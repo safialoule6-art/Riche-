@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sunami — Apprends une langue en vivant une histoire</title>
+<meta name="description" content="Sunami transforme chaque leçon de langue en épisode d'une histoire continue. Un tuteur IA, 6 langues, niveaux CECR, streak quotidien.">
+
+<!-- Open Graph (Facebook, LinkedIn, iMessage, Discord…) -->
+<meta property="og:title" content="Sunami — Apprends une langue en vivant une histoire">
+<meta property="og:description" content="Un tuteur IA qui te fait parler dans un épisode qui continue chaque jour — pas des exercices.">
+<meta property="og:image" content="https://sunami-luma14.vercel.app/og-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://sunami-luma14.vercel.app">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_FR">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sunami — Apprends une langue en vivant une histoire">
+<meta name="twitter:description" content="Un tuteur IA qui te fait parler dans un épisode qui continue chaque jour — pas des exercices.">
+<meta name="twitter:image" content="https://sunami-luma14.vercel.app/og-preview.png">
+
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23ef3f56'/%3E%3Ctext x='50' y='68' font-size='55' text-anchor='middle'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E">
+
+<!-- Google Analytics (remplacer G-XXXXXXXXXX par ton vrai ID GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX');
+</script>
+
+<!-- TikTok Pixel (remplacer par ton vrai ID quand tu lances des pubs TikTok) -->
+<script>
+!function (w, d, t) {
+  w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq._i={},ttq._i[t]=[],ttq.instance(t),ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i[t]._u=i,ttq._t=t;if(!n||!n.f){var o=document.createElement("script");o.type="text/javascript",o.async=!0,o.src=i+"?sdkid="+e+"&lib="+t;var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)}};
+  ttq.load('DXXXXXXXXXXXXXXXXXXXXX');
+  ttq.page();
+}(window, document, 'ttq');
+</script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{
+  --abyss:#ffffff; --deep:#ffffff; --surf:#fff1f2; --foam:#2b2226;
+  --wave:#ef3f56; --wave-dim:#c92f44; --muted:#9a8f92; --line:#ffd9de; --err:#d92e48;
+  --ok:#1ba672;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{background:var(--abyss); color:var(--foam); font-family:'Space Grotesk', sans-serif; min-height:100vh;}
+::selection{background:var(--wave); color:#fff;}
+input{
+  width:100%; background:#fff; border:2px solid var(--line); color:var(--foam);
+  padding:14px 16px; font-family:'Space Grotesk',sans-serif; font-size:15px; margin-bottom:12px; border-radius:14px;
+}
+input:focus{outline:none; border-color:var(--wave);}
+.btn{
+  font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:15px;
+  padding:15px 28px; cursor:pointer; border:none; background:var(--wave);
+  color:#fff; width:100%; transition:.15s; border-radius:16px;
+  box-shadow:0 4px 0 var(--wave-dim);
+}
+.btn:hover{background:#ff5468; transform:translateY(1px); box-shadow:0 3px 0 var(--wave-dim);}
+.btn.ghost{background:#fff; color:var(--foam); border:2px solid var(--line); box-shadow:none; font-weight:600;}
+.btn:disabled{opacity:0.4; cursor:default; box-shadow:none;}
+.error-msg{color:var(--err); font-family:'JetBrains Mono',monospace; font-size:12px; margin:-6px 0 12px;}
+
+/* AUTH SCREEN */
+#authScreen{
+  min-height:100vh; display:flex; align-items:center; justify-content:center; padding:6vw;
+}
+.auth-box{width:100%; max-width:380px;}
+.logo{font-family:'Fraunces', serif; font-weight:700; font-size:28px; text-align:center; margin-bottom:6px; display:flex; align-items:center; justify-content:center; gap:10px;}
+.logo-badge{
+  width:38px; height:38px; border-radius:12px; background:var(--wave);
+  display:inline-flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;
+}
+.logo span{color:var(--wave);}
+.auth-sub{text-align:center; color:var(--muted); font-size:13px; margin-bottom:32px; font-family:'JetBrains Mono',monospace;}
+.tabs{display:flex; margin-bottom:24px; border:1px solid var(--line);}
+.tab{flex:1; text-align:center; padding:12px; cursor:pointer; font-size:13px; color:var(--muted); font-family:'JetBrains Mono',monospace;}
+.tab.active{background:var(--surf); color:var(--wave);}
+
+/* APP SCREEN */
+#appScreen{display:none; min-height:100vh; flex-direction:column;}
+header{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:18px 6vw; border-bottom:2px solid var(--line); background:var(--deep);
+}
+.hlogo{font-family:'Fraunces', serif; font-weight:700; font-size:20px; display:flex; align-items:center; gap:8px;}
+.hlogo-badge{
+  width:26px; height:26px; border-radius:8px; background:var(--wave);
+  display:inline-flex; align-items:center; justify-content:center; font-size:13px;
+}
+.hlogo span{color:var(--wave);}
+.userchip{
+  font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);
+  display:flex; align-items:center; gap:10px;
+}
+.logout{color:var(--err); cursor:pointer; text-decoration:underline;}
+
+.chat-wrap{max-width:640px; margin:0 auto; width:100%; padding:6vw 6vw 30px; display:flex; flex-direction:column;}
+.scene-tag{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--wave-dim); margin-bottom:16px; letter-spacing:0.08em; font-weight:700;}
+.scene-card{
+  display:flex; gap:16px; align-items:center; background:var(--surf); border:2px solid var(--line);
+  padding:18px; margin-bottom:24px; border-radius:18px;
+}
+.scene-avatar{
+  width:56px; height:56px; border-radius:50%; background:#fff; border:2px solid var(--wave);
+  display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0;
+}
+.scene-card-text{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); line-height:1.6;}
+.scene-card-text b{color:var(--foam); font-family:'Space Grotesk',sans-serif; font-size:14px; display:block; margin-bottom:2px;}
+#chatLog{display:flex; flex-direction:column; gap:16px; margin-bottom:20px; min-height:120px;}
+.msg{padding:14px 18px; max-width:85%; line-height:1.55; font-size:15px; border-radius:16px;}
+.msg.character{background:var(--surf); border:2px solid var(--line); align-self:flex-start;}
+.msg.character b{color:var(--wave-dim); font-style:italic; font-family:'Fraunces',serif;}
+.msg.user{background:var(--wave); color:#fff; align-self:flex-end; border:none;}
+.msg.feedback{
+  align-self:center; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);
+  text-align:center; padding:6px 12px; font-weight:700;
+}
+.msg.feedback.wrong{color:var(--err);}
+.msg.feedback.right{color:var(--ok);}
+
+.input-row{display:flex; gap:10px;}
+.input-row input{margin-bottom:0;}
+.input-row .btn{width:auto; padding:14px 22px;}
+.loading{
+  font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted); align-self:flex-start;
+}
+</style>
+</head>
+<body>
+
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="logo"><span class="logo-badge">🌊</span>sunami<span>.</span></div>
+    <h1 class="hero-headline">Vis une histoire.<br>Apprends une langue.</h1>
+    <p class="hero-sub">Un tuteur IA qui te fait parler dans un épisode qui continue chaque jour — pas des exercices.</p>
+    <div class="demo-box">
+      <div class="demo-box-head">👀 essaie sans te connecter</div>
+      <div id="demoText"></div>
+      <div class="demo-choices" id="demoChoices"></div>
+    </div>
+
+    <!-- Email capture : récupère les visiteurs qui hésitent à se connecter direct -->
+    <div class="email-capture" id="emailCapture">
+      <div class="ec-head">🔔 sois prévenu de l'épisode 2</div>
+      <form id="emailForm" class="ec-form" onsubmit="return submitEmail(event)">
+        <input type="email" id="emailInput" placeholder="ton@email.com" required>
+        <button type="submit" class="btn ec-btn" id="emailSubmit">Me prévenir</button>
+      </form>
+      <div class="ec-msg" id="emailMsg"></div>
+    </div>
+
+    <button class="btn" id="googleBtn" onclick="loginWithGoogle()">C'est parti !</button>
+    <div class="error-msg" id="authError"></div>
+    <div style="text-align:center; margin-top:10px; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted);">
+      via Google · gratuit · fonctionne sur tous tes appareils
+    </div>
+
+    <div class="lang-strip">
+      <span>🇬🇧</span><span>🇪🇸</span><span>🇩🇪</span><span>🇮🇹</span><span>🇸🇦</span><span>🇵🇹</span>
+    </div>
+
+    <div class="feature-row">
+      <div class="feature-card">
+        <div class="feature-icon">📖</div>
+        <b>Histoire continue</b>
+        <span>chaque jour, un nouvel épisode de la même intrigue</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔥</div>
+        <b>Streak quotidien</b>
+        <span>reviens chaque jour, garde ta série active</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <b>Niveau CECR</b>
+        <span>débutant à avancé, calibré à chaque réponse</span>
+      </div>
+    </div>
+
+    <div class="faq">
+      <div class="faq-item">
+        <b>C'est vraiment gratuit ?</b>
+        <span>Oui, en entier — c'est un projet en bêta, pas d'abonnement caché.</span>
+      </div>
+      <div class="faq-item">
+        <b>Ça marche pour mon niveau ?</b>
+        <span>Débutant à avancé (A1 à C2) — l'IA calibre chaque réplique à ton niveau.</span>
+      </div>
+      <div class="faq-item">
+        <b>Je peux changer de langue en cours de route ?</b>
+        <span>Oui, à tout moment depuis l'écran de conversation.</span>
+      </div>
+      <div class="faq-item">
+        <b>Mes données sont sauvegardées où ?</b>
+        <span>Ta progression est liée à ton compte Google, accessible depuis n'importe quel appareil.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.hero-headline{
+  font-family:'Fraunces', serif; font-weight:700; font-size:32px; text-align:center;
+  line-height:1.15; margin-top:18px; margin-bottom:10px;
+}
+.hero-sub{text-align:center; color:var(--muted); font-size:14px; line-height:1.5; margin-bottom:24px;}
+.lang-strip{
+  display:flex; justify-content:center; gap:14px; font-size:24px; margin:28px 0 8px;
+}
+.feature-row{display:flex; flex-direction:column; gap:12px; margin-top:24px;}
+.feature-card{
+  display:flex; flex-direction:column; gap:2px; background:var(--surf); border:2px solid var(--line);
+  border-radius:16px; padding:14px 16px;
+}
+.feature-icon{font-size:20px; margin-bottom:2px;}
+.feature-card b{font-family:'Space Grotesk',sans-serif; font-size:14px;}
+.feature-card span{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); line-height:1.4;}
+
+.demo-box{
+  background:var(--surf); border:2px solid var(--line); border-radius:18px; padding:18px; margin:26px 0 18px;
+}
+.demo-box-head{
+  font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--wave-dim); font-weight:700;
+  letter-spacing:0.06em; margin-bottom:12px;
+}
+#demoText{font-size:15px; line-height:1.6; margin-bottom:14px;}
+#demoText b{color:var(--wave-dim); font-style:italic; font-family:'Fraunces',serif;}
+.demo-choices{display:flex; flex-direction:column; gap:8px;}
+.demo-choice{
+  text-align:left; background:#fff; border:2px solid var(--line); color:var(--foam);
+  padding:12px 14px; font-family:'Space Grotesk',sans-serif; font-size:14px; cursor:pointer;
+  border-radius:12px; transition:.15s;
+}
+.demo-choice:hover{border-color:var(--wave);}
+.demo-choice.wrong-flash{border-color:var(--err); color:var(--err);}
+
+/* Email capture block */
+.email-capture{
+  background:#fff; border:2px dashed var(--line); border-radius:18px; padding:16px;
+  margin:0 0 18px; text-align:center;
+}
+.ec-head{
+  font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--wave-dim); font-weight:700;
+  letter-spacing:0.06em; margin-bottom:10px;
+}
+.ec-form{display:flex; gap:8px; flex-direction:column;}
+.ec-form input{margin-bottom:0;}
+.ec-btn{margin-top:4px; box-shadow:0 3px 0 var(--wave-dim); padding:12px 18px; font-size:14px;}
+.ec-msg{
+  font-family:'JetBrains Mono',monospace; font-size:11px; margin-top:8px; min-height:14px;
+  color:var(--ok);
+}
+.ec-msg.err{color:var(--err);}
+@media(min-width:480px){
+  .ec-form{flex-direction:row;}
+  .ec-form input{margin-bottom:0;}
+  .ec-btn{margin-top:0; flex-shrink:0;}
+}
+
+.faq{margin-top:28px; display:flex; flex-direction:column; gap:10px;}
+.faq-item{
+  background:#fff; border:2px solid var(--line); border-radius:14px; padding:12px 14px;
+}
+.faq-item b{display:block; font-size:14px; margin-bottom:2px;}
+.faq-item span{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); line-height:1.5;}
+</style>
+
+<div id="appScreen">
+  <header>
+    <div class="hlogo"><span class="hlogo-badge">🌊</span>sunami<span>.</span></div>
+    <div class="userchip">
+      <span id="streakChip" style="display:none;">🔥 <b id="streakCount">0</b></span>
+      <span id="userLabel"></span>
+      <span class="logout" onclick="logout()">déconnexion</span>
+    </div>
+  </header>
+
+  <div id="pickScreen" class="chat-wrap">
+    <div class="section-eyebrow" style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--wave-dim); letter-spacing:0.1em; margin-bottom:14px;">CHOISIS TA LANGUE</div>
+    <div class="pick-grid" id="langGrid"></div>
+    <div class="section-eyebrow" style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--wave-dim); letter-spacing:0.1em; margin:28px 0 14px;">CHOISIS TON NIVEAU (CECR)</div>
+    <div class="pick-grid" id="levelGrid"></div>
+    <button class="btn" style="margin-top:28px;" id="startBtn" onclick="confirmPick()" disabled>Commencer l'épisode 1</button>
+  </div>
+
+  <div class="chat-wrap" id="chatScreen" style="display:none;">
+    <div class="scene-tag" id="sceneTag"></div>
+    <div class="scene-card">
+      <div class="scene-avatar" id="sceneAvatar">🧳</div>
+      <div class="scene-card-text"><b id="sceneCharName">Chauffeuse — Aéroport</b>épisode 1 · réponds dans la langue cible pour faire avancer la scène</div>
+    </div>
+    <div style="text-align:right; margin-bottom:12px;">
+      <span onclick="backToPicker()" style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); cursor:pointer; text-decoration:underline;">changer de langue / niveau</span>
+    </div>
+    <div id="chatLog"></div>
+    <div class="input-row">
+      <input id="userInput" placeholder="Réponds dans la langue cible..." onkeydown="if(event.key==='Enter')sendReply()">
+      <button class="btn" id="sendBtn" onclick="sendReply()">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.pick-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;}
+@media(max-width:500px){.pick-grid{grid-template-columns:repeat(2, 1fr);}}
+.pick-card{
+  border:2px solid var(--line); background:#fff; padding:16px 10px; text-align:center;
+  cursor:pointer; font-family:'Space Grotesk',sans-serif; font-size:14px; transition:.15s; border-radius:16px;
+}
+.pick-card small{display:block; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); margin-top:4px;}
+.pick-card.active{border-color:var(--wave); background:var(--surf); color:var(--wave);}
+.pick-card.active small{color:var(--wave-dim);}
+</style>
+
+<script>
+const demoScenes = [
+  {
+    text: `You land in Marseille. A woman waves at the gate holding a sign with your name. <b>"Bonjour ! You must be tired — how do you say hello, if you were speaking English to me right now?"</b>`,
+    choices: [
+      {label:'"Hello, nice to meet you."', correct:true, next:1},
+      {label:'"Hallo, gutentag."', correct:false},
+    ]
+  },
+  {
+    text: `She laughs. <b>"Good! Now — which is correct: 'I have your bag' or 'I has your bag'?"</b>`,
+    choices: [
+      {label:'"I has your bag."', correct:false},
+      {label:'"I have your bag."', correct:true, next:2},
+    ]
+  },
+  {
+    text: `<b>"Perfect. The car is this way — episode 2 continues tomorrow, same story, same characters."</b><br><br>— fin de la démo — <span style="color:var(--wave-dim); font-weight:700;">connecte-toi pour vivre la suite avec une IA qui génère chaque réplique</span>`,
+    choices: []
+  }
+];
+
+function renderDemoScene(i){
+  const s = demoScenes[i];
+  document.getElementById('demoText').innerHTML = s.text;
+  const c = document.getElementById('demoChoices');
+  c.innerHTML = '';
+  s.choices.forEach(choice=>{
+    const b = document.createElement('button');
+    b.className = 'demo-choice';
+    b.textContent = choice.label;
+    b.onclick = ()=>{
+      if(choice.correct){
+        renderDemoScene(choice.next);
+      } else {
+        b.classList.add('wrong-flash');
+        setTimeout(()=>b.classList.remove('wrong-flash'), 500);
+      }
+    };
+    c.appendChild(b);
+  });
+}
+renderDemoScene(0);
+</script>
+
+<script>
+/* ---------- Email capture (stocke en local pour l'instant) ---------- */
+window.submitEmail = async function(ev){
+  ev.preventDefault();
+  const input = document.getElementById('emailInput');
+  const btn = document.getElementById('emailSubmit');
+  const msg = document.getElementById('emailMsg');
+  const email = input.value.trim();
+  if(!email) return false;
+
+  btn.disabled = true;
+  btn.textContent = '...';
+  msg.className = 'ec-msg';
+  msg.textContent = '';
+
+  try{
+    // Option simple : on stocke dans Supabase si tu veux créer une table "leads"
+    // Pour l'instant on log juste — à toi de câbler Brevo/Mailchimp plus tard
+    if (window.supabase){
+      await window.supabase.from('leads').insert({ email, source: 'demo' });
+    }
+    msg.textContent = '✓ c\'est noté, on te prévient';
+    input.value = '';
+    // Event analytics
+    if (typeof gtag !== 'undefined') gtag('event', 'lead_captured', { method: 'email' });
+  }catch(err){
+    msg.className = 'ec-msg err';
+    msg.textContent = 'erreur, réessaie';
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Me prévenir';
+  }
+  return false;
+};
+</script>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const supabaseUrl = 'https://cdtabuyomtkfasvugtck.supabase.co';
+const supabaseKey = 'sb_publishable_ms6RPYdPVcO3c9A6X1ruQQ_uiYl1Dxo';
+const supabase = createClient(supabaseUrl, supabaseKey);
+window.supabase = supabase;
+
+let mode = 'login';
+window.switchTab = function(m){
+  mode = m;
+  document.getElementById('tabLogin').classList.toggle('active', m==='login');
+  document.getElementById('tabSignup').classList.toggle('active', m==='signup');
+  document.getElementById('authSubmit').textContent = m==='login' ? 'Se connecter' : 'Créer mon compte';
+  document.getElementById('authError').textContent = '';
+}
+
+window.loginWithGoogle = async function(){
+  const errEl = document.getElementById('authError');
+  errEl.textContent = '';
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin }
+  });
+  if(error){ errEl.textContent = error.message; }
+}
+
+window.logout = async function(){
+  await supabase.auth.signOut();
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('authScreen').style.display = 'flex';
+  chatHistory = [];
+  document.getElementById('chatLog').innerHTML = '';
+}
+
+const LANGUAGES = [
+  {code:'anglais', label:'Anglais', flag:'🇬🇧'},
+  {code:'espagnol', label:'Espagnol', flag:'🇪🇸'},
+  {code:'allemand', label:'Allemand', flag:'🇩🇪'},
+  {code:'italien', label:'Italien', flag:'🇮🇹'},
+  {code:'arabe', label:'Arabe', flag:'🇸🇦'},
+  {code:'portugais', label:'Portugais', flag:'🇵🇹'},
+];
+const LEVELS = [
+  {code:'A1-A2 (débutant)', label:'Débutant', sub:'A1 · A2'},
+  {code:'B1-B2 (intermédiaire)', label:'Intermédiaire', sub:'B1 · B2'},
+  {code:'C1-C2 (avancé)', label:'Avancé', sub:'C1 · C2'},
+];
+let pickedLang = null, pickedLevel = null;
+
+function renderPickers(){
+  const langGrid = document.getElementById('langGrid');
+  langGrid.innerHTML = '';
+  LANGUAGES.forEach(l=>{
+    const c = document.createElement('div');
+    c.className = 'pick-card';
+    c.innerHTML = `${l.flag}<br>${l.label}`;
+    c.onclick = ()=>{
+      document.querySelectorAll('#langGrid .pick-card').forEach(x=>x.classList.remove('active'));
+      c.classList.add('active');
+      pickedLang = l.code;
+      checkReady();
+    };
+    langGrid.appendChild(c);
+  });
+  const levelGrid = document.getElementById('levelGrid');
+  levelGrid.innerHTML = '';
+  LEVELS.forEach(lv=>{
+    const c = document.createElement('div');
+    c.className = 'pick-card';
+    c.innerHTML = `${lv.label}<small>${lv.sub}</small>`;
+    c.onclick = ()=>{
+      document.querySelectorAll('#levelGrid .pick-card').forEach(x=>x.classList.remove('active'));
+      c.classList.add('active');
+      pickedLevel = lv.code;
+      checkReady();
+    };
+    levelGrid.appendChild(c);
+  });
+}
+function checkReady(){
+  document.getElementById('startBtn').disabled = !(pickedLang && pickedLevel);
+}
+window.confirmPick = function(){
+  document.getElementById('pickScreen').style.display = 'none';
+  document.getElementById('chatScreen').style.display = 'flex';
+  progress.language = pickedLang;
+  progress.level = pickedLevel;
+  saveProgress();
+  const langLabel = LANGUAGES.find(l=>l.code===pickedLang).label;
+  const levelLabel = LEVELS.find(l=>l.code===pickedLevel).label;
+  document.getElementById('sceneTag').textContent = `${langLabel.toUpperCase()} · NIVEAU ${levelLabel.toUpperCase()} · SAISON ${progress.season} · ÉPISODE ${progress.episode}`;
+  startScene();
+}
+
+let userId = null;
+let progress = { season: 1, episode: 1, streak: 0, last_active: null, language: null, level: null };
+
+async function loadProgress(uid){
+  const { data, error } = await supabase.from('progress').select('*').eq('user_id', uid).maybeSingle();
+  if (data) progress = { ...progress, ...data };
+  return data;
+}
+
+async function touchStreak(){
+  const today = new Date().toISOString().slice(0,10);
+  if (progress.last_active === today){
+    // already counted today
+  } else {
+    const y = new Date(); y.setDate(y.getDate()-1);
+    const yesterday = y.toISOString().slice(0,10);
+    progress.streak = (progress.last_active === yesterday) ? (progress.streak || 0) + 1 : 1;
+    progress.last_active = today;
+  }
+  document.getElementById('streakChip').style.display = 'inline';
+  document.getElementById('streakCount').textContent = progress.streak;
+  await saveProgress();
+}
+
+async function saveProgress(){
+  await supabase.from('progress').upsert({
+    user_id: userId,
+    season: progress.season,
+    episode: progress.episode,
+    streak: progress.streak,
+    last_active: progress.last_active,
+    language: progress.language,
+    level: progress.level
+  });
+}
+
+window.backToPicker = function(){
+  document.getElementById('chatScreen').style.display = 'none';
+  document.getElementById('pickScreen').style.display = 'flex';
+  document.getElementById('chatLog').innerHTML = '';
+  chatHistory = [];
+  pickedLang = null; pickedLevel = null;
+  renderPickers();
+}
+
+async function enterApp(email, uid){
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'flex';
+  document.getElementById('userLabel').textContent = email;
+  userId = uid;
+  await loadProgress(uid);
+  await touchStreak();
+
+  if (progress.language && progress.level){
+    pickedLang = progress.language;
+    pickedLevel = progress.level;
+    document.getElementById('pickScreen').style.display = 'none';
+    document.getElementById('chatScreen').style.display = 'flex';
+    const langLabel = LANGUAGES.find(l=>l.code===pickedLang)?.label || pickedLang;
+    const levelLabel = LEVELS.find(l=>l.code===pickedLevel)?.label || pickedLevel;
+    document.getElementById('sceneTag').textContent = `${langLabel.toUpperCase()} · NIVEAU ${levelLabel.toUpperCase()} · SAISON ${progress.season} · ÉPISODE ${progress.episode}`;
+    startScene();
+  } else {
+    renderPickers();
+  }
+}
+
+/* auto-login if a Supabase session already exists, and catch the redirect back from Google */
+window.addEventListener('DOMContentLoaded', async ()=>{
+  const { data } = await supabase.auth.getSession();
+  if(data.session) enterApp(data.session.user.email, data.session.user.id);
+});
+supabase.auth.onAuthStateChange((event, session)=>{
+  if(session) enterApp(session.user.email, session.user.id);
+});
+
+/* ---------- CHAT / AI SCENE ---------- */
+let chatHistory = [];
+
+function addMsg(type, html){
+  const log = document.getElementById('chatLog');
+  const div = document.createElement('div');
+  div.className = 'msg ' + type;
+  div.innerHTML = html;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return div;
+}
+
+async function callAI(userReply){
+  const sendBtn = document.getElementById('sendBtn');
+  sendBtn.disabled = true;
+  const loadingEl = addMsg('loading', '···');
+
+  try{
+    const res = await fetch('/api/generate', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ history: chatHistory, userReply, language: pickedLang, level: pickedLevel })
+    });
+    const data = await res.json();
+    loadingEl.remove();
+
+    if(data.error){
+      addMsg('feedback wrong', 'Erreur: ' + data.error);
+      sendBtn.disabled = false;
+      return;
+    }
+
+    if(userReply){
+      chatHistory.push({ role:'user', content:userReply });
+      addMsg('feedback ' + (data.correct ? 'right' : 'wrong'), (data.correct ? '✓ ' : '✕ ') + data.feedback);
+    }
+    chatHistory.push({ role:'assistant', content: JSON.stringify(data) });
+    addMsg('character', '<b>' + data.character_line + '</b>');
+
+    if(data.scene_done){
+      progress.episode += 1;
+      if (progress.episode > 5){ progress.episode = 1; progress.season += 1; }
+      saveProgress();
+      addMsg('feedback right', `— épisode terminé, à demain pour la suite (S${progress.season}·É${progress.episode}) —`);
+      document.getElementById('userInput').disabled = true;
+      sendBtn.disabled = true;
+    } else {
+      sendBtn.disabled = false;
+    }
+  }catch(err){
+    loadingEl.remove();
+    addMsg('feedback wrong', 'Erreur réseau: ' + err.message);
+    sendBtn.disabled = false;
+  }
+}
+
+function startScene(){
+  callAI(null);
+}
+
+function sendReply(){
+  const input = document.getElementById('userInput');
+  const val = input.value.trim();
+  if(!val) return;
+  addMsg('user', val);
+  input.value = '';
+  callAI(val);
+}
+window.sendReply = sendReply;
+</script>
+</body>
+</html>
