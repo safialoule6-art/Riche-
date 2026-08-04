@@ -6,26 +6,32 @@
 <title>Sunami — Apprends une langue en vivant une histoire</title>
 <meta name="description" content="Sunami transforme chaque leçon de langue en épisode d'une histoire continue. Un tuteur IA, 6 langues, niveaux CECR, streak quotidien.">
 
-<!-- Open Graph (Facebook, LinkedIn, iMessage, Discord…) -->
+<!-- Open Graph (Facebook, LinkedIn, iMessage, Discord, WhatsApp…) -->
 <meta property="og:title" content="Sunami — Apprends une langue en vivant une histoire">
 <meta property="og:description" content="Un tuteur IA qui te fait parler dans un épisode qui continue chaque jour — pas des exercices.">
-<meta property="og:image" content="https://sunami-luma14.vercel.app/og-preview.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://sunami-rho.vercel.app">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:image" content="https://sunami-rho.vercel.app/og-preview.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:url" content="https://sunami-luma14.vercel.app">
-<meta property="og:type" content="website">
-<meta property="og:locale" content="fr_FR">
+<meta property="og:image:alt" content="Sunami — app d'apprentissage de langue par histoires interactives">
+<meta property="og:site_name" content="Sunami">
 
 <!-- Twitter / X -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Sunami — Apprends une langue en vivant une histoire">
 <meta name="twitter:description" content="Un tuteur IA qui te fait parler dans un épisode qui continue chaque jour — pas des exercices.">
-<meta name="twitter:image" content="https://sunami-luma14.vercel.app/og-preview.png">
+<meta name="twitter:image" content="https://sunami-rho.vercel.app/og-preview.png">
+<meta name="twitter:image:alt" content="Sunami — apprends une langue en vivant une histoire">
 
-<!-- Favicon -->
+<!-- Theme color mobile + apple touch icon -->
+<meta name="theme-color" content="#ef3f56">
+<link rel="apple-touch-icon" href="https://sunami-rho.vercel.app/og-preview.png">
+
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23ef3f56'/%3E%3Ctext x='50' y='68' font-size='55' text-anchor='middle'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E">
 
-<!-- Google Analytics (remplacer G-XXXXXXXXXX par ton vrai ID GA4) -->
+<!-- Google Analytics 4 (remplacer G-XXXXXXXXXX par ton vrai ID) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -34,7 +40,7 @@
   gtag('config', 'G-XXXXXXXXXX');
 </script>
 
-<!-- TikTok Pixel (remplacer par ton vrai ID quand tu lances des pubs TikTok) -->
+<!-- TikTok Pixel (remplacer DXXXXXXXXXXXXXXXXXXXXX par ton vrai ID quand tu lances des pubs) -->
 <script>
 !function (w, d, t) {
   w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq._i={},ttq._i[t]=[],ttq.instance(t),ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i[t]._u=i,ttq._t=t;if(!n||!n.f){var o=document.createElement("script");o.type="text/javascript",o.async=!0,o.src=i+"?sdkid="+e+"&lib="+t;var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)}};
@@ -42,13 +48,11 @@
   ttq.page();
 }(window, document, 'ttq');
 </script>
-
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
 :root{
   --abyss:#ffffff; --deep:#ffffff; --surf:#fff1f2; --foam:#2b2226;
   --wave:#ef3f56; --wave-dim:#c92f44; --muted:#9a8f92; --line:#ffd9de; --err:#d92e48;
-  --ok:#1ba672;
 }
 *{box-sizing:border-box; margin:0; padding:0;}
 body{background:var(--abyss); color:var(--foam); font-family:'Space Grotesk', sans-serif; min-height:100vh;}
@@ -125,7 +129,7 @@ header{
   text-align:center; padding:6px 12px; font-weight:700;
 }
 .msg.feedback.wrong{color:var(--err);}
-.msg.feedback.right{color:var(--ok);}
+.msg.feedback.right{color:#1ba672;}
 
 .input-row{display:flex; gap:10px;}
 .input-row input{margin-bottom:0;}
@@ -148,20 +152,20 @@ header{
       <div class="demo-choices" id="demoChoices"></div>
     </div>
 
-    <!-- Email capture : récupère les visiteurs qui hésitent à se connecter direct -->
-    <div class="email-capture" id="emailCapture">
-      <div class="ec-head">🔔 sois prévenu de l'épisode 2</div>
-      <form id="emailForm" class="ec-form" onsubmit="return submitEmail(event)">
-        <input type="email" id="emailInput" placeholder="ton@email.com" required>
-        <button type="submit" class="btn ec-btn" id="emailSubmit">Me prévenir</button>
-      </form>
-      <div class="ec-msg" id="emailMsg"></div>
-    </div>
-
     <button class="btn" id="googleBtn" onclick="loginWithGoogle()">C'est parti !</button>
     <div class="error-msg" id="authError"></div>
     <div style="text-align:center; margin-top:10px; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted);">
       via Google · gratuit · fonctionne sur tous tes appareils
+    </div>
+
+    <div class="lead-box">
+      <div class="lead-box-head">📬 pas prêt à te connecter ?</div>
+      <p>Laisse ton email, on te prévient quand l'épisode 2 sort.</p>
+      <div class="lead-row">
+        <input id="leadEmail" type="email" placeholder="ton@email.com">
+        <button class="btn ghost" id="leadBtn" onclick="submitLead()">Ok</button>
+      </div>
+      <div class="error-msg" id="leadMsg"></div>
     </div>
 
     <div class="lang-strip">
@@ -243,35 +247,14 @@ header{
 .demo-choice:hover{border-color:var(--wave);}
 .demo-choice.wrong-flash{border-color:var(--err); color:var(--err);}
 
-/* Email capture block */
-.email-capture{
-  background:#fff; border:2px dashed var(--line); border-radius:18px; padding:16px;
-  margin:0 0 18px; text-align:center;
+.lead-box{
+  background:#fff; border:2px dashed var(--line); border-radius:16px; padding:16px; margin-top:18px;
 }
-.ec-head{
-  font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--wave-dim); font-weight:700;
-  letter-spacing:0.06em; margin-bottom:10px;
-}
-.ec-form{display:flex; gap:8px; flex-direction:column;}
-.ec-form input{margin-bottom:0;}
-.ec-btn{margin-top:4px; box-shadow:0 3px 0 var(--wave-dim); padding:12px 18px; font-size:14px;}
-.ec-msg{
-  font-family:'JetBrains Mono',monospace; font-size:11px; margin-top:8px; min-height:14px;
-  color:var(--ok);
-}
-.ec-msg.err{color:var(--err);}
-@media(min-width:480px){
-  .ec-form{flex-direction:row;}
-  .ec-form input{margin-bottom:0;}
-  .ec-btn{margin-top:0; flex-shrink:0;}
-}
-
-.faq{margin-top:28px; display:flex; flex-direction:column; gap:10px;}
-.faq-item{
-  background:#fff; border:2px solid var(--line); border-radius:14px; padding:12px 14px;
-}
-.faq-item b{display:block; font-size:14px; margin-bottom:2px;}
-.faq-item span{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); line-height:1.5;}
+.lead-box-head{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--wave-dim); font-weight:700; margin-bottom:6px;}
+.lead-box p{font-size:12px; color:var(--muted); margin-bottom:10px; line-height:1.4;}
+.lead-row{display:flex; gap:8px;}
+.lead-row input{margin-bottom:0; padding:10px 12px; font-size:13px;}
+.lead-row .btn{width:auto; padding:10px 18px; font-size:13px; box-shadow:none;}
 </style>
 
 <div id="appScreen">
@@ -366,42 +349,6 @@ function renderDemoScene(i){
 renderDemoScene(0);
 </script>
 
-<script>
-/* ---------- Email capture (stocke en local pour l'instant) ---------- */
-window.submitEmail = async function(ev){
-  ev.preventDefault();
-  const input = document.getElementById('emailInput');
-  const btn = document.getElementById('emailSubmit');
-  const msg = document.getElementById('emailMsg');
-  const email = input.value.trim();
-  if(!email) return false;
-
-  btn.disabled = true;
-  btn.textContent = '...';
-  msg.className = 'ec-msg';
-  msg.textContent = '';
-
-  try{
-    // Option simple : on stocke dans Supabase si tu veux créer une table "leads"
-    // Pour l'instant on log juste — à toi de câbler Brevo/Mailchimp plus tard
-    if (window.supabase){
-      await window.supabase.from('leads').insert({ email, source: 'demo' });
-    }
-    msg.textContent = '✓ c\'est noté, on te prévient';
-    input.value = '';
-    // Event analytics
-    if (typeof gtag !== 'undefined') gtag('event', 'lead_captured', { method: 'email' });
-  }catch(err){
-    msg.className = 'ec-msg err';
-    msg.textContent = 'erreur, réessaie';
-  }finally{
-    btn.disabled = false;
-    btn.textContent = 'Me prévenir';
-  }
-  return false;
-};
-</script>
-
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -417,6 +364,28 @@ window.switchTab = function(m){
   document.getElementById('tabSignup').classList.toggle('active', m==='signup');
   document.getElementById('authSubmit').textContent = m==='login' ? 'Se connecter' : 'Créer mon compte';
   document.getElementById('authError').textContent = '';
+}
+
+window.submitLead = async function(){
+  const emailEl = document.getElementById('leadEmail');
+  const msgEl = document.getElementById('leadMsg');
+  const email = emailEl.value.trim();
+  msgEl.textContent = '';
+  msgEl.style.color = '';
+
+  if(!email || !email.includes('@')){
+    msgEl.textContent = 'Entre un email valide.';
+    return;
+  }
+
+  const { error } = await supabase.from('leads').insert({ email, source: 'landing' });
+  if(error){
+    msgEl.textContent = 'Erreur : ' + error.message;
+  } else {
+    msgEl.style.color = '#1ba672';
+    msgEl.textContent = '✓ Noté, à bientôt !';
+    emailEl.value = '';
+  }
 }
 
 window.loginWithGoogle = async function(){
