@@ -44,6 +44,10 @@ window.openSettings = function(){
   const em = document.getElementById('setEmail');
   const lbl = document.getElementById('userLabel');
   if(em && lbl) em.textContent = lbl.textContent ? ('Connecté : ' + lbl.textContent) : '';
+  const up = document.getElementById('superUpsell');
+  const act = document.getElementById('superActive');
+  if(isPremium()){ if(up) up.style.display='none'; if(act) act.style.display='block'; }
+  else { if(up) up.style.display='block'; if(act) act.style.display='none'; }
   const m = document.getElementById('settingsModal');
   m.classList.add('open'); m.setAttribute('aria-hidden','false');
 };
@@ -115,7 +119,74 @@ window.closeCelebrate = function(){
   if('speechSynthesis' in window) window.speechSynthesis.cancel();
 };
 
-document.addEventListener('keydown', e => { if(e.key === 'Escape'){ window.closeSettings(); window.closeCelebrate(); } });
+/* ===== PREMIUM (Sunami Super) + CŒURS (freemium façon Duolingo) ===== */
+const FREE_HEARTS = 5;
+const FREE_EPISODES_PER_DAY = 1;
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function isPremium(){ return localStorage.getItem('sunami-premium') === '1'; }
+function heartsState(){
+  let s; try{ s = JSON.parse(localStorage.getItem('sunami-hearts')||'{}'); }catch(e){ s = {}; }
+  if(s.date !== todayStr()){ s = { date: todayStr(), hearts: FREE_HEARTS }; localStorage.setItem('sunami-hearts', JSON.stringify(s)); }
+  return s;
+}
+function getHearts(){ return isPremium() ? Infinity : heartsState().hearts; }
+function loseHeart(){
+  if(isPremium()) return;
+  const s = heartsState(); s.hearts = Math.max(0, s.hearts - 1);
+  localStorage.setItem('sunami-hearts', JSON.stringify(s)); updateHeartsChip();
+}
+function episodesTodayState(){
+  let s; try{ s = JSON.parse(localStorage.getItem('sunami-eptoday')||'{}'); }catch(e){ s = {}; }
+  if(s.date !== todayStr()){ s = { date: todayStr(), count: 0 }; }
+  return s;
+}
+function episodesTodayCount(){ return episodesTodayState().count || 0; }
+function bumpEpisodesToday(){ const s = episodesTodayState(); s.count = (s.count||0)+1; localStorage.setItem('sunami-eptoday', JSON.stringify(s)); }
+
+function updateHeartsChip(){
+  const prem = isPremium();
+  const hc = document.getElementById('heartChip');
+  const sb = document.getElementById('superBadge');
+  if(prem){
+    if(hc) hc.style.display = 'none';
+    if(sb) sb.style.display = 'inline-flex';
+  } else {
+    if(sb) sb.style.display = 'none';
+    if(hc){ hc.style.display = 'inline-flex'; const c = document.getElementById('heartCount'); if(c) c.textContent = getHearts(); }
+  }
+}
+
+window.openPaywall = function(reason){
+  const t = document.getElementById('paywallTitle');
+  const sub = document.getElementById('paywallSub');
+  if(t && sub){
+    if(reason === 'hearts'){ t.textContent = 'Plus de cœurs pour aujourd\u2019hui'; sub.textContent = 'Reviens demain\u2026 ou passe à Super pour des cœurs illimités.'; }
+    else if(reason === 'episodes'){ t.textContent = 'Épisode du jour terminé'; sub.textContent = 'Reviens demain pour la suite\u2026 ou enchaîne tout de suite avec Super.'; }
+    else { t.textContent = 'Passe à Sunami Super'; sub.textContent = 'Débloque toute l\u2019expérience.'; }
+  }
+  const m = document.getElementById('paywallModal');
+  if(m){ m.classList.add('open'); m.setAttribute('aria-hidden','false'); }
+};
+window.closePaywall = function(){
+  const m = document.getElementById('paywallModal');
+  if(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
+};
+window.upgradeToSuper = async function(btn){
+  const original = btn ? btn.textContent : '';
+  try{
+    if(btn){ btn.disabled = true; btn.textContent = 'Redirection sécurisée\u2026'; }
+    const res = await fetch('/api/create-payment', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ productName:'Sunami Super — 1 mois', price:500, currency:'EUR' })
+    });
+    const data = await res.json();
+    if(res.ok && data.purchaseUrl){ window.location.href = data.purchaseUrl; return; }
+    alert(data.error || 'Paiement indisponible pour le moment.');
+  }catch(e){ alert('Erreur réseau, réessaie.'); }
+  if(btn){ btn.disabled = false; btn.textContent = original; }
+};
+
+document.addEventListener('keydown', e => { if(e.key === 'Escape'){ window.closeSettings(); window.closeCelebrate(); window.closePaywall(); } });
 document.addEventListener('DOMContentLoaded', applySettings);
 
 window.logout = async function(){
@@ -261,6 +332,7 @@ async function enterApp(email, uid){
   await loadProgress(uid);
   await touchStreak();
   updateXpChip();
+  updateHeartsChip();
 
   if (progress.language && progress.level){
     pickedLang = progress.language;
@@ -338,6 +410,7 @@ async function callAI(userReply){
     if(userReply){
       chatHistory.push({ role:'user', content:userReply });
       if(data.correct){ addXp(10); episodeXp += 10; }
+      else { loseHeart(); }
       addMsg('feedback ' + (data.correct ? 'right' : 'wrong'), (data.correct ? '✓ ' : '✕ ') + data.feedback);
     }
     chatHistory.push({ role:'assistant', content: JSON.stringify(data) });
@@ -348,10 +421,16 @@ async function callAI(userReply){
       if (progress.episode > 5){ progress.episode = 1; progress.season += 1; }
       saveProgress();
       updateSceneMeta();
+      bumpEpisodesToday();
       episodeXp += 50; addXp(50);
       celebrate(episodeXp);
       document.getElementById('userInput').disabled = true;
       sendBtn.disabled = true;
+    } else if(!isPremium() && getHearts() <= 0){
+      addMsg('feedback wrong', '💔 Plus de cœurs — reviens demain ou passe à Super.');
+      document.getElementById('userInput').disabled = true;
+      sendBtn.disabled = true;
+      window.openPaywall('hearts');
     } else {
       sendBtn.disabled = false;
     }
@@ -364,6 +443,8 @@ async function callAI(userReply){
 
 function startScene(){
   episodeXp = 0;
+  if(!isPremium() && episodesTodayCount() >= FREE_EPISODES_PER_DAY){ window.openPaywall('episodes'); return; }
+  if(!isPremium() && getHearts() <= 0){ window.openPaywall('hearts'); return; }
   const input = document.getElementById('userInput');
   if(input) input.disabled = false;
   callAI(null);

@@ -24,8 +24,16 @@ Au lieu d'exercices répétitifs, l'utilisateur vit une **histoire continue** : 
 | Variable | Description |
 |---|---|
 | `OPENROUTER_API_KEY` | Clé API OpenRouter (modèle : `anthropic/claude-sonnet-4.5`) |
+| `INFLOW_API_KEY` | Clé **privée** InflowPay (`inflow_prod_...`) — paiements Sunami Super. Utilisée uniquement côté serveur dans `api/create-payment.js`. |
 
-⚠️ **Ne jamais** commit de clé API dans le code. Toujours passer par `process.env.OPENROUTER_API_KEY`.
+⚠️ **Ne jamais** commit de clé API dans le code. Toujours passer par `process.env`.
+
+## Paiements — Sunami Super (InflowPay)
+
+- Offre : **abonnement Super à 5€/mois** (épisodes illimités + cœurs illimités + badge doré).
+- Flux : le front appelle `POST /api/create-payment` → la fonction serverless crée le paiement avec `INFLOW_API_KEY` → renvoie `purchaseUrl` → le navigateur est **redirigé vers le checkout hébergé InflowPay**.
+- Retour : `/success` (active Super) et `/cancel`.
+- ⚠️ **À faire pour la prod** : l'activation de Super est aujourd'hui posée côté client (`localStorage`) sur la page `/success`. Pour un entitlement fiable et non contournable, ajoute un **webhook InflowPay** côté serveur qui marque l'utilisateur comme premium en base (Supabase), et lis ce statut au chargement.
 
 ## Pixels & tracking (à configurer avant le marketing)
 

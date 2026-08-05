@@ -54,6 +54,8 @@
   <header>
     <a class="hbrand" href="/" style="text-decoration:none;color:inherit;"><svg class="badge mascot"><use href="#mascot"/></svg>sunami<em>.</em></a>
     <div class="chips">
+      <span class="chip" id="heartChip">❤️ <span id="heartCount">5</span></span>
+      <span class="chip gold" id="superBadge" style="display:none;">✨ SUPER</span>
       <span class="chip" id="xpChip">⭐ <span id="xpCount">0</span></span>
       <span class="chip" id="streakChip" style="display:none;">🔥 <span id="streakCount">0</span></span>
       <span id="userLabel" style="display:none;"></span>
@@ -127,6 +129,16 @@
       </div>
     </div>
     <div class="set-group">
+      <div class="set-title">Sunami Super</div>
+      <div id="superUpsell">
+        <p style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:10px;line-height:1.5;">Épisodes illimités, cœurs illimités et badge doré ✨ — 5€/mois.</p>
+        <button class="btn super-btn" onclick="upgradeToSuper(this)">Passer à Super — 5€/mois</button>
+      </div>
+      <div id="superActive" style="display:none;">
+        <div class="super-active-badge">✨ Tu es Super — merci !</div>
+      </div>
+    </div>
+    <div class="set-group">
       <div class="set-title">Compte</div>
       <div class="set-account" id="setEmail"></div>
       <button class="btn ghost" id="shareBtn" onclick="shareProgress()">🔗 Partager ma progression</button>
@@ -150,6 +162,25 @@
       <div class="cel-stat total"><div class="v" id="celTotal">0</div><div class="l">XP total</div></div>
     </div>
     <button class="btn" onclick="closeCelebrate()">Continuer</button>
+  </div>
+</div>
+
+<!-- ================= PAYWALL (Sunami Super) ================= -->
+<div id="paywallModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Passer à Super">
+  <div class="modal-backdrop" onclick="closePaywall()"></div>
+  <div class="modal-card cel-card">
+    <svg class="mascot idle" aria-hidden="true"><use href="#mascot"/></svg>
+    <div class="super-tag">✨ SUNAMI SUPER</div>
+    <h2 id="paywallTitle">Passe à Sunami Super</h2>
+    <div class="cel-sub" id="paywallSub">Débloque toute l'expérience.</div>
+    <ul class="perks">
+      <li>📖 <b>Épisodes illimités</b> — enchaîne sans attendre demain</li>
+      <li>❤️ <b>Cœurs illimités</b> — apprends sans stress des erreurs</li>
+      <li>✨ <b>Badge doré</b> — soutiens le projet</li>
+    </ul>
+    <button class="btn super-btn" onclick="upgradeToSuper(this)">Passer à Super — 5€/mois</button>
+    <button class="btn ghost" onclick="closePaywall()" style="margin-top:8px;">Plus tard</button>
+    <div class="pay-note">Paiement sécurisé via InflowPay · annulable à tout moment</div>
   </div>
 </div>
 
