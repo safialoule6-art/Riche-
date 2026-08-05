@@ -24,16 +24,28 @@ Au lieu d'exercices répétitifs, l'utilisateur vit une **histoire continue** : 
 | Variable | Description |
 |---|---|
 | `OPENROUTER_API_KEY` | Clé API OpenRouter (modèle : `anthropic/claude-sonnet-4.5`) |
-| `INFLOW_API_KEY` | Clé **privée** InflowPay (`inflow_prod_...`) — paiements Sunami Super. Utilisée uniquement côté serveur dans `api/create-payment.js`. |
+| `INFLOW_API_KEY` | Clé **privée** InflowPay (`inflow_prod_...`) — création de paiement (`api/create-payment.js`). |
+| `INFLOW_WEBHOOK_SECRET` | Secret de signature du webhook InflowPay (`whsec_...`) — vérification Svix (`api/inflow-webhook.js`). |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clé **service_role** Supabase (Settings → API) — écriture de l'entitlement premium côté serveur. **Secret.** |
+| `SUPABASE_URL` | (optionnel) URL du projet Supabase, sinon valeur par défaut du code. |
 
 ⚠️ **Ne jamais** commit de clé API dans le code. Toujours passer par `process.env`.
 
 ## Paiements — Sunami Super (InflowPay)
 
 - Offre : **abonnement Super à 5€/mois** (épisodes illimités + cœurs illimités + badge doré).
-- Flux : le front appelle `POST /api/create-payment` → la fonction serverless crée le paiement avec `INFLOW_API_KEY` → renvoie `purchaseUrl` → le navigateur est **redirigé vers le checkout hébergé InflowPay**.
-- Retour : `/success` (active Super) et `/cancel`.
-- ⚠️ **À faire pour la prod** : l'activation de Super est aujourd'hui posée côté client (`localStorage`) sur la page `/success`. Pour un entitlement fiable et non contournable, ajoute un **webhook InflowPay** côté serveur qui marque l'utilisateur comme premium en base (Supabase), et lis ce statut au chargement.
+- Flux : le front appelle `POST /api/create-payment` (avec l'`userId` Supabase) → la fonction crée le paiement avec `INFLOW_API_KEY`, enregistre `paymentId → userId` dans la table `payments`, et renvoie `purchaseUrl` → le navigateur est **redirigé vers le checkout hébergé InflowPay**.
+- Retour : `/success` et `/cancel`.
+- **Entitlement fiable (webhook)** : InflowPay envoie un webhook signé (Svix) à `POST /api/inflow-webhook`. On vérifie la signature avec `INFLOW_WEBHOOK_SECRET`, on retrouve l'utilisateur (metadata `userId` ou table `payments`) et on met `premium = true` (+ `premium_until`) sur sa ligne `progress`. Le client lit ce statut au chargement (source de vérité).
+
+### Mise en place (ordre à respecter)
+1. Exécuter **`supabase.sql`** dans Supabase → SQL Editor (colonnes premium + table `payments`).
+2. Sur Vercel → Settings → Environment Variables : `INFLOW_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (et `SUPABASE_URL` si besoin). Redéployer.
+3. Sur le dashboard InflowPay → **Add webhook** : URL = `https://sunami-rho.vercel.app/api/inflow-webhook`, événements = `checkout_session.*` (ou tous). Copier le **secret** (`whsec_...`).
+4. Ajouter ce secret sur Vercel : `INFLOW_WEBHOOK_SECRET = whsec_...`. Redéployer.
+5. Tester avec une **carte de test** InflowPay (docs → Test Cards) et vérifier que `progress.premium` passe à `true`.
+
+> Enforcement complet : les limites (cœurs / 1 épisode par jour) sont aujourd'hui appliquées côté client. Pour rendre le premium 100% non contournable, il faudrait aussi vérifier le statut premium dans `api/generate.js` avant de générer une scène.
 
 ## Pixels & tracking (à configurer avant le marketing)
 

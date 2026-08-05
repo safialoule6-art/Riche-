@@ -177,7 +177,11 @@ window.upgradeToSuper = async function(btn){
     if(btn){ btn.disabled = true; btn.textContent = 'Redirection sécurisée\u2026'; }
     const res = await fetch('/api/create-payment', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ productName:'Sunami Super — 1 mois', price:500, currency:'EUR' })
+      body: JSON.stringify({
+        productName:'Sunami Super — 1 mois', price:500, currency:'EUR',
+        userId: userId || null,
+        email: (document.getElementById('userLabel')?.textContent) || null
+      })
     });
     const data = await res.json();
     if(res.ok && data.purchaseUrl){ window.location.href = data.purchaseUrl; return; }
@@ -330,6 +334,11 @@ async function enterApp(email, uid){
   document.getElementById('userLabel').textContent = email;
   userId = uid;
   await loadProgress(uid);
+  // Source de vérité de l'abonnement : la base (renseignée par le webhook InflowPay)
+  try{
+    const active = progress.premium === true && (!progress.premium_until || new Date(progress.premium_until) > new Date());
+    if(active) localStorage.setItem('sunami-premium','1'); else localStorage.removeItem('sunami-premium');
+  }catch(e){}
   await touchStreak();
   updateXpChip();
   updateHeartsChip();
