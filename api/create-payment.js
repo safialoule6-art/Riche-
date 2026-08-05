@@ -59,13 +59,17 @@ export default async function handler(req, res) {
       }),
     });
 
-    const data = await response.json().catch(() => ({}));
+    const rawText = await response.text();
+    let data;
+    try { data = rawText ? JSON.parse(rawText) : {}; } catch { data = {}; }
 
     if (!response.ok) {
-      console.error("Erreur InflowPay:", response.status, JSON.stringify(data));
+      let msg = data.message || data.error || data.detail || rawText || "";
+      if (Array.isArray(msg)) msg = msg.join("; ");
+      console.error("Erreur InflowPay:", response.status, rawText);
       return res.status(response.status).json({
         error: "Échec de création du paiement",
-        detail: data && (data.message || data.error) ? (data.message || data.error) : undefined,
+        detail: `HTTP ${response.status} — ${String(msg).slice(0, 300) || "réponse vide"}`,
       });
     }
 
