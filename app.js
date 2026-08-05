@@ -184,8 +184,9 @@ window.upgradeToSuper = async function(btn){
       })
     });
     const data = await res.json();
-    if(res.ok && data.purchaseUrl){ window.location.href = data.purchaseUrl; return; }
-    alert(data.error || 'Paiement indisponible pour le moment.');
+    const url = data.checkoutUrl || data.purchaseUrl;
+    if(res.ok && url){ window.location.href = url; return; }
+    alert((data.detail ? (data.error + ' — ' + data.detail) : data.error) || 'Paiement indisponible pour le moment.');
   }catch(e){ alert('Erreur réseau, réessaie.'); }
   if(btn){ btn.disabled = false; btn.textContent = original; }
 };
