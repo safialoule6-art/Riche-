@@ -291,3 +291,27 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
   *{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important;}
   .reveal{opacity:1 !important; transform:none !important;}
 }
+
+/* ===== PREMIUM (Sunami Super) ===== */
+.chip.gold{color:#7a5200; background:linear-gradient(120deg,var(--gold),#ffd071); border-color:transparent;}
+[data-theme="dark"] .chip.gold{color:#2a1c00;}
+.super-btn{background:linear-gradient(120deg,var(--gold),#ffb020); color:#3a2600; box-shadow:0 4px 0 #d68a00;}
+.super-btn:active{box-shadow:0 0 0 #d68a00;}
+.super-tag{display:inline-block; background:linear-gradient(120deg,var(--gold),#ffd071); color:#3a2600; font-weight:800; font-size:12px; letter-spacing:.08em; padding:5px 12px; border-radius:99px; margin-bottom:10px;}
+.super-active-badge{background:linear-gradient(120deg,var(--gold),#ffd071); color:#3a2600; font-weight:800; text-align:center; padding:12px; border-radius:14px;}
+.perks{list-style:none; text-align:left; margin:0 auto 18px; max-width:320px; display:flex; flex-direction:column; gap:9px;}
+.perks li{font-size:14px; font-weight:600; color:var(--foam); line-height:1.4;}
+.pay-note{font-size:11px; color:var(--muted); font-weight:700; margin-top:12px;}
+
+/* Tarifs (landing) */
+.pricing{display:flex; flex-direction:column; gap:12px;}
+.price-card{position:relative; background:var(--card); border:2px solid var(--card-border); border-radius:var(--radius); padding:22px 20px; box-shadow:var(--shadow-soft);}
+.price-card.super{border-color:var(--gold);}
+.price-badge{position:absolute; top:-11px; left:20px; background:linear-gradient(120deg,var(--gold),#ffd071); color:#3a2600; font-weight:800; font-size:11px; letter-spacing:.06em; padding:4px 11px; border-radius:99px;}
+.price-name{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:18px;}
+.price-amt{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:34px; color:var(--wave); margin:2px 0 14px;}
+.price-card.super .price-amt{color:var(--gold);}
+.price-amt span{font-family:'Nunito',sans-serif; font-size:14px; font-weight:700; color:var(--muted);}
+.price-card .perks{margin:0 0 18px;}
+.price-card .btn{width:100%;}
+
