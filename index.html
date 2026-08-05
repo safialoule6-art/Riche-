@@ -621,7 +621,7 @@ window.supabase = supabase;
 
 /* ===== SETTINGS + TEXT-TO-SPEECH ===== */
 const LOCALES = { anglais:'en-US', espagnol:'es-ES', allemand:'de-DE', italien:'it-IT', arabe:'ar-SA', portugais:'pt-PT' };
-let settings = { autoplay:false, rate:1, font:'m' };
+let settings = { autoplay:true, rate:1, font:'m' };
 try{ settings = { ...settings, ...JSON.parse(localStorage.getItem('sunami-settings') || '{}') }; }catch(e){}
 
 function saveSettings(){ localStorage.setItem('sunami-settings', JSON.stringify(settings)); }
@@ -773,6 +773,7 @@ window.loginWithGoogle = async function(){
 
 window.logout = async function(){
   window.closeSettings && window.closeSettings();
+  appEntered = false;
   if('speechSynthesis' in window) window.speechSynthesis.cancel();
   await supabase.auth.signOut();
   document.getElementById('appScreen').style.display = 'none';
@@ -907,7 +908,10 @@ window.backToPicker = function(){
   renderPickers();
 }
 
+let appEntered = false;
 async function enterApp(email, uid){
+  if(appEntered) return;
+  appEntered = true;
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('appScreen').style.display = 'flex';
   document.getElementById('userLabel').textContent = email;
@@ -970,7 +974,7 @@ async function callAI(userReply){
     const res = await fetch('/api/generate', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ history: chatHistory, userReply, language: pickedLang, level: pickedLevel })
+      body: JSON.stringify({ history: chatHistory, userReply, language: pickedLang, level: pickedLevel, season: progress.season, episode: progress.episode })
     });
     const data = await res.json();
     loadingEl.remove();
@@ -979,6 +983,13 @@ async function callAI(userReply){
       addMsg('feedback wrong', 'Erreur: ' + data.error);
       sendBtn.disabled = false;
       return;
+    }
+
+    if(data.character_name){
+      const el = document.getElementById('sceneCharName'); if(el) el.textContent = data.character_name;
+    }
+    if(data.scene_title){
+      const el = document.querySelector('#chatScreen .scene-meta span'); if(el) el.textContent = data.scene_title;
     }
 
     if(userReply){
