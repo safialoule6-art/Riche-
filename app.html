@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sunami — Mon histoire</title>
+<meta name="description" content="Ton épisode Sunami du jour.">
+<meta name="robots" content="noindex">
+
+<meta name="theme-color" content="#14b8a6">
+<link rel="apple-touch-icon" href="https://sunami-rho.vercel.app/og-preview.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='28' fill='%2314b8a6'/%3E%3Cpath d='M50 20 C50 20 76 54 76 72 a26 26 0 1 1 -52 0 C24 54 50 20 50 20Z' fill='white'/%3E%3C/svg%3E">
+
+<link rel="stylesheet" href="/styles.css">
+<script src="/theme.js"></script>
+
+<!-- Google Analytics 4 (remplacer G-XXXXXXXXXX par ton vrai ID) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX');
+</script>
+</head>
+<body>
+
+<!-- Mascotte "Sunny" (sprite réutilisable) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="mascot" viewBox="0 0 120 140">
+    <defs>
+      <linearGradient id="mgrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#14b8a6"/>
+      </linearGradient>
+    </defs>
+    <path d="M60 8 C60 8 102 62 102 92 A42 42 0 1 1 18 92 C18 62 60 8 60 8 Z" fill="url(#mgrad)"/>
+    <path d="M60 8 C60 8 78 32 88 54 C72 44 52 46 40 60 C46 40 60 8 60 8 Z" fill="#ffffff" opacity="0.18"/>
+    <ellipse cx="47" cy="93" rx="12" ry="14" fill="#ffffff"/>
+    <ellipse cx="76" cy="93" rx="12" ry="14" fill="#ffffff"/>
+    <circle cx="49" cy="96" r="6" fill="#0f2e2b"/>
+    <circle cx="74" cy="96" r="6" fill="#0f2e2b"/>
+    <circle cx="51" cy="93" r="2.2" fill="#ffffff"/>
+    <circle cx="76" cy="93" r="2.2" fill="#ffffff"/>
+    <circle cx="33" cy="108" r="6" fill="#ff8a8f" opacity="0.55"/>
+    <circle cx="90" cy="108" r="6" fill="#ff8a8f" opacity="0.55"/>
+    <path d="M51 113 Q61.5 123 72 113" stroke="#0f2e2b" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+  </symbol>
+</svg>
+
+<div class="bg-glow" aria-hidden="true"></div>
+
+<!-- ================= APP ================= -->
+<div id="appScreen">
+  <header>
+    <a class="hbrand" href="/" style="text-decoration:none;color:inherit;"><svg class="badge mascot"><use href="#mascot"/></svg>sunami<em>.</em></a>
+    <div class="chips">
+      <span class="chip" id="xpChip">⭐ <span id="xpCount">0</span></span>
+      <span class="chip" id="streakChip" style="display:none;">🔥 <span id="streakCount">0</span></span>
+      <span id="userLabel" style="display:none;"></span>
+      <button class="icon-btn" id="settingsBtn" onclick="openSettings()" aria-label="Paramètres" title="Paramètres">⚙️</button>
+    </div>
+  </header>
+
+  <div id="pickScreen" class="chat-wrap">
+    <div class="eyebrow-left">Choisis ta langue</div>
+    <div class="pick-grid" id="langGrid"></div>
+    <div class="eyebrow-left" style="margin-top:28px;">Choisis ton niveau (CECR)</div>
+    <div class="pick-grid" id="levelGrid"></div>
+    <button class="btn" style="margin-top:28px;" id="startBtn" onclick="confirmPick()" disabled>Commencer l'épisode 1</button>
+  </div>
+
+  <div class="chat-wrap" id="chatScreen" style="display:none;">
+    <div class="scene-tag" id="sceneTag"></div>
+    <div class="scene-card">
+      <div class="scene-avatar" id="sceneAvatar"><svg class="mascot idle"><use href="#mascot"/></svg></div>
+      <div class="scene-meta"><b id="sceneCharName">Ton tuteur</b><span>épisode en cours · réponds dans la langue cible pour faire avancer la scène</span></div>
+    </div>
+    <div class="ep-progress" aria-label="Progression de la saison">
+      <div class="ep-progress-head"><span id="epProgressLabel">Saison 1 · Épisode 1</span><span id="epProgressPct">20%</span></div>
+      <div class="ep-track"><div class="ep-fill" id="epFill"></div></div>
+      <div class="ep-dots" id="epDots"></div>
+    </div>
+    <div class="repick"><button onclick="backToPicker()">changer de langue / niveau</button></div>
+    <div id="chatLog"></div>
+    <div class="input-row">
+      <input id="userInput" placeholder="Réponds dans la langue cible..." onkeydown="if(event.key==='Enter')sendReply()">
+      <button class="btn" id="sendBtn" onclick="sendReply()">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SETTINGS MODAL ================= -->
+<div id="settingsModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Paramètres">
+  <div class="modal-backdrop" onclick="closeSettings()"></div>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>⚙️ Paramètres</h2>
+      <button class="icon-btn" onclick="closeSettings()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="set-group">
+      <div class="set-title">Apparence</div>
+      <div class="set-row">
+        <div class="set-label"><b>Thème</b><small>clair ou sombre</small></div>
+        <button class="btn ghost set-btn" onclick="toggleTheme()">Basculer 🌗</button>
+      </div>
+    </div>
+    <div class="set-group">
+      <div class="set-title">Audio · synthèse vocale</div>
+      <div class="set-row">
+        <div class="set-label"><b>Lecture auto</b><small>lire chaque réplique du tuteur</small></div>
+        <label class="switch"><input type="checkbox" id="setAutoplay" onchange="setAutoplay(this)"><span class="switch-track"></span></label>
+      </div>
+      <div class="set-row">
+        <div class="set-label"><b>Vitesse de la voix</b><small>débit de lecture</small></div>
+        <div class="rate-wrap"><input type="range" id="setRate" min="0.5" max="1.5" step="0.1" value="1" oninput="setRate(this)"><span id="setRateVal">1.0×</span></div>
+      </div>
+    </div>
+    <div class="set-group">
+      <div class="set-title">Lisibilité</div>
+      <div class="set-row">
+        <div class="set-label"><b>Taille du texte</b><small>dans la conversation</small></div>
+        <div class="seg">
+          <button class="seg-font" data-font="s" onclick="setFont('s')">A-</button>
+          <button class="seg-font" data-font="m" onclick="setFont('m')">A</button>
+          <button class="seg-font" data-font="l" onclick="setFont('l')">A+</button>
+        </div>
+      </div>
+    </div>
+    <div class="set-group">
+      <div class="set-title">Compte</div>
+      <div class="set-account" id="setEmail"></div>
+      <button class="btn ghost" id="shareBtn" onclick="shareProgress()">🔗 Partager ma progression</button>
+      <button class="btn ghost danger" onclick="resetProgress()">↺ Réinitialiser ma progression</button>
+      <button class="btn ghost danger" onclick="logout()">Déconnexion</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= CELEBRATION MODAL ================= -->
+<div id="celebrateModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Épisode terminé">
+  <div class="modal-backdrop" onclick="closeCelebrate()"></div>
+  <div id="confetti"></div>
+  <div class="modal-card cel-card">
+    <svg class="mascot idle" aria-hidden="true"><use href="#mascot"/></svg>
+    <h2>Épisode terminé ! 🎉</h2>
+    <div class="cel-sub">Bravo, l'histoire continue demain.</div>
+    <div class="cel-stats">
+      <div class="cel-stat xp"><div class="v" id="celXp">+50</div><div class="l">XP gagné</div></div>
+      <div class="cel-stat streak"><div class="v" id="celStreak">1</div><div class="l">Jours 🔥</div></div>
+      <div class="cel-stat total"><div class="v" id="celTotal">0</div><div class="l">XP total</div></div>
+    </div>
+    <button class="btn" onclick="closeCelebrate()">Continuer</button>
+  </div>
+</div>
+
+<script type="module" src="/app.js"></script>
+</body>
+</html>
