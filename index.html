@@ -191,7 +191,7 @@ header{
 .scene-card-text{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); line-height:1.6;}
 .scene-card-text b{color:var(--foam); font-family:'Space Grotesk',sans-serif; font-size:14px; display:block; margin-bottom:2px;}
 #chatLog{display:flex; flex-direction:column; gap:16px; margin-bottom:20px; min-height:120px;}
-.msg{padding:14px 18px; max-width:85%; line-height:1.55; font-size:15px; border-radius:18px; animation:msgIn .45s var(--ease) both;}
+.msg{padding:14px 18px; max-width:85%; line-height:1.55; font-size:var(--chat-font,15px); border-radius:18px; animation:msgIn .45s var(--ease) both;}
 @keyframes msgIn{from{opacity:0; transform:translateY(12px) scale(.97);}to{opacity:1; transform:none;}}
 .msg.character{background:var(--card); border:1px solid var(--card-border); align-self:flex-start; border-bottom-left-radius:6px; backdrop-filter:blur(10px);}
 .msg.character b{color:var(--wave-dim); font-style:italic; font-family:'Fraunces',serif;}
@@ -398,8 +398,8 @@ header{
     <div class="hlogo"><span class="hlogo-badge">🌊</span>sunami<span>.</span></div>
     <div class="userchip">
       <span id="streakChip" style="display:none;">🔥 <b id="streakCount">0</b></span>
-      <span id="userLabel"></span>
-      <span class="logout" onclick="logout()">déconnexion</span>
+      <span id="userLabel" class="user-label"></span>
+      <button class="icon-btn" id="settingsBtn" onclick="openSettings()" aria-label="Paramètres" title="Paramètres">⚙️</button>
     </div>
   </header>
 
@@ -417,6 +417,11 @@ header{
       <div class="scene-avatar" id="sceneAvatar">🧳</div>
       <div class="scene-card-text"><b id="sceneCharName">Chauffeuse — Aéroport</b>épisode 1 · réponds dans la langue cible pour faire avancer la scène</div>
     </div>
+    <div class="ep-progress" aria-label="Progression de la saison">
+      <div class="ep-progress-head"><span id="epProgressLabel">Saison 1 · Épisode 1</span><span id="epProgressPct">20%</span></div>
+      <div class="ep-track"><div class="ep-fill" id="epFill"></div></div>
+      <div class="ep-dots" id="epDots"></div>
+    </div>
     <div style="text-align:right; margin-bottom:12px;">
       <span onclick="backToPicker()" style="font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); cursor:pointer; text-decoration:underline;">changer de langue / niveau</span>
     </div>
@@ -428,8 +433,135 @@ header{
   </div>
 </div>
 
+<div id="settingsModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Paramètres">
+  <div class="modal-backdrop" onclick="closeSettings()"></div>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>⚙️ Paramètres</h2>
+      <button class="icon-btn" onclick="closeSettings()" aria-label="Fermer">✕</button>
+    </div>
+
+    <div class="set-group">
+      <div class="set-title">Apparence</div>
+      <div class="set-row">
+        <div class="set-label"><b>Thème</b><small>clair ou sombre</small></div>
+        <button class="btn ghost set-btn" onclick="toggleTheme()">Basculer 🌗</button>
+      </div>
+    </div>
+
+    <div class="set-group">
+      <div class="set-title">Audio · synthèse vocale</div>
+      <div class="set-row">
+        <div class="set-label"><b>Lecture auto</b><small>lire chaque réplique du tuteur</small></div>
+        <label class="switch"><input type="checkbox" id="setAutoplay" onchange="setAutoplay(this)"><span class="switch-track"></span></label>
+      </div>
+      <div class="set-row">
+        <div class="set-label"><b>Vitesse de la voix</b><small>débit de lecture</small></div>
+        <div class="rate-wrap"><input type="range" id="setRate" min="0.5" max="1.5" step="0.1" value="1" oninput="setRate(this)"><span id="setRateVal">1.0×</span></div>
+      </div>
+    </div>
+
+    <div class="set-group">
+      <div class="set-title">Lisibilité</div>
+      <div class="set-row">
+        <div class="set-label"><b>Taille du texte</b><small>dans la conversation</small></div>
+        <div class="seg">
+          <button class="seg-font" data-font="s" onclick="setFont('s')">A-</button>
+          <button class="seg-font" data-font="m" onclick="setFont('m')">A</button>
+          <button class="seg-font" data-font="l" onclick="setFont('l')">A+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="set-group">
+      <div class="set-title">Compte</div>
+      <div class="set-account" id="setEmail"></div>
+      <button class="btn ghost" id="shareBtn" onclick="shareProgress()">🔗 Partager ma progression</button>
+      <button class="btn ghost danger" onclick="resetProgress()">↺ Réinitialiser ma progression</button>
+      <button class="btn ghost danger" onclick="logout()">Déconnexion</button>
+    </div>
+  </div>
+</div>
+
 <style>
-.pick-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;}
+/* ===== HEADER ICON BUTTON ===== */
+.icon-btn{
+  width:38px; height:38px; border-radius:12px; border:1px solid var(--card-border);
+  background:var(--card); color:var(--foam); cursor:pointer; font-size:16px;
+  display:inline-flex; align-items:center; justify-content:center; backdrop-filter:blur(10px);
+  transition:transform .25s var(--ease), border-color .25s, background .25s;
+}
+.icon-btn:hover{transform:rotate(45deg) scale(1.06); border-color:var(--wave);}
+.user-label{max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+@media(max-width:560px){.user-label{display:none;}}
+
+/* ===== EPISODE PROGRESS ===== */
+.ep-progress{margin:-8px 0 22px;}
+.ep-progress-head{display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); margin-bottom:8px; letter-spacing:.04em;}
+.ep-progress-head #epProgressPct{color:var(--wave-dim); font-weight:700;}
+.ep-track{height:8px; border-radius:99px; background:var(--surf); border:1px solid var(--card-border); overflow:hidden;}
+.ep-fill{height:100%; width:20%; border-radius:99px; background:linear-gradient(90deg,var(--wave),var(--wave-2)); transition:width .7s var(--ease); box-shadow:0 0 12px rgba(239,63,86,.5);}
+.ep-dots{display:flex; justify-content:space-between; margin-top:8px;}
+.ep-dot{width:10px; height:10px; border-radius:50%; background:var(--surf); border:1.5px solid var(--card-border); transition:.3s var(--ease);}
+.ep-dot.done{background:var(--wave); border-color:var(--wave);}
+.ep-dot.cur{transform:scale(1.35); box-shadow:0 0 0 4px rgba(239,63,86,.18);}
+
+/* ===== SPEAK BUTTON ON MESSAGES ===== */
+.speak-btn{
+  display:inline-flex; align-items:center; justify-content:center; margin-left:8px; margin-top:8px;
+  width:28px; height:28px; border-radius:9px; border:1px solid var(--card-border); background:var(--deep);
+  cursor:pointer; font-size:13px; vertical-align:middle; transition:transform .2s var(--ease), border-color .2s;
+}
+.speak-btn:hover{transform:scale(1.12); border-color:var(--wave);}
+.speak-btn.speaking{border-color:var(--wave); animation:pulseStreak 1.2s ease-in-out infinite;}
+
+/* ===== SETTINGS MODAL ===== */
+.modal{position:fixed; inset:0; z-index:100; display:none;}
+.modal.open{display:block;}
+.modal-backdrop{position:absolute; inset:0; background:rgba(20,10,14,.5); backdrop-filter:blur(4px); animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.modal-card{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-48%); width:min(440px,92vw);
+  max-height:88vh; overflow-y:auto; background:var(--abyss); border:1px solid var(--card-border);
+  border-radius:24px; padding:22px; box-shadow:0 40px 90px -30px rgba(0,0,0,.6);
+  animation:modalIn .4s var(--ease);
+}
+@keyframes modalIn{from{opacity:0; transform:translate(-50%,-42%) scale(.96);}to{opacity:1; transform:translate(-50%,-48%) scale(1);}}
+.modal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;}
+.modal-head h2{font-family:'Fraunces',serif; font-weight:900; font-size:22px;}
+.set-group{border-top:1px solid var(--card-border); padding:16px 0;}
+.set-group:first-of-type{border-top:none; padding-top:0;}
+.set-title{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--wave-dim); font-weight:700; margin-bottom:12px;}
+.set-row{display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:12px;}
+.set-row:last-child{margin-bottom:0;}
+.set-label b{display:block; font-size:14px;}
+.set-label small{font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted);}
+.set-btn{width:auto; padding:9px 16px; font-size:13px;}
+.set-account{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted); margin-bottom:12px; word-break:break-all;}
+.set-group .btn.ghost{margin-bottom:8px;}
+.btn.ghost.danger{color:var(--err); border-color:var(--card-border);}
+.btn.ghost.danger:hover{border-color:var(--err);}
+
+/* toggle switch */
+.switch{position:relative; display:inline-block; width:48px; height:28px; cursor:pointer; flex-shrink:0;}
+.switch input{position:absolute; opacity:0; width:0; height:0;}
+.switch-track{position:absolute; inset:0; border-radius:99px; background:var(--surf); border:1px solid var(--card-border); transition:.3s var(--ease);}
+.switch-track::before{content:""; position:absolute; left:3px; top:3px; width:20px; height:20px; border-radius:50%; background:var(--muted); transition:.3s var(--ease);}
+.switch input:checked + .switch-track{background:linear-gradient(120deg,var(--wave),var(--wave-2)); border-color:transparent;}
+.switch input:checked + .switch-track::before{transform:translateX(20px); background:#fff;}
+
+/* range */
+.rate-wrap{display:flex; align-items:center; gap:10px;}
+.rate-wrap input[type=range]{width:110px; accent-color:var(--wave); margin:0;}
+.rate-wrap span{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--wave-dim); font-weight:700; min-width:34px;}
+
+/* segmented */
+.seg{display:inline-flex; border:1px solid var(--card-border); border-radius:12px; overflow:hidden;}
+.seg-font{background:var(--card); color:var(--muted); border:none; padding:9px 14px; cursor:pointer; font-family:'Space Grotesk',sans-serif; font-weight:700; transition:.2s;}
+.seg-font.active{background:linear-gradient(120deg,var(--wave),var(--wave-2)); color:#fff;}
+</style>
+
+<style>
 @media(max-width:500px){.pick-grid{grid-template-columns:repeat(2, 1fr);}}
 .pick-card{
   position:relative; border:1.5px solid var(--card-border); background:var(--card); padding:18px 10px; text-align:center;
@@ -496,6 +628,73 @@ const supabaseKey = 'sb_publishable_ms6RPYdPVcO3c9A6X1ruQQ_uiYl1Dxo';
 const supabase = createClient(supabaseUrl, supabaseKey);
 window.supabase = supabase;
 
+/* ===== SETTINGS + TEXT-TO-SPEECH ===== */
+const LOCALES = { anglais:'en-US', espagnol:'es-ES', allemand:'de-DE', italien:'it-IT', arabe:'ar-SA', portugais:'pt-PT' };
+let settings = { autoplay:false, rate:1, font:'m' };
+try{ settings = { ...settings, ...JSON.parse(localStorage.getItem('sunami-settings') || '{}') }; }catch(e){}
+
+function saveSettings(){ localStorage.setItem('sunami-settings', JSON.stringify(settings)); }
+
+function applySettings(){
+  const map = { s:'13px', m:'15px', l:'17px' };
+  document.documentElement.style.setProperty('--chat-font', map[settings.font] || '15px');
+  const ap = document.getElementById('setAutoplay'); if(ap) ap.checked = settings.autoplay;
+  const rt = document.getElementById('setRate'); if(rt) rt.value = settings.rate;
+  const rv = document.getElementById('setRateVal'); if(rv) rv.textContent = settings.rate.toFixed(1) + '×';
+  document.querySelectorAll('.seg-font').forEach(b => b.classList.toggle('active', b.dataset.font === settings.font));
+}
+
+// warm up voices (some browsers load them async)
+if('speechSynthesis' in window){ try{ window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = ()=>window.speechSynthesis.getVoices(); }catch(e){} }
+
+function speak(text, btn){
+  if(!('speechSynthesis' in window) || !text) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = LOCALES[pickedLang] || 'en-US';
+  u.rate = settings.rate;
+  const voices = window.speechSynthesis.getVoices();
+  const v = voices.find(x => x.lang && x.lang.toLowerCase().startsWith(u.lang.slice(0,2).toLowerCase()));
+  if(v) u.voice = v;
+  if(btn){ u.onstart = ()=>btn.classList.add('speaking'); u.onend = u.onerror = ()=>btn.classList.remove('speaking'); }
+  window.speechSynthesis.speak(u);
+}
+
+window.openSettings = function(){
+  applySettings();
+  const em = document.getElementById('setEmail');
+  const lbl = document.getElementById('userLabel');
+  if(em && lbl) em.textContent = lbl.textContent ? ('Connecté : ' + lbl.textContent) : '';
+  const m = document.getElementById('settingsModal');
+  m.classList.add('open'); m.setAttribute('aria-hidden','false');
+};
+window.closeSettings = function(){
+  const m = document.getElementById('settingsModal');
+  m.classList.remove('open'); m.setAttribute('aria-hidden','true');
+};
+window.setAutoplay = function(el){ settings.autoplay = el.checked; saveSettings(); };
+window.setRate = function(el){ settings.rate = parseFloat(el.value); document.getElementById('setRateVal').textContent = settings.rate.toFixed(1) + '×'; saveSettings(); };
+window.setFont = function(f){ settings.font = f; saveSettings(); applySettings(); };
+window.resetProgress = async function(){
+  if(!confirm('Réinitialiser toute ta progression (streak, saison, épisode, langue) ? Cette action est irréversible.')) return;
+  progress = { season:1, episode:1, streak:0, last_active:null, language:null, level:null };
+  try{ await saveProgress(); }catch(e){}
+  location.reload();
+};
+window.shareProgress = async function(){
+  const txt = `🌊 Streak de ${progress.streak || 0} jour(s) sur Sunami — j'apprends une langue en vivant une histoire !`;
+  const url = 'https://sunami-rho.vercel.app';
+  try{
+    if(navigator.share){ await navigator.share({ title:'Sunami', text:txt, url }); }
+    else {
+      await navigator.clipboard.writeText(txt + ' ' + url);
+      const b = document.getElementById('shareBtn'); if(b){ const o = b.textContent; b.textContent = '✓ Copié dans le presse-papiers !'; setTimeout(()=>b.textContent = o, 1800); }
+    }
+  }catch(e){}
+};
+document.addEventListener('keydown', e => { if(e.key === 'Escape') window.closeSettings(); });
+document.addEventListener('DOMContentLoaded', applySettings);
+
 let mode = 'login';
 window.switchTab = function(m){
   mode = m;
@@ -538,9 +737,12 @@ window.loginWithGoogle = async function(){
 }
 
 window.logout = async function(){
+  window.closeSettings && window.closeSettings();
+  if('speechSynthesis' in window) window.speechSynthesis.cancel();
   await supabase.auth.signOut();
   document.getElementById('appScreen').style.display = 'none';
   document.getElementById('authScreen').style.display = 'flex';
+  const tt = document.getElementById('themeToggle'); if(tt) tt.style.display = 'flex';
   chatHistory = [];
   document.getElementById('chatLog').innerHTML = '';
 }
@@ -599,10 +801,30 @@ window.confirmPick = function(){
   progress.language = pickedLang;
   progress.level = pickedLevel;
   saveProgress();
-  const langLabel = LANGUAGES.find(l=>l.code===pickedLang).label;
-  const levelLabel = LEVELS.find(l=>l.code===pickedLevel).label;
-  document.getElementById('sceneTag').textContent = `${langLabel.toUpperCase()} · NIVEAU ${levelLabel.toUpperCase()} · SAISON ${progress.season} · ÉPISODE ${progress.episode}`;
+  updateSceneMeta();
   startScene();
+}
+
+function updateSceneMeta(){
+  const langLabel = (LANGUAGES.find(l=>l.code===pickedLang)?.label) || pickedLang || '';
+  const levelLabel = (LEVELS.find(l=>l.code===pickedLevel)?.label) || pickedLevel || '';
+  const tag = document.getElementById('sceneTag');
+  if(tag) tag.textContent = `${langLabel.toUpperCase()} · NIVEAU ${levelLabel.toUpperCase()} · SAISON ${progress.season} · ÉPISODE ${progress.episode}`;
+  const total = 5;
+  const ep = Math.min(Math.max(progress.episode, 1), total);
+  const pct = Math.round((ep / total) * 100);
+  const fill = document.getElementById('epFill'); if(fill) fill.style.width = pct + '%';
+  const lbl = document.getElementById('epProgressLabel'); if(lbl) lbl.textContent = `Saison ${progress.season} · Épisode ${progress.episode}`;
+  const pctEl = document.getElementById('epProgressPct'); if(pctEl) pctEl.textContent = pct + '%';
+  const dots = document.getElementById('epDots');
+  if(dots){
+    dots.innerHTML = '';
+    for(let i=1; i<=total; i++){
+      const d = document.createElement('span');
+      d.className = 'ep-dot' + (i <= progress.episode ? ' done' : '') + (i === progress.episode ? ' cur' : '');
+      dots.appendChild(d);
+    }
+  }
 }
 
 let userId = null;
@@ -654,6 +876,7 @@ async function enterApp(email, uid){
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('appScreen').style.display = 'flex';
   document.getElementById('userLabel').textContent = email;
+  const tt = document.getElementById('themeToggle'); if(tt) tt.style.display = 'none';
   userId = uid;
   await loadProgress(uid);
   await touchStreak();
@@ -663,9 +886,7 @@ async function enterApp(email, uid){
     pickedLevel = progress.level;
     document.getElementById('pickScreen').style.display = 'none';
     document.getElementById('chatScreen').style.display = 'flex';
-    const langLabel = LANGUAGES.find(l=>l.code===pickedLang)?.label || pickedLang;
-    const levelLabel = LEVELS.find(l=>l.code===pickedLevel)?.label || pickedLevel;
-    document.getElementById('sceneTag').textContent = `${langLabel.toUpperCase()} · NIVEAU ${levelLabel.toUpperCase()} · SAISON ${progress.season} · ÉPISODE ${progress.episode}`;
+    updateSceneMeta();
     startScene();
   } else {
     renderPickers();
@@ -689,6 +910,16 @@ function addMsg(type, html){
   const div = document.createElement('div');
   div.className = 'msg ' + type;
   div.innerHTML = html;
+  if(type.indexOf('character') !== -1 && ('speechSynthesis' in window)){
+    const txt = div.textContent.trim();
+    const spk = document.createElement('button');
+    spk.className = 'speak-btn'; spk.type = 'button';
+    spk.setAttribute('aria-label', 'Écouter la réplique'); spk.title = 'Écouter';
+    spk.textContent = '🔊';
+    spk.onclick = () => speak(txt, spk);
+    div.appendChild(spk);
+    if(settings.autoplay) speak(txt, spk);
+  }
   log.appendChild(div);
   log.scrollTop = log.scrollHeight;
   return div;
@@ -725,6 +956,7 @@ async function callAI(userReply){
       progress.episode += 1;
       if (progress.episode > 5){ progress.episode = 1; progress.season += 1; }
       saveProgress();
+      updateSceneMeta();
       addMsg('feedback right', `— épisode terminé, à demain pour la suite (S${progress.season}·É${progress.episode}) —`);
       document.getElementById('userInput').disabled = true;
       sendBtn.disabled = true;
