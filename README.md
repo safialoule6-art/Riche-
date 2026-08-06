@@ -38,8 +38,20 @@ Au lieu d'exercices répétitifs, un **conteur IA** raconte une histoire immersi
 
 ## Pixels & tracking (à configurer avant le marketing)
 
-Dans `index.html` / `app.html`, remplacer les placeholders :
-- `G-XXXXXXXXXX` → ton ID Google Analytics 4
+Tout le tracking est centralisé dans **`analytics.js`** (chargé par `index.html` et `app.html`).
+Renseigne tes IDs dans le bloc `CFG` en haut du fichier — une valeur vide désactive le canal (aucun script chargé, aucune requête) :
+
+```js
+var CFG = {
+  ga4:    "", // ex: "G-XXXXXXXXXX"  (Google Analytics 4)
+  tiktok: "", // ex: "DXXXXXXXXXXXXXXXXXXXXX" (TikTok Pixel)
+  meta:   "", // ex: "1234567890123456" (Meta / Facebook Pixel)
+};
+```
+
+Événements suivis (funnel) : `demo_started`, `demo_completed`, `cta_start_click`, `story_started`,
+`reply_sent`, `xp_gained`, `level_up`, `streak_milestone`, `auth_opened`, `sign_up`, `login`,
+`save_banner_shown`, `save_clicked`, `lead`. Appel unique : `track('nom', { ...params })`.
 
 ## URL de production
 

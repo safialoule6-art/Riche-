@@ -39,6 +39,7 @@ window.submitLead = async function(){
     msgEl.style.color = 'var(--ok)';
     msgEl.textContent = '✓ Noté, à bientôt !';
     emailEl.value = '';
+    window.track && track('lead', { source: 'landing' });
   }
 };
 
@@ -64,6 +65,7 @@ const demoScenes = [
   }
 ];
 function renderDemoScene(i){
+  if(i === 2){ window.track && track('demo_completed'); }
   const s = demoScenes[i];
   document.getElementById('demoText').innerHTML = s.text;
   const c = document.getElementById('demoChoices');
@@ -80,6 +82,11 @@ function renderDemoScene(i){
   });
 }
 renderDemoScene(0);
+window.track && track('demo_started');
+document.addEventListener('DOMContentLoaded', ()=>{
+  const cta = document.getElementById('startCta');
+  if(cta) cta.addEventListener('click', ()=> window.track && track('cta_start_click'));
+});
 
 /* ===== Reveal au scroll ===== */
 document.addEventListener('DOMContentLoaded', ()=>{

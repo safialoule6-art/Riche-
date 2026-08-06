@@ -114,8 +114,10 @@ function addXp(n){
   const chip = document.getElementById('xpChip');
   if(chip){ chip.classList.remove('pop'); void chip.offsetWidth; chip.classList.add('pop'); }
   floatXp(n);
+  window.track && track('xp_gained', { amount: n, total: xp });
   const after = levelOf(xp);
   if(after > before){
+    window.track && track('level_up', { level: after });
     setTimeout(() => celebrate({
       emoji: '⭐', title: 'Niveau ' + after + ' atteint !',
       sub: 'Tu maîtrises de plus en plus la langue. Continue sur ta lancée !'
@@ -249,6 +251,7 @@ window.confirmPick = function(){
   progress.language = pickedLang;
   progress.level = pickedLevel;
   saveProgress();
+  window.track && track('story_started', { language: pickedLang, level: pickedLevel, theme: pickedTheme || 'aucun', guest: isGuest });
   updateSceneMeta();
   startScene();
 };
@@ -290,6 +293,7 @@ async function touchStreak(){
   await saveProgress();
   const milestones = [3, 7, 14, 30, 50, 100, 200, 365];
   if(increased && milestones.includes(progress.streak)){
+    window.track && track('streak_milestone', { streak: progress.streak });
     setTimeout(() => celebrate({
       emoji: '🔥', title: progress.streak + ' jours de série !',
       sub: 'Quelle régularité ! Reviens demain pour ne pas briser ta flamme.'
@@ -434,6 +438,7 @@ window.toggleAuthMode = function(){
   renderAuthMode();
 };
 window.openAuth = function(mode){
+  window.track && track('auth_opened', { mode: mode || 'save' });
   authMode = 'signup';
   showAuthError(''); showAuthMsg('');
   renderAuthMode();
@@ -468,17 +473,19 @@ window.submitAuth = async function(){
     if(authMode === 'signup'){
       const { data, error } = await supabase.auth.signUp({ email, password: pass });
       if(error){ showAuthError(error.message); }
-      else if(data.session){ /* connexion immédiate → onAuthStateChange gère la suite */ }
+      else if(data.session){ window.track && track('sign_up', { method: 'email' }); /* onAuthStateChange gère la suite */ }
       else { showAuthMsg('✓ Compte créé ! Vérifie ta boîte mail pour confirmer, puis connecte-toi. Ta progression reste ici en attendant.'); authMode = 'login'; renderAuthMode(); }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
       if(error){ showAuthError(error.message); }
+      else { window.track && track('login', { method: 'email' }); }
     }
   }catch(err){ showAuthError('Erreur : ' + err.message); }
   finally{ submit.disabled = false; submit.textContent = orig; }
 };
 window.loginWithGoogle = async function(){
   showAuthError('');
+  window.track && track('login', { method: 'google' });
   try{
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -506,11 +513,12 @@ function maybeShowSaveBanner(){
   b.id = 'saveBanner'; b.className = 'save-banner';
   b.innerHTML = `<div class="sb-txt">💾 Tu progresses bien !<small>Crée un compte gratuit pour garder ton XP, ta série et ton histoire.</small></div>`;
   const save = document.createElement('button'); save.className = 'btn'; save.textContent = 'Sauvegarder';
-  save.onclick = ()=> window.openAuth('save');
+  save.onclick = ()=>{ window.track && track('save_clicked'); window.openAuth('save'); };
   const close = document.createElement('button'); close.className = 'sb-close'; close.setAttribute('aria-label','Fermer'); close.textContent = '✕';
   close.onclick = ()=>{ sessionStorage.setItem('sunami-save-dismissed','1'); removeSaveBanner(); };
   b.appendChild(save); b.appendChild(close);
   log.appendChild(b);
+  window.track && track('save_banner_shown');
   scrollChat();
 }
 
@@ -649,6 +657,7 @@ function sendReply(){
   const val = input.value.trim();
   if(!val) return;
   addMsg('user', val);
+  window.track && track('reply_sent', { chapter: chapter });
   input.value = '';
   callAI(val);
 }
