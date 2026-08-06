@@ -12,7 +12,9 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='28' fill='%2314b8a6'/%3E%3Cpath d='M50 20 C50 20 76 54 76 72 a26 26 0 1 1 -52 0 C24 54 50 20 50 20Z' fill='white'/%3E%3C/svg%3E">
 
 <link rel="stylesheet" href="/styles.css">
+<link rel="manifest" href="/manifest.json">
 <script src="/theme.js"></script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});});}</script>
 
 <!-- Google Analytics 4 (remplacer G-XXXXXXXXXX par ton vrai ID) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
@@ -66,6 +68,8 @@
     <div class="pick-grid" id="langGrid"></div>
     <div class="eyebrow-left" style="margin-top:28px;">Choisis ton niveau (CECR)</div>
     <div class="pick-grid" id="levelGrid"></div>
+    <div class="eyebrow-left" style="margin-top:28px;">Choisis une ambiance</div>
+    <div class="pick-grid" id="themeGrid"></div>
     <button class="btn" style="margin-top:28px;" id="startBtn" onclick="confirmPick()" disabled>Commencer l'histoire</button>
   </div>
 
@@ -77,8 +81,10 @@
     </div>
     <div class="repick"><button onclick="backToPicker()">changer de langue / niveau</button></div>
     <div id="chatLog"></div>
+    <div id="suggestRow" class="suggest-row"></div>
     <div class="input-row">
       <input id="userInput" placeholder="Réponds dans la langue cible..." onkeydown="if(event.key==='Enter')sendReply()">
+      <button class="icon-btn" id="hintBtn" onclick="getHints()" aria-label="Suggestions de réponse" title="Besoin d'aide ?">💡</button>
       <button class="btn" id="sendBtn" onclick="sendReply()">Envoyer</button>
     </div>
   </div>

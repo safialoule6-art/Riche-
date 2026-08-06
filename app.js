@@ -108,7 +108,17 @@ const LEVELS = [
   {code:'C1-C2 (avancé)', label:'Avancé', sub:'C1 · C2'},
 ];
 let pickedLang = null, pickedLevel = null;
+let pickedTheme = 'surprise';
 let chapter = 0;
+
+const THEMES = [
+  {code:'surprise', label:'Surprise', emoji:'🎲'},
+  {code:'un voyage / une aventure', label:'Voyage', emoji:'🧳'},
+  {code:'une enquête / un mystère', label:'Mystère', emoji:'🕵️'},
+  {code:'la vie quotidienne', label:'Quotidien', emoji:'☕'},
+  {code:'un conte fantastique', label:'Fantastique', emoji:'🐉'},
+  {code:'une histoire d\'amitié ou d\'amour', label:'Romance', emoji:'💛'},
+];
 
 function renderPickers(){
   const langGrid = document.getElementById('langGrid');
@@ -139,6 +149,22 @@ function renderPickers(){
     };
     levelGrid.appendChild(c);
   });
+  const themeGrid = document.getElementById('themeGrid');
+  if(themeGrid){
+    themeGrid.innerHTML = '';
+    pickedTheme = 'surprise';
+    THEMES.forEach(t=>{
+      const c = document.createElement('div');
+      c.className = 'pick-card' + (t.code === 'surprise' ? ' active' : '');
+      c.innerHTML = `<div style="font-size:24px;line-height:1;margin-bottom:6px;">${t.emoji}</div>${t.label}`;
+      c.onclick = ()=>{
+        document.querySelectorAll('#themeGrid .pick-card').forEach(x=>x.classList.remove('active'));
+        c.classList.add('active');
+        pickedTheme = t.code;
+      };
+      themeGrid.appendChild(c);
+    });
+  }
 }
 function checkReady(){
   document.getElementById('startBtn').disabled = !(pickedLang && pickedLevel);
@@ -270,6 +296,61 @@ function addSpeaker(bubble, text){
   bubble.appendChild(spk);
 }
 
+function addTranslate(bubble, original){
+  const btn = document.createElement('button');
+  btn.className = 'speak-btn'; btn.type = 'button';
+  btn.setAttribute('aria-label','Traduire en français'); btn.title = 'Traduire';
+  btn.textContent = '🇫🇷';
+  btn.onclick = async ()=>{
+    const existing = bubble.querySelector('.translation');
+    if(existing){ existing.remove(); return; }
+    btn.disabled = true; const old = btn.textContent; btn.textContent = '…';
+    try{
+      const r = await fetch('/api/assist', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ mode:'translate', text: cleanForSpeech(original) || original, language: pickedLang, level: pickedLevel })
+      });
+      const d = await r.json();
+      const p = document.createElement('div'); p.className = 'translation';
+      p.textContent = '🇫🇷 ' + (d.result || (d.error === 'rate_limit' ? 'Patiente un peu puis réessaie.' : 'Traduction indisponible.'));
+      bubble.appendChild(p); scrollChat();
+    }catch(e){}
+    btn.textContent = old; btn.disabled = false;
+  };
+  bubble.appendChild(btn);
+}
+
+function clearSuggestions(){ const r = document.getElementById('suggestRow'); if(r) r.innerHTML = ''; }
+
+window.getHints = async function(){
+  const row = document.getElementById('suggestRow'); if(!row) return;
+  const last = [...chatHistory].reverse().find(m => m.role === 'assistant');
+  if(!last){ return; }
+  const btn = document.getElementById('hintBtn');
+  row.innerHTML = '<span class="suggest-loading">💡 je réfléchis…</span>';
+  if(btn) btn.disabled = true;
+  try{
+    const r = await fetch('/api/assist', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ mode:'suggest', text: last.content, language: pickedLang, level: pickedLevel })
+    });
+    const d = await r.json();
+    row.innerHTML = '';
+    if(d.suggestions && d.suggestions.length){
+      d.suggestions.forEach(s=>{
+        const chip = document.createElement('button');
+        chip.className = 'suggest-chip'; chip.type = 'button'; chip.textContent = s;
+        chip.onclick = ()=>{ const inp = document.getElementById('userInput'); inp.value = s; clearSuggestions(); sendReply(); };
+        row.appendChild(chip);
+      });
+    } else {
+      row.innerHTML = '<span class="suggest-loading">' + (d.error === 'rate_limit' ? '⏳ patiente un peu…' : 'Pas de suggestion.') + '</span>';
+      setTimeout(clearSuggestions, 1600);
+    }
+  }catch(e){ clearSuggestions(); }
+  if(btn) btn.disabled = false;
+};
+
 async function callAI(userReply){
   const sendBtn = document.getElementById('sendBtn');
   const input = document.getElementById('userInput');
@@ -280,7 +361,7 @@ async function callAI(userReply){
     const res = await fetch('/api/generate', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ history: chatHistory, userReply, language: pickedLang, level: pickedLevel })
+      body: JSON.stringify({ history: chatHistory, userReply, language: pickedLang, level: pickedLevel, theme: pickedTheme })
     });
 
     if(res.status === 429){
@@ -328,9 +409,11 @@ async function callAI(userReply){
     bubble.innerHTML = formatStory(full);
     const speech = cleanForSpeech(full);
     addSpeaker(bubble, speech);
+    addTranslate(bubble, full);
     chatHistory.push({ role:'assistant', content: full });
     chapter += 1; updateSceneMeta();
     if(settings.autoplay) speak(speech);
+    clearSuggestions();
 
     sendBtn.disabled = false; input.disabled = false; input.focus();
     scrollChat();
@@ -355,6 +438,7 @@ function sendReply(){
   const input = document.getElementById('userInput');
   const val = input.value.trim();
   if(!val) return;
+  clearSuggestions();
   addMsg('user', val);
   input.value = '';
   callAI(val);

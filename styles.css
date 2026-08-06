@@ -315,3 +315,16 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 .price-card .perks{margin:0 0 18px;}
 .price-card .btn{width:100%;}
 
+
+/* ===== Suggestions (aide) & traduction ===== */
+.input-row{align-items:center;}
+.suggest-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;}
+.suggest-row:empty{display:none;}
+.suggest-chip{background:var(--surf); border:1.5px solid var(--card-border); color:var(--foam); border-radius:14px;
+  padding:9px 12px; font-family:'Nunito',sans-serif; font-weight:700; font-size:13px; cursor:pointer;
+  transition:transform .15s var(--ease), border-color .15s; text-align:left; line-height:1.35;}
+.suggest-chip:hover{border-color:var(--wave); transform:translateY(-1px);}
+.suggest-chip:active{transform:translateY(1px);}
+.suggest-loading{font-size:12px; font-weight:700; color:var(--muted);}
+.translation{margin-top:10px; padding-top:10px; border-top:1px dashed var(--card-border);
+  font-size:13px; font-weight:600; color:var(--muted); line-height:1.5;}
