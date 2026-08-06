@@ -32,22 +32,8 @@
 <link rel="stylesheet" href="/styles.css">
 <script src="/theme.js"></script>
 
-<!-- Google Analytics 4 (remplacer G-XXXXXXXXXX par ton vrai ID) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-XXXXXXXXXX');
-</script>
-<!-- TikTok Pixel (remplacer DXXXXXXXXXXXXXXXXXXXXX par ton vrai ID quand tu lances des pubs) -->
-<script>
-!function (w, d, t) {
-  w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq._i={},ttq._i[t]=[],ttq.instance(t),ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i[t]._u=i,ttq._t=t;if(!n||!n.f){var o=document.createElement("script");o.type="text/javascript",o.async=!0,o.src=i+"?sdkid="+e+"&lib="+t;var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)}};
-  ttq.load('DXXXXXXXXXXXXXXXXXXXXX');
-  ttq.page();
-}(window, document, 'ttq');
-</script>
+<!-- Tracking centralisé (GA4 + TikTok) — configure les IDs dans /analytics.js -->
+<script src="/analytics.js"></script>
 </head>
 <body>
 

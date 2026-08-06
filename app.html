@@ -14,14 +14,8 @@
 <link rel="stylesheet" href="/styles.css">
 <script src="/theme.js"></script>
 
-<!-- Google Analytics 4 (remplacer G-XXXXXXXXXX par ton vrai ID) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-XXXXXXXXXX');
-</script>
+<!-- Tracking centralisé (GA4 + TikTok) — configure les IDs dans /analytics.js -->
+<script src="/analytics.js"></script>
 </head>
 <body>
 
@@ -56,6 +50,7 @@
     <div class="chips">
       <span class="chip lvl-chip" id="lvlChip" title="Ton niveau">Nv <b id="lvlNum">1</b></span>
       <span class="chip" id="xpChip">⭐ <span id="xpCount">0</span></span>
+      <span class="chip words-chip" id="wordsChip" style="display:none;" title="Mots-clés appris">📚 <span id="wordsCount">0</span></span>
       <span class="chip" id="streakChip" style="display:none;" title="Ta série de jours"><span class="flame">🔥</span> <span id="streakCount">0</span></span>
       <span id="userLabel" style="display:none;"></span>
       <button class="icon-btn" id="settingsBtn" onclick="openSettings()" aria-label="Paramètres" title="Paramètres">⚙️</button>
@@ -132,6 +127,20 @@
       </div>
     </div>
     <div class="set-group">
+      <div class="set-title">Ta progression</div>
+      <div class="stats-grid">
+        <div class="stat-box words"><div class="sv" id="statWords">0</div><div class="sl">Mots appris</div></div>
+        <div class="stat-box chapters"><div class="sv" id="statChapters">0</div><div class="sl">Chapitres</div></div>
+        <div class="stat-box streak"><div class="sv" id="statStreak">0</div><div class="sl">Jours de série</div></div>
+        <div class="stat-box level"><div class="sv" id="statLevel">1</div><div class="sl">Niveau</div></div>
+      </div>
+      <div class="daily-goal">
+        <div class="daily-goal-head"><span>🎯 Objectif du jour</span><span id="dailyGoalPct">0 / 3</span></div>
+        <div class="goal-track"><div class="goal-fill" id="dailyGoalFill"></div></div>
+        <div class="daily-goal-note" id="dailyGoalNote">Lis 3 chapitres aujourd'hui pour valider ton objectif.</div>
+      </div>
+    </div>
+    <div class="set-group">
       <div class="set-title">Compte</div>
       <div class="set-account" id="setEmail"></div>
       <button class="btn ghost" id="shareBtn" onclick="shareProgress()">🔗 Partager ma progression</button>
@@ -151,6 +160,7 @@
     <div class="cel-sub" id="celSub"></div>
     <div class="cel-stats">
       <div class="cel-stat xp"><div class="v" id="celXp">0</div><div class="l">XP</div></div>
+      <div class="cel-stat words"><div class="v" id="celWords">0</div><div class="l">Mots</div></div>
       <div class="cel-stat streak"><div class="v" id="celStreak">0</div><div class="l">Série</div></div>
       <div class="cel-stat total"><div class="v" id="celLvl">1</div><div class="l">Niveau</div></div>
     </div>

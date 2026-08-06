@@ -17,6 +17,7 @@ supabase.auth.onAuthStateChange((event, session)=>{
 
 window.loginWithGoogle = async function(){
   const errEl = document.getElementById('authError'); if(errEl) errEl.textContent = '';
+  try{ if(window.sunamiTrack) window.sunamiTrack('login_start', { method: 'google' }); }catch(e){}
   // On revient sur '/', puis la landing détecte la session et redirige vers '/app'
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -39,6 +40,7 @@ window.submitLead = async function(){
     msgEl.style.color = 'var(--ok)';
     msgEl.textContent = '✓ Noté, à bientôt !';
     emailEl.value = '';
+    try{ if(window.sunamiTrack) window.sunamiTrack('lead', { source: 'landing' }); }catch(e){}
   }
 };
 
@@ -73,7 +75,10 @@ function renderDemoScene(i){
     b.className = 'demo-choice';
     b.textContent = choice.label;
     b.onclick = ()=>{
-      if(choice.correct){ renderDemoScene(choice.next); }
+      if(choice.correct){
+        try{ if(window.sunamiTrack) window.sunamiTrack('demo_progress', { step: (choice.next || 0) }); }catch(e){}
+        renderDemoScene(choice.next);
+      }
       else { b.classList.add('wrong-flash'); setTimeout(()=>b.classList.remove('wrong-flash'), 500); }
     };
     c.appendChild(b);
