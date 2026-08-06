@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sunami — Mon histoire</title>
-<meta name="description" content="Ton épisode Sunami du jour.">
+<meta name="description" content="Ton histoire Sunami du jour.">
 <meta name="robots" content="noindex">
 
 <meta name="theme-color" content="#14b8a6">
@@ -54,8 +54,6 @@
   <header>
     <a class="hbrand" href="/" style="text-decoration:none;color:inherit;"><svg class="badge mascot"><use href="#mascot"/></svg>sunami<em>.</em></a>
     <div class="chips">
-      <span class="chip" id="heartChip">❤️ <span id="heartCount">5</span></span>
-      <span class="chip gold" id="superBadge" style="display:none;">✨ SUPER</span>
       <span class="chip" id="xpChip">⭐ <span id="xpCount">0</span></span>
       <span class="chip" id="streakChip" style="display:none;">🔥 <span id="streakCount">0</span></span>
       <span id="userLabel" style="display:none;"></span>
@@ -68,19 +66,14 @@
     <div class="pick-grid" id="langGrid"></div>
     <div class="eyebrow-left" style="margin-top:28px;">Choisis ton niveau (CECR)</div>
     <div class="pick-grid" id="levelGrid"></div>
-    <button class="btn" style="margin-top:28px;" id="startBtn" onclick="confirmPick()" disabled>Commencer l'épisode 1</button>
+    <button class="btn" style="margin-top:28px;" id="startBtn" onclick="confirmPick()" disabled>Commencer l'histoire</button>
   </div>
 
   <div class="chat-wrap" id="chatScreen" style="display:none;">
     <div class="scene-tag" id="sceneTag"></div>
     <div class="scene-card">
       <div class="scene-avatar" id="sceneAvatar"><svg class="mascot idle"><use href="#mascot"/></svg></div>
-      <div class="scene-meta"><b id="sceneCharName">Ton tuteur</b><span>épisode en cours · réponds dans la langue cible pour faire avancer la scène</span></div>
-    </div>
-    <div class="ep-progress" aria-label="Progression de la saison">
-      <div class="ep-progress-head"><span id="epProgressLabel">Saison 1 · Épisode 1</span><span id="epProgressPct">20%</span></div>
-      <div class="ep-track"><div class="ep-fill" id="epFill"></div></div>
-      <div class="ep-dots" id="epDots"></div>
+      <div class="scene-meta"><b id="sceneCharName">Ton conteur</b><span>l'histoire s'écrit en direct · réponds dans la langue cible pour la faire continuer</span></div>
     </div>
     <div class="repick"><button onclick="backToPicker()">changer de langue / niveau</button></div>
     <div id="chatLog"></div>
@@ -109,7 +102,7 @@
     <div class="set-group">
       <div class="set-title">Audio · synthèse vocale</div>
       <div class="set-row">
-        <div class="set-label"><b>Lecture auto</b><small>lire chaque réplique du tuteur</small></div>
+        <div class="set-label"><b>Lecture auto</b><small>lire chaque chapitre à voix haute</small></div>
         <label class="switch"><input type="checkbox" id="setAutoplay" onchange="setAutoplay(this)"><span class="switch-track"></span></label>
       </div>
       <div class="set-row">
@@ -129,58 +122,12 @@
       </div>
     </div>
     <div class="set-group">
-      <div class="set-title">Sunami Super</div>
-      <div id="superUpsell">
-        <p style="font-size:13px;color:var(--muted);font-weight:600;margin-bottom:10px;line-height:1.5;">Épisodes illimités, cœurs illimités et badge doré ✨ — 5€/mois.</p>
-        <button class="btn super-btn" onclick="upgradeToSuper(this)">Passer à Super — 5€/mois</button>
-      </div>
-      <div id="superActive" style="display:none;">
-        <div class="super-active-badge">✨ Tu es Super — merci !</div>
-      </div>
-    </div>
-    <div class="set-group">
       <div class="set-title">Compte</div>
       <div class="set-account" id="setEmail"></div>
       <button class="btn ghost" id="shareBtn" onclick="shareProgress()">🔗 Partager ma progression</button>
       <button class="btn ghost danger" onclick="resetProgress()">↺ Réinitialiser ma progression</button>
       <button class="btn ghost danger" onclick="logout()">Déconnexion</button>
     </div>
-  </div>
-</div>
-
-<!-- ================= CELEBRATION MODAL ================= -->
-<div id="celebrateModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Épisode terminé">
-  <div class="modal-backdrop" onclick="closeCelebrate()"></div>
-  <div id="confetti"></div>
-  <div class="modal-card cel-card">
-    <svg class="mascot idle" aria-hidden="true"><use href="#mascot"/></svg>
-    <h2>Épisode terminé ! 🎉</h2>
-    <div class="cel-sub">Bravo, l'histoire continue demain.</div>
-    <div class="cel-stats">
-      <div class="cel-stat xp"><div class="v" id="celXp">+50</div><div class="l">XP gagné</div></div>
-      <div class="cel-stat streak"><div class="v" id="celStreak">1</div><div class="l">Jours 🔥</div></div>
-      <div class="cel-stat total"><div class="v" id="celTotal">0</div><div class="l">XP total</div></div>
-    </div>
-    <button class="btn" onclick="closeCelebrate()">Continuer</button>
-  </div>
-</div>
-
-<!-- ================= PAYWALL (Sunami Super) ================= -->
-<div id="paywallModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Passer à Super">
-  <div class="modal-backdrop" onclick="closePaywall()"></div>
-  <div class="modal-card cel-card">
-    <svg class="mascot idle" aria-hidden="true"><use href="#mascot"/></svg>
-    <div class="super-tag">✨ SUNAMI SUPER</div>
-    <h2 id="paywallTitle">Passe à Sunami Super</h2>
-    <div class="cel-sub" id="paywallSub">Débloque toute l'expérience.</div>
-    <ul class="perks">
-      <li>📖 <b>Épisodes illimités</b> — enchaîne sans attendre demain</li>
-      <li>❤️ <b>Cœurs illimités</b> — apprends sans stress des erreurs</li>
-      <li>✨ <b>Badge doré</b> — soutiens le projet</li>
-    </ul>
-    <button class="btn super-btn" onclick="upgradeToSuper(this)">Passer à Super — 5€/mois</button>
-    <button class="btn ghost" onclick="closePaywall()" style="margin-top:8px;">Plus tard</button>
-    <div class="pay-note">Paiement sécurisé via InflowPay · annulable à tout moment</div>
   </div>
 </div>
 
