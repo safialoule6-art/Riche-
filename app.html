@@ -54,19 +54,29 @@
   <header>
     <a class="hbrand" href="/" style="text-decoration:none;color:inherit;"><svg class="badge mascot"><use href="#mascot"/></svg>sunami<em>.</em></a>
     <div class="chips">
+      <span class="chip lvl-chip" id="lvlChip" title="Ton niveau">Nv <b id="lvlNum">1</b></span>
       <span class="chip" id="xpChip">⭐ <span id="xpCount">0</span></span>
-      <span class="chip" id="streakChip" style="display:none;">🔥 <span id="streakCount">0</span></span>
+      <span class="chip" id="streakChip" style="display:none;" title="Ta série de jours"><span class="flame">🔥</span> <span id="streakCount">0</span></span>
       <span id="userLabel" style="display:none;"></span>
       <button class="icon-btn" id="settingsBtn" onclick="openSettings()" aria-label="Paramètres" title="Paramètres">⚙️</button>
     </div>
   </header>
 
+  <div class="xp-bar" aria-hidden="true"><div class="xp-bar-fill" id="xpBarFill"></div></div>
+
   <div id="pickScreen" class="chat-wrap">
-    <div class="eyebrow-left">Choisis ta langue</div>
+    <div class="pick-hero">
+      <svg class="mascot idle" aria-hidden="true"><use href="#mascot"/></svg>
+      <h2>Ta prochaine histoire commence ici</h2>
+      <p>Choisis ta langue, ton niveau et l'ambiance — le conteur écrit la suite en direct.</p>
+    </div>
+    <div class="eyebrow-left pick-section">1 · Choisis ta langue</div>
     <div class="pick-grid" id="langGrid"></div>
-    <div class="eyebrow-left" style="margin-top:28px;">Choisis ton niveau (CECR)</div>
+    <div class="eyebrow-left pick-section">2 · Choisis ton niveau (CECR)</div>
     <div class="pick-grid" id="levelGrid"></div>
-    <button class="btn" style="margin-top:28px;" id="startBtn" onclick="confirmPick()" disabled>Commencer l'histoire</button>
+    <div class="eyebrow-left pick-section">3 · Choisis une ambiance</div>
+    <div class="pick-grid" id="themeGrid"></div>
+    <button class="btn" style="margin-top:28px;" id="startBtn" onclick="confirmPick()" disabled>Commencer l'histoire ✨</button>
   </div>
 
   <div class="chat-wrap" id="chatScreen" style="display:none;">
@@ -128,6 +138,23 @@
       <button class="btn ghost danger" onclick="resetProgress()">↺ Réinitialiser ma progression</button>
       <button class="btn ghost danger" onclick="logout()">Déconnexion</button>
     </div>
+  </div>
+</div>
+
+<!-- ================= CELEBRATION MODAL ================= -->
+<div id="celModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Récompense">
+  <div class="modal-backdrop" onclick="closeCelebration()"></div>
+  <div id="confetti" aria-hidden="true"></div>
+  <div class="modal-card cel-card">
+    <span class="cel-emoji" id="celEmoji">🎉</span>
+    <h2 id="celTitle">Bravo !</h2>
+    <div class="cel-sub" id="celSub"></div>
+    <div class="cel-stats">
+      <div class="cel-stat xp"><div class="v" id="celXp">0</div><div class="l">XP</div></div>
+      <div class="cel-stat streak"><div class="v" id="celStreak">0</div><div class="l">Série</div></div>
+      <div class="cel-stat total"><div class="v" id="celLvl">1</div><div class="l">Niveau</div></div>
+    </div>
+    <button class="btn" onclick="closeCelebration()">Continuer l'histoire</button>
   </div>
 </div>
 

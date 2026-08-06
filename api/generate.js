@@ -15,10 +15,20 @@ export const config = { runtime: "edge" };
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "llama-3.1-8b-instant";
 
-function buildSystemPrompt(language, level) {
+const THEME_HINTS = {
+  voyage: "Contexte : un VOYAGE (aéroports, gares, hôtels, rencontres, découvertes de lieux).",
+  quotidien: "Contexte : la VIE QUOTIDIENNE (café, marché, voisins, petites scènes du jour).",
+  travail: "Contexte : le MONDE DU TRAVAIL (bureau, réunion, entretien, collègues, carrière).",
+  mystere: "Contexte : un MYSTÈRE / une enquête (indices, suspense, personnages intrigants).",
+  romance: "Contexte : une histoire de RENCONTRE et d'émotions douces, légère et chaleureuse.",
+  aventure: "Contexte : une AVENTURE (nature, exploration, obstacles à surmonter, action).",
+};
+
+function buildSystemPrompt(language, level, theme) {
+  const themeLine = theme && THEME_HINTS[theme] ? `\n${THEME_HINTS[theme]}\n` : "";
   return `Tu es le conteur de "Sunami", un professeur de langue qui enseigne par le STORYTELLING.
 
-LANGUE CIBLE : ${language}. NIVEAU DE L'APPRENANT : ${level}.
+LANGUE CIBLE : ${language}. NIVEAU DE L'APPRENANT : ${level}.${themeLine}
 
 TON RÔLE
 - Raconte une histoire captivante et immersive **dans la langue cible (${language})** pour faire pratiquer l'apprenant.
@@ -53,15 +63,16 @@ export default async function handler(req) {
 
   let body;
   try { body = await req.json(); } catch { body = {}; }
-  const { history, userReply, language, level } = body || {};
+  const { history, userReply, language, level, theme } = body || {};
   const targetLanguage = language || "anglais";
   const cefrLevel = level || "A1-A2 (débutant)";
+  const storyTheme = theme || null;
 
   // On ne garde que les 10 derniers messages (contexte léger)
   const trimmed = Array.isArray(history) ? history.slice(-10) : [];
 
   const messages = [
-    { role: "system", content: buildSystemPrompt(targetLanguage, cefrLevel) },
+    { role: "system", content: buildSystemPrompt(targetLanguage, cefrLevel, storyTheme) },
     ...trimmed,
     { role: "user", content: userReply || "Commence une nouvelle histoire et pose-moi ta première question." },
   ];

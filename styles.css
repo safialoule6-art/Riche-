@@ -303,6 +303,114 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 .perks li{font-size:14px; font-weight:600; color:var(--foam); line-height:1.4;}
 .pay-note{font-size:11px; color:var(--muted); font-weight:700; margin-top:12px;}
 
+/* ================================================================
+   ===== SUNAMI /app — REFONTE INTERACTIVE (v2) =====
+   Live writing, gamification animée, onboarding en cartes, contextes.
+   Animations en transform/opacity uniquement · respect reduced-motion.
+   ================================================================ */
+
+/* ---- Barre de progression XP sous le header ---- */
+.xp-bar{height:5px; background:var(--surf); position:sticky; top:63px; z-index:19; overflow:hidden;}
+.xp-bar-fill{height:100%; width:0%; background:linear-gradient(90deg,var(--gold),#ffd071);
+  transition:width .8s var(--ease); box-shadow:0 0 10px rgba(245,165,36,.5);}
+[data-theme="dark"] .xp-bar{background:#0e1b19;}
+
+/* level chip */
+.lvl-chip{color:var(--wave-dim); gap:4px;}
+.lvl-chip b{font-weight:900;}
+
+/* streak flame vivant */
+#streakChip .flame{display:inline-block; transform-origin:50% 90%;}
+#streakChip.lit .flame{animation:flicker 1.6s ease-in-out infinite;}
+@keyframes flicker{
+  0%,100%{transform:scale(1) rotate(-2deg);}
+  25%{transform:scale(1.14) rotate(3deg);}
+  50%{transform:scale(.96) rotate(-3deg);}
+  75%{transform:scale(1.08) rotate(2deg);}
+}
+
+/* +XP flottant */
+.xp-float{position:fixed; z-index:200; pointer-events:none; font-family:'Baloo 2',sans-serif;
+  font-weight:800; font-size:18px; color:var(--gold); text-shadow:0 2px 8px rgba(245,165,36,.4);
+  animation:xpFloat 1.1s var(--ease) forwards;}
+@keyframes xpFloat{0%{opacity:0; transform:translateY(6px) scale(.7);}
+  25%{opacity:1; transform:translateY(-4px) scale(1.05);}
+  100%{opacity:0; transform:translateY(-42px) scale(1);}}
+
+/* ---- Onboarding : entrée en cascade des cartes ---- */
+.pick-card{opacity:0; animation:cardIn .5s var(--ease) forwards;}
+.pick-grid .pick-card:nth-child(1){animation-delay:.04s;}
+.pick-grid .pick-card:nth-child(2){animation-delay:.09s;}
+.pick-grid .pick-card:nth-child(3){animation-delay:.14s;}
+.pick-grid .pick-card:nth-child(4){animation-delay:.19s;}
+.pick-grid .pick-card:nth-child(5){animation-delay:.24s;}
+.pick-grid .pick-card:nth-child(6){animation-delay:.29s;}
+@keyframes cardIn{from{opacity:0; transform:translateY(14px) scale(.97);}to{opacity:1; transform:none;}}
+.pick-card .flag{font-size:28px; line-height:1; margin-bottom:6px; display:block;
+  transition:transform .25s var(--ease);}
+.pick-card:hover .flag{transform:scale(1.18) rotate(-4deg);}
+.pick-card .emoji{font-size:26px; line-height:1; margin-bottom:6px; display:block;
+  transition:transform .25s var(--ease);}
+.pick-card:hover .emoji{transform:scale(1.15) translateY(-2px);}
+.pick-card:active{transform:translateY(1px) scale(.98);}
+
+.pick-hero{text-align:center; margin-bottom:6px;}
+.pick-hero .mascot{width:76px; height:88px; margin:0 auto 6px;}
+.pick-hero h2{font-size:23px; margin-bottom:4px;}
+.pick-hero p{font-size:14px; color:var(--muted); font-weight:600; max-width:340px; margin:0 auto;}
+.pick-section{margin-top:24px;}
+
+/* ---- Écran d'histoire ---- */
+.scene-avatar .mascot{transition:transform .3s var(--ease);}
+.scene-card.thinking .mascot{animation:think 1s ease-in-out infinite;}
+@keyframes think{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-5px) rotate(3deg);}}
+.scene-card.speaking .mascot{animation:bob 1.4s ease-in-out infinite;}
+
+/* accueil / empty-state du conteur */
+.story-welcome{display:flex; flex-direction:column; align-items:center; text-align:center;
+  gap:6px; padding:22px 16px; color:var(--muted); font-weight:700; font-size:13px;
+  animation:msgIn .5s var(--ease) both;}
+.story-welcome .dots{display:inline-flex; gap:5px;}
+.story-welcome .dots i{width:7px; height:7px; border-radius:50%; background:var(--wave);
+  display:inline-block; animation:dotPulse 1.2s ease-in-out infinite;}
+.story-welcome .dots i:nth-child(2){animation-delay:.18s;}
+.story-welcome .dots i:nth-child(3){animation-delay:.36s;}
+@keyframes dotPulse{0%,100%{opacity:.3; transform:scale(.7);}50%{opacity:1; transform:scale(1);}}
+
+/* live writing : curseur qui clignote pendant le streaming */
+.stream-cursor{display:inline-block; width:3px; height:1.05em; background:var(--wave);
+  margin-left:1px; vertical-align:text-bottom; border-radius:2px;
+  animation:caret 1s steps(2,start) infinite;}
+@keyframes caret{50%{opacity:0;}}
+.msg.character.streaming{border-color:var(--wave);}
+/* vocab clé mis en valeur (rendu live) */
+.msg.character b{position:relative;}
+
+/* indicateur "le conteur écrit" enrichi */
+.loading.rich{display:inline-flex; align-items:center; gap:8px; letter-spacing:0; padding:11px 16px;
+  background:var(--card); border:2px solid var(--card-border); border-radius:18px; border-bottom-left-radius:6px;
+  animation:msgIn .3s var(--ease) both;}
+.loading.rich .tdot{width:8px; height:8px; border-radius:50%; background:var(--muted);
+  animation:dotPulse 1.2s ease-in-out infinite;}
+.loading.rich .tdot:nth-child(2){animation-delay:.18s;}
+.loading.rich .tdot:nth-child(3){animation-delay:.36s;}
+
+/* input premium */
+.input-row input:focus{box-shadow:0 0 0 4px rgba(20,184,166,.18);}
+#userInput{transition:border-color .2s, box-shadow .2s, transform .12s;}
+
+/* ---- Célébration / paliers ---- */
+.cel-emoji{font-size:52px; line-height:1; margin-bottom:6px; display:block;
+  animation:celPop .6s var(--ease) both;}
+@keyframes celPop{0%{transform:scale(0) rotate(-20deg);}60%{transform:scale(1.25) rotate(8deg);}100%{transform:scale(1) rotate(0);}}
+.cel-card .btn{margin-top:4px;}
+
+@media (prefers-reduced-motion: reduce){
+  .pick-card{opacity:1 !important;}
+  .xp-float{display:none !important;}
+  .stream-cursor{animation:none !important;}
+}
+
 /* Tarifs (landing) */
 .pricing{display:flex; flex-direction:column; gap:12px;}
 .price-card{position:relative; background:var(--card); border:2px solid var(--card-border); border-radius:var(--radius); padding:22px 20px; box-shadow:var(--shadow-soft);}
