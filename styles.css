@@ -93,6 +93,17 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
 .cta-note{font-size:12px; color:var(--muted); font-weight:700; margin-top:10px;}
 .cta-note b{color:var(--wave);}
 
+.auth-divider{display:flex; align-items:center; gap:10px; margin:16px auto 10px; max-width:280px; color:var(--muted); font-size:12px; font-weight:700;}
+.auth-divider::before, .auth-divider::after{content:""; flex:1; height:1px; background:var(--line);}
+
+.text-link{background:none; border:none; color:var(--wave); font-family:'Nunito',sans-serif; font-weight:800; font-size:14px; cursor:pointer; text-decoration:underline; padding:4px;}
+.text-link.small{font-size:12px; color:var(--muted); text-decoration:underline; margin-top:4px;}
+
+.email-auth{display:flex; flex-direction:column; gap:10px; max-width:320px; margin:6px auto 0;}
+.email-auth input{margin-bottom:0;}
+.email-auth-actions{display:flex; gap:8px;}
+.email-auth-actions .btn{flex:1; width:auto;}
+
 .lang-pills{display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:26px 0 10px;}
 .lang-pill{display:inline-flex; align-items:center; gap:6px; background:var(--card); border:2px solid var(--line);
   border-radius:99px; padding:7px 13px; font-size:13px; font-weight:700; transition:transform .2s var(--ease), border-color .2s;}

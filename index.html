@@ -73,7 +73,28 @@
       <p class="hero-sub">Un tuteur IA te fait parler dans un épisode qui continue chaque jour — pas des exercices barbants.</p>
       <button class="btn" id="googleBtn" onclick="loginWithGoogle()">Commencer — c'est gratuit</button>
       <div class="error-msg" id="authError"></div>
-      <div class="cta-note">via Google · <b>100% gratuit</b> · sur tous tes appareils</div>
+      <div class="auth-divider"><span>ou</span></div>
+      <button class="text-link" id="emailToggleBtn" type="button" onclick="toggleEmailAuth()">Continuer avec un email</button>
+
+      <form id="emailAuthBox" class="email-auth" style="display:none" onsubmit="return false;">
+        <input id="authEmail" type="email" autocomplete="email" placeholder="ton@email.com">
+        <input id="authPassword" type="password" autocomplete="current-password" placeholder="Mot de passe (6 caractères min.)">
+        <div class="email-auth-actions">
+          <button class="btn small" id="emailSigninBtn" type="button" onclick="loginWithEmail()">Se connecter</button>
+          <button class="btn ghost small" id="emailSignupBtn" type="button" onclick="signupWithEmail()">Créer un compte</button>
+        </div>
+        <button class="text-link small" type="button" onclick="resetPassword()">Mot de passe oublié ?</button>
+        <div class="error-msg" id="emailAuthMsg"></div>
+      </form>
+
+      <form id="recoveryBox" class="email-auth" style="display:none" onsubmit="return false;">
+        <p class="hero-sub" style="margin:0 0 2px;font-size:14px;">Choisis ton nouveau mot de passe :</p>
+        <input id="recoveryPassword" type="password" autocomplete="new-password" placeholder="Nouveau mot de passe (6 caractères min.)">
+        <button class="btn" type="button" onclick="confirmNewPassword()">Enregistrer le mot de passe</button>
+        <div class="error-msg" id="recoveryMsg"></div>
+      </form>
+
+      <div class="cta-note">via Google ou email · <b>100% gratuit</b> · sur tous tes appareils</div>
 
       <div class="lang-pills">
         <span class="lang-pill">🇬🇧 Anglais</span>
@@ -145,7 +166,7 @@
         <details class="faq-item"><summary><span>C'est vraiment gratuit ?</span><i>+</i></summary><p>Oui, en entier — c'est un projet en bêta, pas d'abonnement caché.</p></details>
         <details class="faq-item"><summary><span>Ça marche pour mon niveau ?</span><i>+</i></summary><p>Débutant à avancé (A1 à C2) — l'IA calibre chaque réplique à ton niveau.</p></details>
         <details class="faq-item"><summary><span>Je peux changer de langue en cours de route ?</span><i>+</i></summary><p>Oui, à tout moment depuis l'écran de conversation.</p></details>
-        <details class="faq-item"><summary><span>Mes données sont sauvegardées où ?</span><i>+</i></summary><p>Ta progression est liée à ton compte Google, accessible depuis n'importe quel appareil.</p></details>
+        <details class="faq-item"><summary><span>Mes données sont sauvegardées où ?</span><i>+</i></summary><p>Ta progression est liée à ton compte (Google ou email), accessible depuis n'importe quel appareil.</p></details>
       </div>
     </div>
 
