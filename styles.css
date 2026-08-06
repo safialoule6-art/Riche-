@@ -411,6 +411,29 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
   .stream-cursor{animation:none !important;}
 }
 
+/* ---- Play-first : bouton invité, modale d'auth, bandeau de sauvegarde ---- */
+.save-cta{width:auto; padding:8px 13px; font-size:13px; box-shadow:0 3px 0 var(--line); animation:cardIn .5s var(--ease) both;}
+@media(max-width:420px){ .hbrand{font-size:0;} .hbrand .badge{font-size:16px;} .save-cta{padding:8px 10px;} }
+
+.modal-card .auth-intro{font-size:14px; color:var(--muted); font-weight:600; margin-bottom:14px; line-height:1.5;}
+.auth-hint{background:var(--surf); border:2px solid var(--card-border); border-radius:14px; padding:12px 14px;
+  font-size:13px; font-weight:600; color:var(--foam); line-height:1.5; margin-bottom:14px;}
+.auth-hint b{color:var(--wave-dim);}
+.auth-msg{font-size:13px; font-weight:700; color:var(--ok); margin:-4px 0 10px; min-height:0;}
+#authModal .modal-card .btn{margin-bottom:10px;}
+.auth-sep{display:flex; align-items:center; gap:12px; color:var(--muted); font-size:12px; font-weight:800;
+  text-transform:uppercase; letter-spacing:.1em; margin:6px 0 14px;}
+.auth-sep::before, .auth-sep::after{content:""; flex:1; height:2px; background:var(--card-border); border-radius:2px;}
+
+/* bandeau doux « sauvegarde ta progression » dans le fil */
+.save-banner{display:flex; align-items:center; gap:12px; align-self:stretch; background:var(--surf);
+  border:2px solid var(--card-border); border-radius:16px; padding:13px 15px; animation:msgIn .4s var(--ease) both;}
+.save-banner .sb-txt{flex:1; font-size:13px; font-weight:700; line-height:1.4;}
+.save-banner .sb-txt small{display:block; color:var(--muted); font-weight:600; font-size:12px; margin-top:2px;}
+.save-banner .btn{width:auto; padding:10px 15px; font-size:13px; margin:0;}
+.save-banner .sb-close{background:none; border:none; color:var(--muted); cursor:pointer; font-size:16px; padding:2px 4px; line-height:1;}
+.guest-tag{font-size:11px; font-weight:800; letter-spacing:.05em; color:var(--muted);}
+
 /* Tarifs (landing) */
 .pricing{display:flex; flex-direction:column; gap:12px;}
 .price-card{position:relative; background:var(--card); border:2px solid var(--card-border); border-radius:var(--radius); padding:22px 20px; box-shadow:var(--shadow-soft);}

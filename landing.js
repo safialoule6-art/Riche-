@@ -59,7 +59,7 @@ const demoScenes = [
     ]
   },
   {
-    text: `<b>"Perfect. The car is this way — episode 2 continues tomorrow, same story, same characters."</b><br><br>— fin de la démo — <span style="color:var(--wave-dim); font-weight:800;">connecte-toi pour vivre la suite avec une IA qui génère chaque réplique</span>`,
+    text: `<b>"Perfect. The car is this way — l'histoire continue avec une IA qui génère chaque réplique."</b><br><br>— fin de la démo — <a href="/app" style="color:var(--wave-dim); font-weight:800; text-decoration:none;">commence gratuitement, sans compte →</a>`,
     choices: []
   }
 ];

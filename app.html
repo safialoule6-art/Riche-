@@ -57,6 +57,7 @@
       <span class="chip lvl-chip" id="lvlChip" title="Ton niveau">Nv <b id="lvlNum">1</b></span>
       <span class="chip" id="xpChip">⭐ <span id="xpCount">0</span></span>
       <span class="chip" id="streakChip" style="display:none;" title="Ta série de jours"><span class="flame">🔥</span> <span id="streakCount">0</span></span>
+      <button class="btn ghost small save-cta" id="saveCta" onclick="openAuth('save')" style="display:none;">💾 Sauvegarder</button>
       <span id="userLabel" style="display:none;"></span>
       <button class="icon-btn" id="settingsBtn" onclick="openSettings()" aria-label="Paramètres" title="Paramètres">⚙️</button>
     </div>
@@ -134,10 +135,35 @@
     <div class="set-group">
       <div class="set-title">Compte</div>
       <div class="set-account" id="setEmail"></div>
+      <button class="btn" id="setAuthBtn" onclick="openAuth('save')" style="display:none;">💾 Créer un compte / Se connecter</button>
       <button class="btn ghost" id="shareBtn" onclick="shareProgress()">🔗 Partager ma progression</button>
       <button class="btn ghost danger" onclick="resetProgress()">↺ Réinitialiser ma progression</button>
-      <button class="btn ghost danger" onclick="logout()">Déconnexion</button>
+      <button class="btn ghost danger" id="logoutBtn" onclick="logout()">Déconnexion</button>
     </div>
+  </div>
+</div>
+
+<!-- ================= AUTH MODAL (play-first : compte optionnel) ================= -->
+<div id="authModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Créer un compte ou se connecter">
+  <div class="modal-backdrop" onclick="closeAuth()"></div>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="authTitle">💾 Sauvegarde ta progression</h2>
+      <button class="icon-btn" onclick="closeAuth()" aria-label="Fermer">✕</button>
+    </div>
+    <p class="auth-intro" id="authIntro">Crée un compte gratuit pour garder ton XP, ta série et ton histoire sur tous tes appareils.</p>
+    <div class="auth-hint" id="authWebviewHint" style="display:none;">
+      💡 Tu es dans l'app TikTok/Instagram. <b>L'email fonctionne ici directement.</b> Pour Google, ouvre le lien dans ton navigateur (menu ⋯ → « Ouvrir dans le navigateur »).
+    </div>
+    <input id="authEmail" type="email" autocomplete="email" placeholder="ton@email.com">
+    <input id="authPass" type="password" autocomplete="current-password" placeholder="Mot de passe (min. 6 caractères)" onkeydown="if(event.key==='Enter')submitAuth()">
+    <div class="error-msg" id="authError"></div>
+    <div class="auth-msg" id="authMsg"></div>
+    <button class="btn" id="authSubmit" onclick="submitAuth()">Créer mon compte gratuit</button>
+    <button class="btn ghost" id="authToggle" onclick="toggleAuthMode()">J'ai déjà un compte → Se connecter</button>
+    <div class="auth-sep"><span>ou</span></div>
+    <button class="btn ghost" id="authGoogle" onclick="loginWithGoogle()">Continuer avec Google</button>
+    <p class="pay-note">100% gratuit · aucune carte bancaire · tu peux continuer sans compte.</p>
   </div>
 </div>
 

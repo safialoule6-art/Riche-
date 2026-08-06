@@ -17,7 +17,7 @@ Au lieu d'exercices répétitifs, un **conteur IA** raconte une histoire immersi
   - `app.html` + `app.js` — l'application (`/app`)
   - `styles.css` (design partagé) · `theme.js` (thème clair/sombre)
 - **API** : `api/generate.js` — **fonction Edge Vercel** qui appelle **Groq** (`llama-3.1-8b-instant`) en **streaming** (réponse mot à mot)
-- **Auth** : Supabase (Google OAuth)
+- **Auth** : Supabase — **email/mot de passe** (fonctionne dans les navigateurs in-app TikTok/Insta) + Google OAuth. L'app est **jouable sans compte** (play-first) : la progression invité est locale, puis transférée au compte à l'inscription.
 - **DB** : Supabase Postgres
   - `progress` — streak, langue, niveau (par user)
   - `leads` — emails capturés depuis la landing

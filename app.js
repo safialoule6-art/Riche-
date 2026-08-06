@@ -45,7 +45,14 @@ window.openSettings = function(){
   applySettings();
   const em = document.getElementById('setEmail');
   const lbl = document.getElementById('userLabel');
-  if(em && lbl) em.textContent = lbl.textContent ? ('Connecté : ' + lbl.textContent) : '';
+  const authBtn = document.getElementById('setAuthBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  if(em){
+    if(isGuest){ em.textContent = '👤 Mode invité — ta progression est enregistrée sur cet appareil uniquement.'; }
+    else { em.textContent = lbl && lbl.textContent ? ('Connecté : ' + lbl.textContent) : ''; }
+  }
+  if(authBtn) authBtn.style.display = isGuest ? 'block' : 'none';
+  if(logoutBtn) logoutBtn.style.display = isGuest ? 'none' : 'block';
   const m = document.getElementById('settingsModal');
   m.classList.add('open'); m.setAttribute('aria-hidden','false');
 };
@@ -75,7 +82,7 @@ window.shareProgress = async function(){
   }catch(e){}
 };
 
-document.addEventListener('keydown', e => { if(e.key === 'Escape'){ window.closeSettings(); window.closeCelebration && window.closeCelebration(); } });
+document.addEventListener('keydown', e => { if(e.key === 'Escape'){ window.closeSettings(); window.closeCelebration && window.closeCelebration(); window.closeAuth && window.closeAuth(); } });
 document.addEventListener('DOMContentLoaded', applySettings);
 
 /* ===== XP & NIVEAUX (gratuit) ===== */
@@ -257,6 +264,7 @@ function updateSceneMeta(){
 }
 
 let userId = null;
+let isGuest = false;
 let progress = { season: 1, episode: 1, streak: 0, last_active: null, language: null, level: null };
 
 async function loadProgress(uid){
@@ -290,6 +298,12 @@ async function touchStreak(){
 }
 
 async function saveProgress(){
+  // Invité : pas de compte → on garde les choix localement, rien côté serveur.
+  if(isGuest || !userId){
+    if(progress.language) localStorage.setItem('sunami-guest-lang', progress.language);
+    if(progress.level) localStorage.setItem('sunami-guest-level', progress.level);
+    return;
+  }
   await supabase.from('progress').upsert({
     user_id: userId,
     season: progress.season,
@@ -312,11 +326,15 @@ window.backToPicker = function(){
 };
 
 let appEntered = false;
+function showAppShell(){ document.getElementById('appScreen').style.display = 'flex'; }
+
 async function enterApp(email, uid){
   if(appEntered) return;
   appEntered = true;
-  document.getElementById('appScreen').style.display = 'flex';
+  isGuest = false;
+  showAppShell();
   document.getElementById('userLabel').textContent = email;
+  const saveCta = document.getElementById('saveCta'); if(saveCta) saveCta.style.display = 'none';
   userId = uid;
   await loadProgress(uid);
   await touchStreak();
@@ -334,16 +352,167 @@ async function enterApp(email, uid){
   }
 }
 
-/* Garde d'accès : app réservée aux connectés */
+/* Mode invité : jouable immédiatement, sans compte (play-first). */
+function enterGuest(){
+  if(appEntered) return;
+  appEntered = true;
+  isGuest = true;
+  userId = null;
+  showAppShell();
+  const saveCta = document.getElementById('saveCta'); if(saveCta) saveCta.style.display = 'inline-flex';
+  // Restaure les derniers choix locaux, s'il y en a
+  pickedLang = localStorage.getItem('sunami-guest-lang') || null;
+  pickedLevel = localStorage.getItem('sunami-guest-level') || null;
+  progress.language = pickedLang; progress.level = pickedLevel;
+  updateXpChip();
+  renderPickers();
+}
+
+/* Passage invité → compte, sans perdre l'XP (déjà local) ni les choix. */
+async function promoteToUser(session){
+  const wasGuest = isGuest;
+  isGuest = false;
+  userId = session.user.id;
+  document.getElementById('userLabel').textContent = session.user.email;
+  const saveCta = document.getElementById('saveCta'); if(saveCta) saveCta.style.display = 'none';
+  window.closeAuth && window.closeAuth();
+  removeSaveBanner();
+  await loadProgress(userId);
+  // Le compte est neuf ? On y transfère les choix faits en invité.
+  if(!progress.language && pickedLang){ progress.language = pickedLang; progress.level = pickedLevel; }
+  await touchStreak();
+  updateXpChip();
+  await saveProgress();
+  if(wasGuest){
+    celebrate({ emoji:'💾', title:'Progression sauvegardée !',
+      sub:'Ton XP et ta série sont maintenant liés à ton compte, disponibles sur tous tes appareils.' });
+  }
+}
+
+/* Play-first : l'app est accessible sans compte. */
 window.addEventListener('DOMContentLoaded', async ()=>{
   const { data } = await supabase.auth.getSession();
   if(data.session){ enterApp(data.session.user.email, data.session.user.id); }
-  else { window.location.replace('/'); }
+  else { enterGuest(); }
+  maybeOpenAuthFromQuery();
 });
 supabase.auth.onAuthStateChange((event, session)=>{
-  if(session){ enterApp(session.user.email, session.user.id); }
-  else if(event === 'SIGNED_OUT'){ window.location.replace('/'); }
+  if(event === 'SIGNED_IN' && session){
+    if(appEntered && isGuest){ promoteToUser(session); }
+    else { enterApp(session.user.email, session.user.id); }
+  } else if(event === 'SIGNED_OUT'){
+    window.location.replace('/');
+  }
 });
+
+/* ===== AUTH (play-first : compte optionnel, email + Google) ===== */
+let authMode = 'signup'; // 'signup' | 'login'
+
+function isInAppBrowser(){
+  const ua = navigator.userAgent || navigator.vendor || '';
+  return /FBAN|FBAV|Instagram|Line|Twitter|TikTok|musical_ly|Snapchat|Pinterest|WhatsApp|OKApp|MicroMessenger/i.test(ua);
+}
+function showAuthError(msg){ const el = document.getElementById('authError'); if(el) el.textContent = msg || ''; }
+function showAuthMsg(msg){ const el = document.getElementById('authMsg'); if(el) el.textContent = msg || ''; }
+function renderAuthMode(){
+  const submit = document.getElementById('authSubmit');
+  const toggle = document.getElementById('authToggle');
+  const pass = document.getElementById('authPass');
+  if(authMode === 'signup'){
+    if(submit) submit.textContent = 'Créer mon compte gratuit';
+    if(toggle) toggle.textContent = 'J\u2019ai déjà un compte → Se connecter';
+    if(pass) pass.setAttribute('autocomplete', 'new-password');
+  } else {
+    if(submit) submit.textContent = 'Se connecter';
+    if(toggle) toggle.textContent = 'Pas encore de compte → En créer un';
+    if(pass) pass.setAttribute('autocomplete', 'current-password');
+  }
+}
+window.toggleAuthMode = function(){
+  authMode = authMode === 'signup' ? 'login' : 'signup';
+  showAuthError(''); showAuthMsg('');
+  renderAuthMode();
+};
+window.openAuth = function(mode){
+  authMode = 'signup';
+  showAuthError(''); showAuthMsg('');
+  renderAuthMode();
+  const title = document.getElementById('authTitle');
+  const intro = document.getElementById('authIntro');
+  if(mode === 'save'){
+    if(title) title.textContent = '💾 Sauvegarde ta progression';
+    if(intro) intro.textContent = 'Crée un compte gratuit pour garder ton XP, ta série et ton histoire sur tous tes appareils.';
+  } else {
+    if(title) title.textContent = 'Se connecter';
+    if(intro) intro.textContent = 'Retrouve ta progression sur tous tes appareils.';
+  }
+  const hint = document.getElementById('authWebviewHint');
+  if(hint) hint.style.display = isInAppBrowser() ? 'block' : 'none';
+  const m = document.getElementById('authModal');
+  if(m){ m.classList.add('open'); m.setAttribute('aria-hidden','false'); }
+  const em = document.getElementById('authEmail'); if(em) setTimeout(()=>em.focus(), 60);
+};
+window.closeAuth = function(){
+  const m = document.getElementById('authModal');
+  if(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
+};
+window.submitAuth = async function(){
+  const email = (document.getElementById('authEmail').value || '').trim();
+  const pass = document.getElementById('authPass').value || '';
+  showAuthError(''); showAuthMsg('');
+  if(!email || !email.includes('@')){ showAuthError('Entre un email valide.'); return; }
+  if(pass.length < 6){ showAuthError('Le mot de passe doit faire au moins 6 caractères.'); return; }
+  const submit = document.getElementById('authSubmit');
+  const orig = submit.textContent; submit.disabled = true; submit.textContent = '…';
+  try{
+    if(authMode === 'signup'){
+      const { data, error } = await supabase.auth.signUp({ email, password: pass });
+      if(error){ showAuthError(error.message); }
+      else if(data.session){ /* connexion immédiate → onAuthStateChange gère la suite */ }
+      else { showAuthMsg('✓ Compte créé ! Vérifie ta boîte mail pour confirmer, puis connecte-toi. Ta progression reste ici en attendant.'); authMode = 'login'; renderAuthMode(); }
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+      if(error){ showAuthError(error.message); }
+    }
+  }catch(err){ showAuthError('Erreur : ' + err.message); }
+  finally{ submit.disabled = false; submit.textContent = orig; }
+};
+window.loginWithGoogle = async function(){
+  showAuthError('');
+  try{
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/app' }
+    });
+    if(error) showAuthError(error.message);
+  }catch(err){ showAuthError('Erreur : ' + err.message); }
+};
+function maybeOpenAuthFromQuery(){
+  try{
+    const params = new URLSearchParams(window.location.search);
+    if(isGuest && (params.get('auth') === '1' || params.get('login') === '1')){ window.openAuth('login'); }
+  }catch(e){}
+}
+
+/* Bandeau doux de sauvegarde (invité), après avoir goûté à la valeur */
+function removeSaveBanner(){ const b = document.getElementById('saveBanner'); if(b) b.remove(); }
+function maybeShowSaveBanner(){
+  if(!isGuest) return;
+  if(sessionStorage.getItem('sunami-save-dismissed')) return;
+  if(document.getElementById('saveBanner')) return;
+  const log = document.getElementById('chatLog');
+  if(!log) return;
+  const b = document.createElement('div');
+  b.id = 'saveBanner'; b.className = 'save-banner';
+  b.innerHTML = `<div class="sb-txt">💾 Tu progresses bien !<small>Crée un compte gratuit pour garder ton XP, ta série et ton histoire.</small></div>`;
+  const save = document.createElement('button'); save.className = 'btn'; save.textContent = 'Sauvegarder';
+  save.onclick = ()=> window.openAuth('save');
+  const close = document.createElement('button'); close.className = 'sb-close'; close.setAttribute('aria-label','Fermer'); close.textContent = '✕';
+  close.onclick = ()=>{ sessionStorage.setItem('sunami-save-dismissed','1'); removeSaveBanner(); };
+  b.appendChild(save); b.appendChild(close);
+  log.appendChild(b);
+  scrollChat();
+}
 
 /* ===== CHAT / HISTOIRE IA (streaming) ===== */
 let chatHistory = [];
@@ -453,6 +622,7 @@ async function callAI(userReply){
     chapter += 1; updateSceneMeta();
     if(settings.autoplay) speak(speech);
     else if(sceneCard) sceneCard.classList.remove('speaking');
+    if(isGuest && chapter >= 2) maybeShowSaveBanner();
 
     sendBtn.disabled = false; input.disabled = false; input.focus();
     scrollChat();
