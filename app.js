@@ -43,6 +43,7 @@ function speak(text, btn){
 
 window.openSettings = function(){
   applySettings();
+  updateStatsPanel();
   const em = document.getElementById('setEmail');
   const lbl = document.getElementById('userLabel');
   if(em && lbl) em.textContent = lbl.textContent ? ('Connecté : ' + lbl.textContent) : '';
@@ -60,11 +61,14 @@ window.resetProgress = async function(){
   if(!confirm('Réinitialiser toute ta progression (streak, XP, langue) ? Cette action est irréversible.')) return;
   progress = { season:1, episode:1, streak:0, last_active:null, language:null, level:null };
   xp = 0; localStorage.setItem('sunami-xp', '0');
+  stats = { words: [], chapters: 0, dayKey: null, chaptersToday: 0, goalHitDay: null };
+  localStorage.removeItem('sunami-stats');
   try{ await saveProgress(); }catch(e){}
   location.reload();
 };
 window.shareProgress = async function(){
-  const txt = `🌊 Streak de ${progress.streak || 0} jour(s) et ${xp} XP sur Sunami — j'apprends une langue en vivant une histoire !`;
+  track('share', { streak: progress.streak || 0, xp: xp });
+  const txt = `🌊 Streak de ${progress.streak || 0} jour(s), ${xp} XP et ${stats.words.length} mots appris sur Sunami — j'apprends une langue en vivant une histoire !`;
   const url = 'https://sunami-rho.vercel.app';
   try{
     if(navigator.share){ await navigator.share({ title:'Sunami', text:txt, url }); }
@@ -109,10 +113,80 @@ function addXp(n){
   floatXp(n);
   const after = levelOf(xp);
   if(after > before){
+    track('level_up', { level: after });
     setTimeout(() => celebrate({
       emoji: '⭐', title: 'Niveau ' + after + ' atteint !',
       sub: 'Tu maîtrises de plus en plus la langue. Continue sur ta lancée !'
     }), 500);
+  }
+}
+
+/* ===== TRACKING (GA4 + TikTok via /analytics.js) ===== */
+function track(event, params){ try{ if(window.sunamiTrack) window.sunamiTrack(event, params || {}); }catch(e){} }
+
+/* ===== PROGRESSION : mots appris, chapitres, objectif du jour ===== */
+const DAILY_GOAL = 3;
+let stats = { words: [], chapters: 0, dayKey: null, chaptersToday: 0, goalHitDay: null };
+try{ stats = { ...stats, ...JSON.parse(localStorage.getItem('sunami-stats') || '{}') }; }catch(e){}
+if(!Array.isArray(stats.words)) stats.words = [];
+
+function todayKey(){ return new Date().toISOString().slice(0,10); }
+function saveStats(){ localStorage.setItem('sunami-stats', JSON.stringify(stats)); }
+function rollDay(){
+  const t = todayKey();
+  if(stats.dayKey !== t){ stats.dayKey = t; stats.chaptersToday = 0; saveStats(); }
+}
+function extractVocab(text){
+  const out = []; const re = /\*\*(.+?)\*\*/g; let m;
+  while((m = re.exec(text))){
+    const w = m[1].replace(/\([^)]*\)/g, '').replace(/[*]/g, '').trim().toLowerCase();
+    if(w && w.length <= 40) out.push(w);
+  }
+  return out;
+}
+function updateProgressChips(){
+  const wc = document.getElementById('wordsCount');
+  const chip = document.getElementById('wordsChip');
+  if(wc) wc.textContent = stats.words.length;
+  if(chip) chip.style.display = stats.words.length > 0 ? 'inline-flex' : 'none';
+}
+function updateStatsPanel(){
+  const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  rollDay();
+  set('statWords', stats.words.length);
+  set('statChapters', stats.chapters);
+  set('statStreak', progress.streak || 0);
+  set('statLevel', levelOf(xp));
+  const done = Math.min(stats.chaptersToday, DAILY_GOAL);
+  set('dailyGoalPct', done + ' / ' + DAILY_GOAL);
+  const fill = document.getElementById('dailyGoalFill');
+  if(fill) fill.style.width = (done / DAILY_GOAL * 100) + '%';
+  const note = document.getElementById('dailyGoalNote');
+  if(note) note.textContent = stats.chaptersToday >= DAILY_GOAL
+    ? '✅ Objectif du jour atteint — bravo, reviens demain !'
+    : 'Lis ' + (DAILY_GOAL - stats.chaptersToday) + ' chapitre(s) de plus pour valider ton objectif.';
+}
+function registerChapter(fullText){
+  rollDay();
+  stats.chapters += 1;
+  stats.chaptersToday += 1;
+  const before = stats.words.length;
+  extractVocab(fullText).forEach(w => { if(!stats.words.includes(w)) stats.words.push(w); });
+  const gained = stats.words.length - before;
+  saveStats();
+  updateProgressChips();
+  track('chapter_complete', { chapter: stats.chapters, new_words: gained });
+  if(gained > 0){
+    const chip = document.getElementById('wordsChip');
+    if(chip){ chip.classList.remove('pop'); void chip.offsetWidth; chip.classList.add('pop'); }
+  }
+  if(stats.chaptersToday === DAILY_GOAL && stats.goalHitDay !== stats.dayKey){
+    stats.goalHitDay = stats.dayKey; saveStats();
+    track('daily_goal', { day: stats.dayKey });
+    setTimeout(() => celebrate({
+      emoji: '🎯', title: 'Objectif du jour atteint !',
+      sub: 'Tu as lu tes ' + DAILY_GOAL + ' chapitres du jour. Reviens demain pour garder le rythme.'
+    }), 600);
   }
 }
 
@@ -139,7 +213,7 @@ function fireConfetti(){
 function celebrate({ emoji = '🎉', title = 'Bravo !', sub = '' }){
   const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
   set('celEmoji', emoji); set('celTitle', title); set('celSub', sub);
-  set('celXp', xp); set('celStreak', progress.streak || 0); set('celLvl', levelOf(xp));
+  set('celXp', xp); set('celWords', stats.words.length); set('celStreak', progress.streak || 0); set('celLvl', levelOf(xp));
   const m = document.getElementById('celModal');
   if(m){ m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); }
   fireConfetti();
@@ -282,6 +356,7 @@ async function touchStreak(){
   await saveProgress();
   const milestones = [3, 7, 14, 30, 50, 100, 200, 365];
   if(increased && milestones.includes(progress.streak)){
+    track('streak_milestone', { streak: progress.streak });
     setTimeout(() => celebrate({
       emoji: '🔥', title: progress.streak + ' jours de série !',
       sub: 'Quelle régularité ! Reviens demain pour ne pas briser ta flamme.'
@@ -321,6 +396,8 @@ async function enterApp(email, uid){
   await loadProgress(uid);
   await touchStreak();
   updateXpChip();
+  updateProgressChips();
+  track('app_open');
 
   if (progress.language && progress.level){
     pickedLang = progress.language;
@@ -358,6 +435,20 @@ function addMsg(type, text){
   log.appendChild(div);
   scrollChat();
   return div;
+}
+
+/* Feedback encourageant du conteur (récompense variable, ton de tuteur) */
+const PRAISE = [
+  "Belle réponse ! ✨", "Bravo, continue comme ça ! 👏", "Super, l'histoire avance 🌊",
+  "Joli, on progresse ! 🌟", "Impeccable 💪", "Excellent réflexe ! 🚀", "Bien vu ! 🙌"
+];
+function addFeedback(){
+  const log = document.getElementById('chatLog');
+  const div = document.createElement('div');
+  div.className = 'msg feedback right';
+  div.textContent = PRAISE[Math.floor(Math.random() * PRAISE.length)];
+  log.appendChild(div);
+  scrollChat();
 }
 
 function escapeHtml(s){ return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -413,7 +504,12 @@ async function callAI(userReply){
     }
 
     loadingEl.remove();
-    if(userReply){ chatHistory.push({ role:'user', content:userReply }); addXp(8 + Math.floor(Math.random()*7)); }
+    if(userReply){
+      chatHistory.push({ role:'user', content:userReply });
+      addXp(8 + Math.floor(Math.random()*7));
+      addFeedback();
+      track('reply_sent', { language: pickedLang, level: pickedLevel });
+    }
 
     // Bulle du conteur qui s'écrit en direct (markdown live + curseur)
     const bubble = document.createElement('div');
@@ -451,6 +547,7 @@ async function callAI(userReply){
     addSpeaker(bubble, speech);
     chatHistory.push({ role:'assistant', content: full });
     chapter += 1; updateSceneMeta();
+    registerChapter(full);
     if(settings.autoplay) speak(speech);
     else if(sceneCard) sceneCard.classList.remove('speaking');
 
@@ -467,6 +564,7 @@ async function callAI(userReply){
 function startScene(){
   chapter = 0;
   chatHistory = [];
+  track('story_start', { language: pickedLang, level: pickedLevel, theme: pickedTheme || 'aucun' });
   document.getElementById('chatLog').innerHTML = '';
   const input = document.getElementById('userInput');
   if(input) input.disabled = false;

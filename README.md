@@ -38,8 +38,14 @@ Au lieu d'exercices répétitifs, un **conteur IA** raconte une histoire immersi
 
 ## Pixels & tracking (à configurer avant le marketing)
 
-Dans `index.html` / `app.html`, remplacer les placeholders :
-- `G-XXXXXXXXXX` → ton ID Google Analytics 4
+Tout est centralisé dans **`analytics.js`** (chargé par `index.html` et `app.html`). Un seul endroit à éditer :
+
+- `GA_ID` → ton ID Google Analytics 4 (`G-XXXXXXXXXX`)
+- `TIKTOK_ID` → ton ID TikTok Pixel (`DXXXXXXXXXXXXXXXXXXXXX`)
+
+Tant que les IDs contiennent un `X` (placeholders), **aucun pixel n'est chargé** et `window.sunamiTrack()` devient un no-op silencieux (aucune erreur en dev, les events sont juste loggés en console).
+
+Événements suivis (GA4 + TikTok) : `login_start`, `lead`, `demo_progress`, `app_open`, `story_start`, `reply_sent`, `chapter_complete`, `level_up`, `streak_milestone`, `daily_goal`, `share`.
 
 ## URL de production
 

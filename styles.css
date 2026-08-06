@@ -283,6 +283,9 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 .cel-stat .v{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:24px; line-height:1;}
 .cel-stat .l{font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin-top:6px;}
 .cel-stat.xp .v{color:var(--gold);} .cel-stat.streak .v{color:var(--accent);} .cel-stat.total .v{color:var(--wave);}
+.cel-stat.words .v{color:var(--wave-dim);}
+.cel-stats{flex-wrap:wrap;}
+.cel-stat{min-width:64px;}
 #confetti{position:absolute; inset:0; overflow:hidden; pointer-events:none;}
 .confetti-piece{position:absolute; top:-14px; width:9px; height:14px; border-radius:2px; opacity:.9; animation:fall linear forwards;}
 @keyframes fall{to{transform:translateY(105vh) rotate(720deg); opacity:1;}}
@@ -409,6 +412,43 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
   .pick-card{opacity:1 !important;}
   .xp-float{display:none !important;}
   .stream-cursor{animation:none !important;}
+}
+
+/* ---- Chip "mots appris" ---- */
+.words-chip{color:var(--wave-dim); gap:4px;}
+.words-chip span{font-weight:900;}
+
+/* ---- Feedback encourageant (bulle centrale) ---- */
+.msg.feedback.right{
+  background:linear-gradient(120deg, rgba(43,182,115,.14), rgba(20,184,166,.14));
+  border-radius:99px; padding:5px 14px; align-self:center; font-size:12.5px;
+  animation:praiseIn .45s var(--ease) both;
+}
+@keyframes praiseIn{from{opacity:0; transform:translateY(6px) scale(.9);}to{opacity:1; transform:none;}}
+
+/* ---- Bloc "Ta progression" (réglages) ---- */
+.stats-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:16px;}
+.stat-box{background:var(--card); border:2px solid var(--card-border); border-radius:14px; padding:14px 12px; text-align:center;}
+.stat-box .sv{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:24px; line-height:1;}
+.stat-box .sl{font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin-top:6px;}
+.stat-box.words .sv{color:var(--wave-dim);} .stat-box.chapters .sv{color:var(--wave);}
+.stat-box.streak .sv{color:var(--accent);} .stat-box.level .sv{color:var(--gold);}
+
+/* ---- Objectif du jour ---- */
+.daily-goal{background:var(--surf); border:2px solid var(--card-border); border-radius:14px; padding:14px;}
+.daily-goal-head{display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:800; margin-bottom:10px;}
+.daily-goal-head span:last-child{color:var(--wave); font-family:'Baloo 2',sans-serif;}
+.goal-track{height:10px; border-radius:99px; background:var(--card); border:2px solid var(--card-border); overflow:hidden;}
+.goal-fill{height:100%; width:0%; border-radius:99px; background:linear-gradient(90deg,var(--wave),var(--wave-2)); transition:width .7s var(--ease);}
+.daily-goal-note{font-size:12px; color:var(--muted); font-weight:700; margin-top:9px;}
+
+/* ---- Header responsive : évite le débordement des chips ---- */
+@media(max-width:460px){
+  header{padding:12px 12px;}
+  .hbrand{font-size:0;} /* garde l'icône, masque le texte sur très petit écran */
+  .hbrand .badge{width:30px; height:30px;}
+  .chips{gap:6px;}
+  .chip{padding:5px 9px; font-size:12px;}
 }
 
 /* Tarifs (landing) */
