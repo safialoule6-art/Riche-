@@ -34,6 +34,10 @@ function speak(text, btn){
   const v = voices.find(x => x.lang && x.lang.toLowerCase().startsWith(u.lang.slice(0,2).toLowerCase()));
   if(v) u.voice = v;
   if(btn){ u.onstart = ()=>btn.classList.add('speaking'); u.onend = u.onerror = ()=>btn.classList.remove('speaking'); }
+  const sc = document.querySelector('.scene-card');
+  const prevStart = u.onstart, prevEnd = u.onend;
+  u.onstart = (e)=>{ if(sc) sc.classList.add('speaking'); if(prevStart) prevStart(e); };
+  u.onend = u.onerror = (e)=>{ if(sc) sc.classList.remove('speaking'); if(prevEnd) prevEnd(e); };
   window.speechSynthesis.speak(u);
 }
 
@@ -71,20 +75,80 @@ window.shareProgress = async function(){
   }catch(e){}
 };
 
-document.addEventListener('keydown', e => { if(e.key === 'Escape') window.closeSettings(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape'){ window.closeSettings(); window.closeCelebration && window.closeCelebration(); } });
 document.addEventListener('DOMContentLoaded', applySettings);
 
-/* ===== XP (gratuit) ===== */
+/* ===== XP & NIVEAUX (gratuit) ===== */
+const XP_PER_LEVEL = 100;
 let xp = parseInt(localStorage.getItem('sunami-xp') || '0', 10) || 0;
+function levelOf(v){ return Math.floor(v / XP_PER_LEVEL) + 1; }
 function updateXpChip(){
   const c = document.getElementById('xpCount'); if(c) c.textContent = xp;
   const chip = document.getElementById('xpChip'); if(chip) chip.style.display = 'inline-flex';
+  const ln = document.getElementById('lvlNum'); if(ln) ln.textContent = levelOf(xp);
+  const bar = document.getElementById('xpBarFill');
+  if(bar) bar.style.width = ((xp % XP_PER_LEVEL) / XP_PER_LEVEL * 100) + '%';
+}
+function floatXp(n){
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const chip = document.getElementById('xpChip');
+  if(reduce || !chip) return;
+  const r = chip.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'xp-float'; el.textContent = '+' + n + ' XP';
+  el.style.left = (r.left + r.width / 2 - 22) + 'px';
+  el.style.top = (r.bottom + 2) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
 }
 function addXp(n){
+  const before = levelOf(xp);
   xp += n; localStorage.setItem('sunami-xp', String(xp)); updateXpChip();
   const chip = document.getElementById('xpChip');
   if(chip){ chip.classList.remove('pop'); void chip.offsetWidth; chip.classList.add('pop'); }
+  floatXp(n);
+  const after = levelOf(xp);
+  if(after > before){
+    setTimeout(() => celebrate({
+      emoji: '⭐', title: 'Niveau ' + after + ' atteint !',
+      sub: 'Tu maîtrises de plus en plus la langue. Continue sur ta lancée !'
+    }), 500);
+  }
 }
+
+/* ===== CÉLÉBRATION & CONFETTIS ===== */
+function fireConfetti(){
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const box = document.getElementById('confetti');
+  if(!box) return;
+  box.innerHTML = '';
+  if(reduce) return;
+  const colors = ['#14b8a6', '#2dd4bf', '#f5a524', '#ff5a5f', '#ffd071', '#5eead4'];
+  for(let i = 0; i < 42; i++){
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.background = colors[i % colors.length];
+    p.style.animationDuration = (1.6 + Math.random() * 1.4) + 's';
+    p.style.animationDelay = (Math.random() * 0.3) + 's';
+    p.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+    box.appendChild(p);
+  }
+  setTimeout(() => { box.innerHTML = ''; }, 3400);
+}
+function celebrate({ emoji = '🎉', title = 'Bravo !', sub = '' }){
+  const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  set('celEmoji', emoji); set('celTitle', title); set('celSub', sub);
+  set('celXp', xp); set('celStreak', progress.streak || 0); set('celLvl', levelOf(xp));
+  const m = document.getElementById('celModal');
+  if(m){ m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); }
+  fireConfetti();
+}
+window.closeCelebration = function(){
+  const m = document.getElementById('celModal');
+  if(m){ m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); }
+  const box = document.getElementById('confetti'); if(box) box.innerHTML = '';
+};
 
 window.logout = async function(){
   window.closeSettings && window.closeSettings();
@@ -107,7 +171,16 @@ const LEVELS = [
   {code:'B1-B2 (intermédiaire)', label:'Intermédiaire', sub:'B1 · B2'},
   {code:'C1-C2 (avancé)', label:'Avancé', sub:'C1 · C2'},
 ];
+const THEMES = [
+  {code:'voyage', label:'Voyage', emoji:'✈️'},
+  {code:'quotidien', label:'Quotidien', emoji:'☕'},
+  {code:'travail', label:'Travail', emoji:'💼'},
+  {code:'mystere', label:'Mystère', emoji:'🕵️'},
+  {code:'romance', label:'Romance', emoji:'💛'},
+  {code:'aventure', label:'Aventure', emoji:'🗺️'},
+];
 let pickedLang = null, pickedLevel = null;
+let pickedTheme = localStorage.getItem('sunami-theme-ctx') || null;
 let chapter = 0;
 
 function renderPickers(){
@@ -116,7 +189,8 @@ function renderPickers(){
   LANGUAGES.forEach(l=>{
     const c = document.createElement('div');
     c.className = 'pick-card';
-    c.innerHTML = `<div style="font-size:26px;line-height:1;margin-bottom:6px;">${l.flag}</div>${l.label}`;
+    if(l.code === pickedLang) c.classList.add('active');
+    c.innerHTML = `<span class="flag">${l.flag}</span>${l.label}`;
     c.onclick = ()=>{
       document.querySelectorAll('#langGrid .pick-card').forEach(x=>x.classList.remove('active'));
       c.classList.add('active');
@@ -130,6 +204,7 @@ function renderPickers(){
   LEVELS.forEach(lv=>{
     const c = document.createElement('div');
     c.className = 'pick-card';
+    if(lv.code === pickedLevel) c.classList.add('active');
     c.innerHTML = `${lv.label}<small>${lv.sub}</small>`;
     c.onclick = ()=>{
       document.querySelectorAll('#levelGrid .pick-card').forEach(x=>x.classList.remove('active'));
@@ -139,6 +214,24 @@ function renderPickers(){
     };
     levelGrid.appendChild(c);
   });
+  const themeGrid = document.getElementById('themeGrid');
+  if(themeGrid){
+    themeGrid.innerHTML = '';
+    THEMES.forEach(t=>{
+      const c = document.createElement('div');
+      c.className = 'pick-card';
+      if(t.code === pickedTheme) c.classList.add('active');
+      c.innerHTML = `<span class="emoji">${t.emoji}</span>${t.label}`;
+      c.onclick = ()=>{
+        const already = t.code === pickedTheme;
+        document.querySelectorAll('#themeGrid .pick-card').forEach(x=>x.classList.remove('active'));
+        if(already){ pickedTheme = null; localStorage.removeItem('sunami-theme-ctx'); }
+        else { c.classList.add('active'); pickedTheme = t.code; localStorage.setItem('sunami-theme-ctx', t.code); }
+        checkReady();
+      };
+      themeGrid.appendChild(c);
+    });
+  }
 }
 function checkReady(){
   document.getElementById('startBtn').disabled = !(pickedLang && pickedLevel);
@@ -174,15 +267,26 @@ async function loadProgress(uid){
 
 async function touchStreak(){
   const today = new Date().toISOString().slice(0,10);
+  let increased = false;
   if (progress.last_active !== today){
     const y = new Date(); y.setDate(y.getDate()-1);
     const yesterday = y.toISOString().slice(0,10);
     progress.streak = (progress.last_active === yesterday) ? (progress.streak || 0) + 1 : 1;
     progress.last_active = today;
+    increased = true;
   }
-  document.getElementById('streakChip').style.display = 'inline-flex';
+  const chip = document.getElementById('streakChip');
+  chip.style.display = 'inline-flex';
+  chip.classList.add('lit');
   document.getElementById('streakCount').textContent = progress.streak;
   await saveProgress();
+  const milestones = [3, 7, 14, 30, 50, 100, 200, 365];
+  if(increased && milestones.includes(progress.streak)){
+    setTimeout(() => celebrate({
+      emoji: '🔥', title: progress.streak + ' jours de série !',
+      sub: 'Quelle régularité ! Reviens demain pour ne pas briser ta flamme.'
+    }), 900);
+  }
 }
 
 async function saveProgress(){
@@ -274,17 +378,27 @@ async function callAI(userReply){
   const sendBtn = document.getElementById('sendBtn');
   const input = document.getElementById('userInput');
   sendBtn.disabled = true; input.disabled = true;
-  const loadingEl = addMsg('loading', '···');
+  const sceneCard = document.querySelector('.scene-card');
+  if(sceneCard){ sceneCard.classList.add('thinking'); sceneCard.classList.remove('speaking'); }
+
+  // Indicateur "le conteur écrit…"
+  const loadingEl = document.createElement('div');
+  loadingEl.className = 'loading rich';
+  loadingEl.setAttribute('aria-label', 'Le conteur écrit');
+  loadingEl.innerHTML = '<span class="tdot"></span><span class="tdot"></span><span class="tdot"></span>';
+  document.getElementById('chatLog').appendChild(loadingEl);
+  scrollChat();
 
   try{
     const res = await fetch('/api/generate', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ history: chatHistory, userReply, language: pickedLang, level: pickedLevel })
+      body: JSON.stringify({ history: chatHistory, userReply, language: pickedLang, level: pickedLevel, theme: pickedTheme })
     });
 
     if(res.status === 429){
       loadingEl.remove();
+      if(sceneCard) sceneCard.classList.remove('thinking');
       addMsg('feedback wrong', '⏳ Trop de demandes d\u2019un coup — patiente ~30 secondes puis réessaie.');
       sendBtn.disabled = false; input.disabled = false;
       return;
@@ -292,20 +406,25 @@ async function callAI(userReply){
     if(!res.ok || !res.body){
       let e = {}; try{ e = await res.json(); }catch(_){}
       loadingEl.remove();
+      if(sceneCard) sceneCard.classList.remove('thinking');
       addMsg('feedback wrong', 'Erreur : ' + (e.error || ('HTTP ' + res.status)));
       sendBtn.disabled = false; input.disabled = false;
       return;
     }
 
     loadingEl.remove();
-    if(userReply){ chatHistory.push({ role:'user', content:userReply }); addXp(10); }
+    if(userReply){ chatHistory.push({ role:'user', content:userReply }); addXp(8 + Math.floor(Math.random()*7)); }
 
-    // Bulle du conteur qui se remplit en direct
+    // Bulle du conteur qui s'écrit en direct (markdown live + curseur)
     const bubble = document.createElement('div');
-    bubble.className = 'msg character';
+    bubble.className = 'msg character streaming';
     const span = document.createElement('span');
+    const cursor = document.createElement('span');
+    cursor.className = 'stream-cursor';
     bubble.appendChild(span);
+    bubble.appendChild(cursor);
     document.getElementById('chatLog').appendChild(bubble);
+    if(sceneCard){ sceneCard.classList.remove('thinking'); sceneCard.classList.add('speaking'); }
 
     const reader = res.body.getReader();
     const dec = new TextDecoder();
@@ -314,28 +433,32 @@ async function callAI(userReply){
       const { done, value } = await reader.read();
       if(done) break;
       full += dec.decode(value, { stream:true });
-      span.textContent = full;
+      span.innerHTML = formatStory(full);
       scrollChat();
     }
 
     if(!full.trim()){
       bubble.remove();
+      if(sceneCard) sceneCard.classList.remove('speaking');
       addMsg('feedback wrong', 'Le conteur n\u2019a rien répondu — réessaie.');
       sendBtn.disabled = false; input.disabled = false;
       return;
     }
 
+    bubble.classList.remove('streaming');
     bubble.innerHTML = formatStory(full);
     const speech = cleanForSpeech(full);
     addSpeaker(bubble, speech);
     chatHistory.push({ role:'assistant', content: full });
     chapter += 1; updateSceneMeta();
     if(settings.autoplay) speak(speech);
+    else if(sceneCard) sceneCard.classList.remove('speaking');
 
     sendBtn.disabled = false; input.disabled = false; input.focus();
     scrollChat();
   }catch(err){
     try{ loadingEl.remove(); }catch(_){}
+    if(sceneCard) sceneCard.classList.remove('thinking','speaking');
     addMsg('feedback wrong', 'Erreur réseau : ' + err.message);
     sendBtn.disabled = false; input.disabled = false;
   }
