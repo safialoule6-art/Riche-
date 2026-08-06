@@ -7,7 +7,7 @@
    pixel n'est chargé et window.sunamiTrack(...) devient un no-op
    silencieux : zéro requête inutile et zéro erreur en développement. */
 (function () {
-  var GA_ID = 'G-XXXXXXXXXX';               // ← ton ID Google Analytics 4
+  var GA_ID = 'G-3CQKR1KTS6';               // ← ton ID Google Analytics 4
   var TIKTOK_ID = 'DXXXXXXXXXXXXXXXXXXXXX'; // ← ton ID TikTok Pixel
 
   var isPlaceholder = function (id) { return !id || id.indexOf('X') !== -1; };
