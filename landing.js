@@ -6,14 +6,38 @@ const supabaseUrl = 'https://cdtabuyomtkfasvugtck.supabase.co';
 const supabaseKey = 'sb_publishable_ms6RPYdPVcO3c9A6X1ruQQ_uiYl1Dxo';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-/* Déjà connecté ? -> on file directement vers l'app */
+/* Détection d'un lien de réinitialisation de mot de passe (?type=recovery dans le hash) :
+   dans ce cas on affiche le formulaire "nouveau mot de passe" au lieu de rediriger direct. */
+function isRecoveryLink(){ return window.location.hash.includes('type=recovery'); }
+let inRecovery = isRecoveryLink();
+
+/* Déjà connecté ? -> on file directement vers l'app (sauf lien de récupération en cours) */
 (async function(){
+  if(inRecovery) return;
   const { data } = await supabase.auth.getSession();
   if(data.session) window.location.replace('/app');
 })();
 supabase.auth.onAuthStateChange((event, session)=>{
-  if(session) window.location.replace('/app');
+  if(event === 'PASSWORD_RECOVERY'){
+    inRecovery = true;
+    const emailBox = document.getElementById('emailAuthBox'); if(emailBox) emailBox.style.display = 'none';
+    const toggleBtn = document.getElementById('emailToggleBtn'); if(toggleBtn) toggleBtn.style.display = 'none';
+    const recBox = document.getElementById('recoveryBox'); if(recBox) recBox.style.display = 'flex';
+    return;
+  }
+  if(session && !inRecovery) window.location.replace('/app');
 });
+
+window.confirmNewPassword = async function(){
+  const pwd = document.getElementById('recoveryPassword')?.value || '';
+  const msgEl = document.getElementById('recoveryMsg');
+  if(msgEl) msgEl.textContent = '';
+  if(!pwd || pwd.length < 6){ if(msgEl) msgEl.textContent = 'Le mot de passe doit faire au moins 6 caractères.'; return; }
+  const { error } = await supabase.auth.updateUser({ password: pwd });
+  if(error){ if(msgEl) msgEl.textContent = error.message; return; }
+  inRecovery = false;
+  window.location.replace('/app');
+};
 
 window.loginWithGoogle = async function(){
   const errEl = document.getElementById('authError'); if(errEl) errEl.textContent = '';
@@ -25,6 +49,80 @@ window.loginWithGoogle = async function(){
   });
   if(error && errEl){ errEl.textContent = error.message; }
 };
+
+/* ===== Login / inscription par email + mot de passe ===== */
+window.toggleEmailAuth = function(){
+  const box = document.getElementById('emailAuthBox');
+  const btn = document.getElementById('emailToggleBtn');
+  if(!box) return;
+  const show = box.style.display === 'none';
+  box.style.display = show ? 'flex' : 'none';
+  if(btn) btn.textContent = show ? 'Masquer' : 'Continuer avec un email';
+  if(show) document.getElementById('authEmail')?.focus();
+};
+
+function readEmailAuthForm(){
+  const email = (document.getElementById('authEmail')?.value || '').trim();
+  const password = document.getElementById('authPassword')?.value || '';
+  return { email, password };
+}
+
+function setEmailAuthMsg(text, isError){
+  const msgEl = document.getElementById('emailAuthMsg');
+  if(!msgEl) return;
+  msgEl.textContent = text || '';
+  msgEl.style.color = isError ? '' : 'var(--ok)';
+}
+
+function setEmailAuthBusy(busy){
+  ['emailSigninBtn','emailSignupBtn'].forEach(id=>{
+    const b = document.getElementById(id);
+    if(b) b.disabled = busy;
+  });
+}
+
+window.loginWithEmail = async function(){
+  const { email, password } = readEmailAuthForm();
+  if(!email || !email.includes('@')){ setEmailAuthMsg('Entre un email valide.', true); return; }
+  if(!password){ setEmailAuthMsg('Entre ton mot de passe.', true); return; }
+  setEmailAuthMsg(''); setEmailAuthBusy(true);
+  try{ if(window.sunamiTrack) window.sunamiTrack('login_start', { method: 'email' }); }catch(e){}
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  setEmailAuthBusy(false);
+  if(error){ setEmailAuthMsg(error.message === 'Invalid login credentials' ? 'Email ou mot de passe incorrect.' : error.message, true); }
+  // Si succès, onAuthStateChange gère déjà la redirection vers /app.
+};
+
+window.signupWithEmail = async function(){
+  const { email, password } = readEmailAuthForm();
+  if(!email || !email.includes('@')){ setEmailAuthMsg('Entre un email valide.', true); return; }
+  if(!password || password.length < 6){ setEmailAuthMsg('Le mot de passe doit faire au moins 6 caractères.', true); return; }
+  setEmailAuthMsg(''); setEmailAuthBusy(true);
+  try{ if(window.sunamiTrack) window.sunamiTrack('login_start', { method: 'email_signup' }); }catch(e){}
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  setEmailAuthBusy(false);
+  if(error){
+    setEmailAuthMsg(error.message === 'User already registered' ? 'Ce compte existe déjà — connecte-toi plutôt.' : error.message, true);
+    return;
+  }
+  // Si la confirmation email est activée sur Supabase, il n'y a pas encore de session.
+  if(data.session){
+    // onAuthStateChange gère la redirection.
+  } else {
+    setEmailAuthMsg('✓ Compte créé ! Vérifie ta boîte mail pour confirmer ton adresse.', false);
+  }
+};
+
+window.resetPassword = async function(){
+  const { email } = readEmailAuthForm();
+  if(!email || !email.includes('@')){ setEmailAuthMsg('Entre ton email ci-dessus, puis clique à nouveau sur "Mot de passe oublié ?".', true); return; }
+  setEmailAuthMsg(''); setEmailAuthBusy(true);
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+  setEmailAuthBusy(false);
+  if(error){ setEmailAuthMsg(error.message, true); }
+  else{ setEmailAuthMsg('✓ Email de réinitialisation envoyé si ce compte existe.', false); }
+};
+
 
 window.submitLead = async function(){
   const emailEl = document.getElementById('leadEmail');

@@ -15,6 +15,13 @@ export const config = { runtime: "edge" };
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "llama-3.1-8b-instant";
 
+// Timeout max pour la connexion initiale à Groq (évite un écran vide sans fin
+// si Groq ne répond jamais).
+const GROQ_TIMEOUT_MS = 15000;
+// Timeout max entre deux morceaux du flux (évite un blocage si le stream
+// s'interrompt en cours de route, une fois les headers déjà envoyés).
+const GROQ_STREAM_STALL_MS = 20000;
+
 const THEME_HINTS = {
   voyage: "Contexte : un VOYAGE (aéroports, gares, hôtels, rencontres, découvertes de lieux).",
   quotidien: "Contexte : la VIE QUOTIDIENNE (café, marché, voisins, petites scènes du jour).",
@@ -78,6 +85,8 @@ export default async function handler(req) {
   ];
 
   let groqRes;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), GROQ_TIMEOUT_MS);
   try {
     groqRes = await fetch(GROQ_URL, {
       method: "POST",
@@ -92,12 +101,21 @@ export default async function handler(req) {
         temperature: 0.85,
         max_tokens: 600,
       }),
+      signal: controller.signal,
     });
   } catch (err) {
+    if (err.name === "AbortError") {
+      return new Response(
+        JSON.stringify({ error: "Le conteur met trop de temps à répondre, réessaie." }),
+        { status: 504, headers: { "content-type": "application/json" } }
+      );
+    }
     return new Response(JSON.stringify({ error: "Erreur réseau vers Groq" }), {
       status: 502,
       headers: { "content-type": "application/json" },
     });
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   // Gestion propre de la limite de requêtes
@@ -123,7 +141,25 @@ export default async function handler(req) {
 
   const stream = new ReadableStream({
     async pull(controller) {
-      const { done, value } = await reader.read();
+      let result;
+      try {
+        result = await Promise.race([
+          reader.read(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("stall")), GROQ_STREAM_STALL_MS)
+          ),
+        ]);
+      } catch {
+        // Le flux Groq s'est figé en cours de route : on prévient l'utilisateur
+        // dans le texte déjà affiché plutôt que de bloquer indéfiniment.
+        controller.enqueue(
+          encoder.encode("\n\n⏱️ Le conteur met trop de temps à répondre, réessaie.")
+        );
+        try { reader.cancel(); } catch {}
+        controller.close();
+        return;
+      }
+      const { done, value } = result;
       if (done) { controller.close(); return; }
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
