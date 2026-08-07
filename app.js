@@ -480,9 +480,10 @@ async function callAI(userReply){
   document.getElementById('chatLog').appendChild(loadingEl);
   scrollChat();
 
-  // Timeout client : si le serveur ne répond pas en 25s, on abandonne.
+  // Timeout global : couvre le fetch + l'attente du premier chunk du stream.
+  // Annulé dès qu'on reçoit le premier morceau de texte.
   const clientCtrl = new AbortController();
-  const clientTimeoutId = setTimeout(() => clientCtrl.abort(), 25000);
+  let clientTimeoutId = setTimeout(() => clientCtrl.abort(), 25000);
 
   try{
     const res = await fetch('/api/generate', {
@@ -492,9 +493,11 @@ async function callAI(userReply){
       signal: clientCtrl.signal,
     });
 
-    clearTimeout(clientTimeoutId);
+    // Le fetch a réussi, mais on garde le timeout actif pour la lecture du stream.
+    // Il sera annulé au premier chunk.
 
     if(res.status === 429){
+      clearTimeout(clientTimeoutId);
       loadingEl.remove();
       if(sceneCard) sceneCard.classList.remove('thinking');
       addMsg('feedback wrong', '⏳ Trop de demandes d\u2019un coup — patiente ~30 secondes puis réessaie.');
@@ -502,6 +505,7 @@ async function callAI(userReply){
       return;
     }
     if(!res.ok || !res.body){
+      clearTimeout(clientTimeoutId);
       let e = {}; try{ e = await res.json(); }catch(_){}
       loadingEl.remove();
       if(sceneCard) sceneCard.classList.remove('thinking');
@@ -532,8 +536,15 @@ async function callAI(userReply){
     const reader = res.body.getReader();
     const dec = new TextDecoder();
     let full = '';
+    let firstChunk = true;
     while(true){
       const { done, value } = await reader.read();
+      // Premier chunk reçu : on annule le timeout, le flux est vivant.
+      if(firstChunk){
+        firstChunk = false;
+        clearTimeout(clientTimeoutId);
+        clientTimeoutId = null;
+      }
       if(done) break;
       full += dec.decode(value, { stream:true });
       span.innerHTML = formatStory(full);
@@ -561,7 +572,7 @@ async function callAI(userReply){
     sendBtn.disabled = false; input.disabled = false; input.focus();
     scrollChat();
   }catch(err){
-    clearTimeout(clientTimeoutId);
+    if(clientTimeoutId !== null) clearTimeout(clientTimeoutId);
     try{ loadingEl.remove(); }catch(_){}
     if(sceneCard) sceneCard.classList.remove('thinking','speaking');
     if(err.name === 'AbortError'){
