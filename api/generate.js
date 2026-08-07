@@ -169,7 +169,7 @@ export default async function handler(req) {
       // Timeout entre deux chunks : si Groq se fige, on prévient et on ferme.
       chunkTimeoutId = setTimeout(() => {
         chunkTimeoutId = null;
-        console.log("[GROQ] STREAM STALL — aucun chunk depuis " + GROQ_STREAM_STALL_MS + "ms, fermeture du flux.");
+        console.error("[GROQ] STREAM STALL — aucun chunk depuis " + GROQ_STREAM_STALL_MS + "ms, fermeture du flux.");
         controller.enqueue(
           encoder.encode("\n\n⏱️ Le conteur met trop de temps à répondre, réessaie.")
         );
@@ -207,7 +207,7 @@ export default async function handler(req) {
         }
       } catch (err) {
         // reader.read() a échoué (ex: reader annulé par le timeout)
-        console.log("[GROQ] Erreur lecture stream — " + (err.name || "error") + " " + (err.message || ""));
+        console.error("[GROQ] Erreur lecture stream — " + (err.name || "error") + " " + (err.message || ""));
         if (!closed) {
           controller.enqueue(
             encoder.encode("\n\n⏱️ Le conteur met trop de temps à répondre, réessaie.")
