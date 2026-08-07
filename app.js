@@ -480,17 +480,9 @@ async function callAI(userReply){
   document.getElementById('chatLog').appendChild(loadingEl);
   scrollChat();
 
-  // Timeout watchdog : réinitialisé à chaque chunk reçu.
-  // Se déclenche uniquement si aucun chunk n'arrive pendant 25s,
-  // quelle que soit la durée totale du stream.
-  const STREAM_STALL_MS = 25000;
+  // Timeout simple sur la requête complète
   const clientCtrl = new AbortController();
-  let clientTimeoutId = setTimeout(() => clientCtrl.abort(), STREAM_STALL_MS);
-
-  function resetStreamTimer() {
-    if (clientTimeoutId !== null) clearTimeout(clientTimeoutId);
-    clientTimeoutId = setTimeout(() => clientCtrl.abort(), STREAM_STALL_MS);
-  }
+  const clientTimeoutId = setTimeout(() => clientCtrl.abort(), 25000);
 
   try{
     const res = await fetch('/api/generate', {
@@ -499,28 +491,36 @@ async function callAI(userReply){
       body: JSON.stringify({ history: chatHistory, userReply, language: pickedLang, level: pickedLevel, theme: pickedTheme }),
       signal: clientCtrl.signal,
     });
-
-    // Le fetch a réussi. Le watchdog sera réinitialisé à chaque chunk.
+    clearTimeout(clientTimeoutId);
 
     if(res.status === 429){
-      clearTimeout(clientTimeoutId);
       loadingEl.remove();
       if(sceneCard) sceneCard.classList.remove('thinking');
       addMsg('feedback wrong', '⏳ Trop de demandes d\u2019un coup — patiente ~30 secondes puis réessaie.');
       sendBtn.disabled = false; input.disabled = false;
       return;
     }
-    if(!res.ok || !res.body){
-      clearTimeout(clientTimeoutId);
-      let e = {}; try{ e = await res.json(); }catch(_){}
+
+    const data = await res.json().catch(() => ({}));
+
+    if(!res.ok || data.error){
       loadingEl.remove();
       if(sceneCard) sceneCard.classList.remove('thinking');
-      addMsg('feedback wrong', 'Erreur : ' + (e.error || ('HTTP ' + res.status)));
+      addMsg('feedback wrong', 'Erreur : ' + (data.error || ('HTTP ' + res.status)));
       sendBtn.disabled = false; input.disabled = false;
       return;
     }
 
+    const fullText = data.text || '';
     loadingEl.remove();
+
+    if(!fullText.trim()){
+      if(sceneCard) sceneCard.classList.remove('thinking');
+      addMsg('feedback wrong', 'Le conteur n\u2019a rien répondu — réessaie.');
+      sendBtn.disabled = false; input.disabled = false;
+      return;
+    }
+
     if(userReply){
       chatHistory.push({ role:'user', content:userReply });
       addXp(8 + Math.floor(Math.random()*7));
@@ -528,7 +528,7 @@ async function callAI(userReply){
       track('reply_sent', { language: pickedLang, level: pickedLevel });
     }
 
-    // Bulle du conteur qui s'écrit en direct (markdown live + curseur)
+    // Bulle du conteur avec animation machine à écrire simulée
     const bubble = document.createElement('div');
     bubble.className = 'msg character streaming';
     const span = document.createElement('span');
@@ -539,60 +539,56 @@ async function callAI(userReply){
     document.getElementById('chatLog').appendChild(bubble);
     if(sceneCard){ sceneCard.classList.remove('thinking'); sceneCard.classList.add('speaking'); }
 
-    const reader = res.body.getReader();
-    const dec = new TextDecoder();
-    let full = '';
-    let lastChunkTs = Date.now();
-    while(true){
-      const { done, value } = await reader.read();
-      const now = Date.now();
-      console.log('[CLIENT] chunk — delta=' + (now - lastChunkTs) + 'ms done=' + done + ' size=' + (value ? value.length : 0));
-      lastChunkTs = now;
-
-      // Chunk reçu : on réinitialise le watchdog.
-      resetStreamTimer();
-
-      if(done) break;
-      full += dec.decode(value, { stream:true });
-      span.innerHTML = formatStory(full);
-      scrollChat();
-    }
-    // Stream terminé normalement : on annule définitivement le timer.
-    if(clientTimeoutId !== null){ clearTimeout(clientTimeoutId); clientTimeoutId = null; }
-
-    if(!full.trim()){
-      bubble.remove();
-      if(sceneCard) sceneCard.classList.remove('speaking');
-      addMsg('feedback wrong', 'Le conteur n\u2019a rien répondu — réessaie.');
-      sendBtn.disabled = false; input.disabled = false;
-      return;
-    }
+    // Animation machine à écrire : affiche le texte progressivement
+    await typewriter(span, fullText);
 
     bubble.classList.remove('streaming');
-    bubble.innerHTML = formatStory(full);
-    const speech = cleanForSpeech(full);
+    bubble.innerHTML = formatStory(fullText);
+    const speech = cleanForSpeech(fullText);
     addSpeaker(bubble, speech);
-    chatHistory.push({ role:'assistant', content: full });
+    chatHistory.push({ role:'assistant', content: fullText });
     chapter += 1; updateSceneMeta();
-    registerChapter(full);
+    registerChapter(fullText);
     if(settings.autoplay) speak(speech);
     else if(sceneCard) sceneCard.classList.remove('speaking');
 
     sendBtn.disabled = false; input.disabled = false; input.focus();
     scrollChat();
   }catch(err){
-    if(clientTimeoutId !== null) clearTimeout(clientTimeoutId);
+    clearTimeout(clientTimeoutId);
     try{ loadingEl.remove(); }catch(_){}
     if(sceneCard) sceneCard.classList.remove('thinking','speaking');
-    // Log l'erreur réelle pour diagnostic
-    console.error('[CLIENT] Erreur callAI — name=' + (err.name || '?') + ' message=' + (err.message || '?') + ' stack=' + ((err.stack || '').slice(0, 300)));
+    console.error('[CLIENT] Erreur callAI — name=' + (err.name || '?') + ' message=' + (err.message || '?'));
     if(err.name === 'AbortError'){
-      addMsg('feedback wrong', '⏱️ Le conteur met trop de temps à répondre, réessaie. [' + err.name + ']');
+      addMsg('feedback wrong', '⏱️ Le conteur met trop de temps à répondre, réessaie.');
     } else {
-      addMsg('feedback wrong', 'Erreur réseau : ' + err.message + ' [' + (err.name || 'Erreur') + ']');
+      addMsg('feedback wrong', 'Erreur réseau : ' + err.message);
     }
     sendBtn.disabled = false; input.disabled = false;
   }
+}
+
+// Simule l'effet d'écriture en direct (machine à écrire).
+// Affiche le texte par blocs de ~3 caractères toutes les ~25ms.
+function typewriter(span, fullText){
+  return new Promise((resolve) => {
+    const charsPerTick = 3;
+    const tickMs = 25;
+    let pos = 0;
+    const total = fullText.length;
+    const timer = setInterval(() => {
+      pos += charsPerTick;
+      if(pos >= total){
+        span.innerHTML = formatStory(fullText);
+        clearInterval(timer);
+        scrollChat();
+        resolve();
+        return;
+      }
+      span.innerHTML = formatStory(fullText.slice(0, pos));
+      scrollChat();
+    }, tickMs);
+  });
 }
 
 function startScene(){
