@@ -17,12 +17,22 @@ const MODEL = "llama-3.1-8b-instant";
 const GROQ_TIMEOUT_MS = 25000; // timeout max pour l'appel complet à Groq
 
 const THEME_HINTS = {
-  voyage: "Contexte : un VOYAGE (aéroports, gares, hôtels, rencontres, découvertes de lieux).",
-  quotidien: "Contexte : la VIE QUOTIDIENNE (café, marché, voisins, petites scènes du jour).",
-  travail: "Contexte : le MONDE DU TRAVAIL (bureau, réunion, entretien, collègues, carrière).",
-  mystere: "Contexte : un MYSTÈRE / une enquête (indices, suspense, personnages intrigants).",
-  romance: "Contexte : une histoire de RENCONTRE et d'émotions douces, légère et chaleureuse.",
-  aventure: "Contexte : une AVENTURE (nature, exploration, obstacles à surmonter, action).",
+  voyage: "Context: a JOURNEY (airports, train stations, hotels, encounters, discovering new places).",
+  quotidien: "Context: EVERYDAY LIFE (café, market, neighbors, small daily scenes).",
+  travail: "Context: the WORLD OF WORK (office, meeting, interview, colleagues, career).",
+  mystere: "Context: a MYSTERY / investigation (clues, suspense, intriguing characters).",
+  romance: "Context: a story of ENCOUNTER and gentle emotions, light and warm.",
+  aventure: "Context: an ADVENTURE (nature, exploration, obstacles to overcome, action).",
+};
+
+// Map French language codes (from client) to English names (for the model).
+const LANG_NAME = {
+  anglais: "English",
+  espagnol: "Spanish",
+  allemand: "German",
+  italien: "Italian",
+  arabe: "Arabic",
+  portugais: "Portuguese",
 };
 
 function buildSystemPrompt(language, level, theme) {
@@ -69,7 +79,7 @@ export default async function handler(req) {
   let body;
   try { body = await req.json(); } catch { body = {}; }
   const { history, userReply, language, level, theme } = body || {};
-  const targetLanguage = language || "anglais";
+  const targetLanguage = LANG_NAME[language] || language || "English";
   const cefrLevel = level || "A1-A2 (débutant)";
   const storyTheme = theme || null;
 
@@ -78,7 +88,7 @@ export default async function handler(req) {
   const messages = [
     { role: "system", content: buildSystemPrompt(targetLanguage, cefrLevel, storyTheme) },
     ...trimmed,
-    { role: "user", content: userReply || "Commence une nouvelle histoire et pose-moi ta première question." },
+    { role: "user", content: userReply || "Start a new story and ask me your first question." },
   ];
 
   const t0 = Date.now();
