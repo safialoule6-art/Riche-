@@ -49,9 +49,13 @@ const LEVEL_GUIDE = {
   "C1-C2 (advanced)": "Use all tenses, rich vocabulary, idioms, complex structures. Natural, native-level prose.",
 };
 
-function buildSystemPrompt(language, level, theme, hasUserReply) {
+function buildSystemPrompt(language, level, theme, hasUserReply, vocabulary) {
   const themeLine = theme && THEME_HINTS[theme] ? `\n${THEME_HINTS[theme]}\n` : "";
   const levelGuide = LEVEL_GUIDE[level] || "";
+  const vocabInstruction = (vocabulary && vocabulary.length > 0) ? `
+VOCABULARY TO REVIEW
+The learner is practicing spaced repetition. You MUST naturally incorporate these words into today's story (in bold with translation): ${vocabulary.join(', ')}. Use at least 2 of them.` : "";
+
   const grammarInstruction = hasUserReply ? `
 GRAMMAR CORRECTION
 After your story and question, add a line with exactly "---" on its own, then write a SHORT grammar note in French (max 2 sentences):
@@ -66,7 +70,7 @@ TARGET LANGUAGE: ${language}. LEARNER LEVEL: ${level}.${themeLine}
 CRITICAL RULE: You write ONLY in ${language}. Never in French, never in any other language. Every single word of your response must be in ${language}.
 
 DIFFICULTY RULES FOR ${level}:
-${levelGuide}
+${levelGuide}${vocabInstruction}
 
 STORY CONTINUITY
 - This is an ongoing saga. The learner is the protagonist. Keep characters, places, and plot consistent across episodes.
@@ -108,17 +112,18 @@ export default async function handler(req) {
 
   let body;
   try { body = await req.json(); } catch { body = {}; }
-  const { history, userReply, language, level, theme } = body || {};
+  const { history, userReply, language, level, theme, vocabulary } = body || {};
   const targetLanguage = LANG_NAME[language] || language || "English";
   const cefrLevel = LEVEL_NAME[level] || level || "A1-A2 (beginner)";
   const storyTheme = theme || null;
+  const vocabList = Array.isArray(vocabulary) ? vocabulary.filter(v => typeof v === 'string' && v.length > 0) : [];
 
   const trimmed = Array.isArray(history) ? history.slice(-10) : [];
 
   const hasUserReply = !!userReply;
 
   const messages = [
-    { role: "system", content: buildSystemPrompt(targetLanguage, cefrLevel, storyTheme, hasUserReply) },
+    { role: "system", content: buildSystemPrompt(targetLanguage, cefrLevel, storyTheme, hasUserReply, vocabList) },
     ...trimmed,
     { role: "user", content: userReply || "Start a new story and ask me your first question." },
   ];
