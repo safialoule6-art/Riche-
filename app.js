@@ -480,12 +480,19 @@ async function callAI(userReply){
   document.getElementById('chatLog').appendChild(loadingEl);
   scrollChat();
 
+  // Timeout client : si le serveur ne répond pas en 25s, on abandonne.
+  const clientCtrl = new AbortController();
+  const clientTimeoutId = setTimeout(() => clientCtrl.abort(), 25000);
+
   try{
     const res = await fetch('/api/generate', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ history: chatHistory, userReply, language: pickedLang, level: pickedLevel, theme: pickedTheme })
+      body: JSON.stringify({ history: chatHistory, userReply, language: pickedLang, level: pickedLevel, theme: pickedTheme }),
+      signal: clientCtrl.signal,
     });
+
+    clearTimeout(clientTimeoutId);
 
     if(res.status === 429){
       loadingEl.remove();
@@ -554,9 +561,14 @@ async function callAI(userReply){
     sendBtn.disabled = false; input.disabled = false; input.focus();
     scrollChat();
   }catch(err){
+    clearTimeout(clientTimeoutId);
     try{ loadingEl.remove(); }catch(_){}
     if(sceneCard) sceneCard.classList.remove('thinking','speaking');
-    addMsg('feedback wrong', 'Erreur réseau : ' + err.message);
+    if(err.name === 'AbortError'){
+      addMsg('feedback wrong', '⏱️ Le conteur met trop de temps à répondre, réessaie.');
+    } else {
+      addMsg('feedback wrong', 'Erreur réseau : ' + err.message);
+    }
     sendBtn.disabled = false; input.disabled = false;
   }
 }

@@ -15,11 +15,9 @@ export const config = { runtime: "edge" };
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "llama-3.1-8b-instant";
 
-// Timeout max pour la connexion initiale à Groq (évite un écran vide sans fin
-// si Groq ne répond jamais).
-const GROQ_TIMEOUT_MS = 15000;
-// Timeout max entre deux morceaux du flux (évite un blocage si le stream
-// s'interrompt en cours de route, une fois les headers déjà envoyés).
+// Timeout max pour la connexion initiale à Groq.
+const GROQ_CONNECT_TIMEOUT_MS = 15000;
+// Timeout max entre deux chunks du flux streaming.
 const GROQ_STREAM_STALL_MS = 20000;
 
 const THEME_HINTS = {
@@ -85,8 +83,8 @@ export default async function handler(req) {
   ];
 
   let groqRes;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), GROQ_TIMEOUT_MS);
+  const fetchController = new AbortController();
+  const fetchTimeoutId = setTimeout(() => fetchController.abort(), GROQ_CONNECT_TIMEOUT_MS);
   try {
     groqRes = await fetch(GROQ_URL, {
       method: "POST",
@@ -101,9 +99,10 @@ export default async function handler(req) {
         temperature: 0.85,
         max_tokens: 600,
       }),
-      signal: controller.signal,
+      signal: fetchController.signal,
     });
   } catch (err) {
+    clearTimeout(fetchTimeoutId);
     if (err.name === "AbortError") {
       return new Response(
         JSON.stringify({ error: "Le conteur met trop de temps à répondre, réessaie." }),
@@ -114,9 +113,8 @@ export default async function handler(req) {
       status: 502,
       headers: { "content-type": "application/json" },
     });
-  } finally {
-    clearTimeout(timeoutId);
   }
+  clearTimeout(fetchTimeoutId);
 
   // Gestion propre de la limite de requêtes
   if (groqRes.status === 429) {
@@ -138,45 +136,64 @@ export default async function handler(req) {
   const decoder = new TextDecoder();
   const reader = groqRes.body.getReader();
   let buffer = "";
+  let chunkTimeoutId = null;
+  let closed = false;
+
+  function closeStream(controller) {
+    if (closed) return;
+    closed = true;
+    if (chunkTimeoutId !== null) { clearTimeout(chunkTimeoutId); chunkTimeoutId = null; }
+    try { reader.cancel(); } catch {}
+    try { controller.close(); } catch {}
+  }
 
   const stream = new ReadableStream({
     async pull(controller) {
-      let result;
-      try {
-        result = await Promise.race([
-          reader.read(),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("stall")), GROQ_STREAM_STALL_MS)
-          ),
-        ]);
-      } catch {
-        // Le flux Groq s'est figé en cours de route : on prévient l'utilisateur
-        // dans le texte déjà affiché plutôt que de bloquer indéfiniment.
+      if (closed) return;
+
+      // Timeout entre deux chunks : si Groq se fige, on prévient et on ferme.
+      chunkTimeoutId = setTimeout(() => {
+        chunkTimeoutId = null;
         controller.enqueue(
           encoder.encode("\n\n⏱️ Le conteur met trop de temps à répondre, réessaie.")
         );
-        try { reader.cancel(); } catch {}
-        controller.close();
-        return;
-      }
-      const { done, value } = result;
-      if (done) { controller.close(); return; }
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-      for (const line of lines) {
-        const t = line.trim();
-        if (!t.startsWith("data:")) continue;
-        const data = t.slice(5).trim();
-        if (data === "[DONE]") { controller.close(); return; }
-        try {
-          const json = JSON.parse(data);
-          const delta = json.choices?.[0]?.delta?.content;
-          if (delta) controller.enqueue(encoder.encode(delta));
-        } catch { /* ligne partielle, on ignore */ }
+        closeStream(controller);
+      }, GROQ_STREAM_STALL_MS);
+
+      try {
+        const { done, value } = await reader.read();
+        // Chunk reçu : on annule le timeout
+        if (chunkTimeoutId !== null) { clearTimeout(chunkTimeoutId); chunkTimeoutId = null; }
+
+        if (done) { closeStream(controller); return; }
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          const t = line.trim();
+          if (!t.startsWith("data:")) continue;
+          const data = t.slice(5).trim();
+          if (data === "[DONE]") { closeStream(controller); return; }
+          try {
+            const json = JSON.parse(data);
+            const delta = json.choices?.[0]?.delta?.content;
+            if (delta) controller.enqueue(encoder.encode(delta));
+          } catch { /* ligne partielle, on ignore */ }
+        }
+      } catch (err) {
+        // reader.read() a échoué (ex: reader annulé par le timeout)
+        if (!closed) {
+          controller.enqueue(
+            encoder.encode("\n\n⏱️ Le conteur met trop de temps à répondre, réessaie.")
+          );
+        }
+        closeStream(controller);
       }
     },
-    cancel() { try { reader.cancel(); } catch {} },
+    cancel() {
+      closeStream(null);
+    },
   });
 
   return new Response(stream, {
