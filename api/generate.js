@@ -35,17 +35,35 @@ const LANG_NAME = {
   portugais: "Portuguese",
 };
 
+// Map French level codes to English.
+const LEVEL_NAME = {
+  "A1-A2 (débutant)": "A1-A2 (beginner)",
+  "B1-B2 (intermédiaire)": "B1-B2 (intermediate)",
+  "C1-C2 (avancé)": "C1-C2 (advanced)",
+};
+
+// Detailed level instructions injected into the system prompt.
+const LEVEL_GUIDE = {
+  "A1-A2 (beginner)": "Use ONLY present tense. Sentences of 5-8 words maximum. Only the most common 500 words. No idioms, no complex grammar. Think: a child's first book.",
+  "B1-B2 (intermediate)": "Use present, past and future tenses. Moderate vocabulary. Some idioms are OK. Sentences can be longer but stay clear.",
+  "C1-C2 (advanced)": "Use all tenses, rich vocabulary, idioms, complex structures. Natural, native-level prose.",
+};
+
 function buildSystemPrompt(language, level, theme) {
   const themeLine = theme && THEME_HINTS[theme] ? `\n${THEME_HINTS[theme]}\n` : "";
+  const levelGuide = LEVEL_GUIDE[level] || "";
   return `You are the storyteller of "Sunami", a language teacher who teaches through STORYTELLING.
 
 TARGET LANGUAGE: ${language}. LEARNER LEVEL: ${level}.${themeLine}
 
 CRITICAL RULE: You write ONLY in ${language}. Never in French, never in any other language. Every single word of your response must be in ${language}.
 
+DIFFICULTY RULES FOR ${level}:
+${levelGuide}
+
 YOUR ROLE
 - Tell a captivating, immersive story in ${language} for the learner to practice.
-- Adapt the difficulty to ${level}: very simple sentences and common vocabulary for beginners; richer and more nuanced for advanced learners.
+- Adapt strictly to ${level} difficulty.
 
 PEDAGOGY
 - Highlight 1-3 key words or expressions in **bold** (surround with double asterisks), followed by a short translation or explanation in French in parentheses. Example: **el bosque** (la forêt).
@@ -80,7 +98,7 @@ export default async function handler(req) {
   try { body = await req.json(); } catch { body = {}; }
   const { history, userReply, language, level, theme } = body || {};
   const targetLanguage = LANG_NAME[language] || language || "English";
-  const cefrLevel = level || "A1-A2 (débutant)";
+  const cefrLevel = LEVEL_NAME[level] || level || "A1-A2 (beginner)";
   const storyTheme = theme || null;
 
   const trimmed = Array.isArray(history) ? history.slice(-10) : [];
