@@ -480,10 +480,17 @@ async function callAI(userReply){
   document.getElementById('chatLog').appendChild(loadingEl);
   scrollChat();
 
-  // Timeout global : couvre le fetch + l'attente du premier chunk du stream.
-  // Annulé dès qu'on reçoit le premier morceau de texte.
+  // Timeout watchdog : réinitialisé à chaque chunk reçu.
+  // Se déclenche uniquement si aucun chunk n'arrive pendant 25s,
+  // quelle que soit la durée totale du stream.
+  const STREAM_STALL_MS = 25000;
   const clientCtrl = new AbortController();
-  let clientTimeoutId = setTimeout(() => clientCtrl.abort(), 25000);
+  let clientTimeoutId = setTimeout(() => clientCtrl.abort(), STREAM_STALL_MS);
+
+  function resetStreamTimer() {
+    if (clientTimeoutId !== null) clearTimeout(clientTimeoutId);
+    clientTimeoutId = setTimeout(() => clientCtrl.abort(), STREAM_STALL_MS);
+  }
 
   try{
     const res = await fetch('/api/generate', {
@@ -493,8 +500,7 @@ async function callAI(userReply){
       signal: clientCtrl.signal,
     });
 
-    // Le fetch a réussi, mais on garde le timeout actif pour la lecture du stream.
-    // Il sera annulé au premier chunk.
+    // Le fetch a réussi. Le watchdog sera réinitialisé à chaque chunk.
 
     if(res.status === 429){
       clearTimeout(clientTimeoutId);
@@ -536,20 +542,23 @@ async function callAI(userReply){
     const reader = res.body.getReader();
     const dec = new TextDecoder();
     let full = '';
-    let firstChunk = true;
+    let lastChunkTs = Date.now();
     while(true){
       const { done, value } = await reader.read();
-      // Premier chunk reçu : on annule le timeout, le flux est vivant.
-      if(firstChunk){
-        firstChunk = false;
-        clearTimeout(clientTimeoutId);
-        clientTimeoutId = null;
-      }
+      const now = Date.now();
+      console.log('[CLIENT] chunk — delta=' + (now - lastChunkTs) + 'ms done=' + done + ' size=' + (value ? value.length : 0));
+      lastChunkTs = now;
+
+      // Chunk reçu : on réinitialise le watchdog.
+      resetStreamTimer();
+
       if(done) break;
       full += dec.decode(value, { stream:true });
       span.innerHTML = formatStory(full);
       scrollChat();
     }
+    // Stream terminé normalement : on annule définitivement le timer.
+    if(clientTimeoutId !== null){ clearTimeout(clientTimeoutId); clientTimeoutId = null; }
 
     if(!full.trim()){
       bubble.remove();
