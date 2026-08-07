@@ -101,7 +101,7 @@ export default async function handler(req) {
         stream: false,
         temperature: 0.85,
         max_tokens: 600,
-        stop: ["P.S.", "P.S :", "Note :", "Note:", "N.B."],
+        stop: ["P.S.", "P.S :", "Note :", "Note:"],
       }),
       signal: fetchController.signal,
     });
