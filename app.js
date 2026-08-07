@@ -126,8 +126,16 @@ function track(event, params){ try{ if(window.sunamiTrack) window.sunamiTrack(ev
 
 /* ===== PROGRESSION : mots appris, chapitres, objectif du jour ===== */
 const DAILY_GOAL = 3;
+// stats.words = [{ word, firstSeen, lastSeen, reviewCount, nextReview }, ...]
 let stats = { words: [], chapters: 0, dayKey: null, chaptersToday: 0, goalHitDay: null };
-try{ stats = { ...stats, ...JSON.parse(localStorage.getItem('sunami-stats') || '{}') }; }catch(e){}
+try{
+  const saved = JSON.parse(localStorage.getItem('sunami-stats') || '{}');
+  stats = { words: [], chapters: 0, dayKey: null, chaptersToday: 0, goalHitDay: null, ...saved };
+  // Migrate old format (array of strings) to new format (array of objects)
+  if(stats.words.length > 0 && typeof stats.words[0] === 'string'){
+    stats.words = stats.words.map(w => ({ word: w, firstSeen: todayKey(), lastSeen: todayKey(), reviewCount: 0, nextReview: todayKey() }));
+  }
+}catch(e){}
 if(!Array.isArray(stats.words)) stats.words = [];
 
 function todayKey(){ return new Date().toISOString().slice(0,10); }
@@ -150,6 +158,39 @@ function updateProgressChips(){
   if(wc) wc.textContent = stats.words.length;
   if(chip) chip.style.display = stats.words.length > 0 ? 'inline-flex' : 'none';
 }
+
+// Spaced repetition: returns words due for review today
+function getWordsForReview(maxWords = 5){
+  const today = todayKey();
+  const due = stats.words
+    .filter(w => w.nextReview <= today)
+    .sort((a,b) => a.reviewCount - b.reviewCount) // prioritize less-reviewed words
+    .slice(0, maxWords);
+  return due.map(w => w.word);
+}
+
+// Spaced repetition: update review schedule after a word is used
+function markWordReviewed(word){
+  const today = todayKey();
+  const entry = stats.words.find(w => w.word === word);
+  if(!entry){
+    stats.words.push({ word, firstSeen: today, lastSeen: today, reviewCount: 1, nextReview: shiftDay(today, 1) });
+  } else {
+    entry.lastSeen = today;
+    entry.reviewCount = (entry.reviewCount || 0) + 1;
+    // Spaced intervals: 1, 3, 7, 14, 30 days
+    const intervals = [1, 3, 7, 14, 30];
+    const idx = Math.min(entry.reviewCount - 1, intervals.length - 1);
+    entry.nextReview = shiftDay(today, intervals[idx]);
+  }
+  saveStats();
+}
+
+function shiftDay(dateStr, days){
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0,10);
+}
 function updateStatsPanel(){
   const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
   rollDay();
@@ -171,7 +212,15 @@ function registerChapter(fullText){
   stats.chapters += 1;
   stats.chaptersToday += 1;
   const before = stats.words.length;
-  extractVocab(fullText).forEach(w => { if(!stats.words.includes(w)) stats.words.push(w); });
+  const newWords = extractVocab(fullText);
+  newWords.forEach(w => {
+    if(!stats.words.find(x => x.word === w)){
+      stats.words.push({ word: w, firstSeen: todayKey(), lastSeen: todayKey(), reviewCount: 0, nextReview: todayKey() });
+    } else {
+      // Word already known — update its review schedule
+      markWordReviewed(w);
+    }
+  });
   const gained = stats.words.length - before;
   saveStats();
   updateProgressChips();
@@ -493,7 +542,7 @@ async function callAI(userReply){
     const res = await fetch('/api/generate', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ history: chatHistory, userReply, language: pickedLang, level: pickedLevel, theme: pickedTheme }),
+      body: JSON.stringify({ history: chatHistory, userReply, language: pickedLang, level: pickedLevel, theme: pickedTheme, vocabulary: getWordsForReview(5) }),
       signal: clientCtrl.signal,
     });
     clearTimeout(clientTimeoutId);
