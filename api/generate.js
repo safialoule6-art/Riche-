@@ -31,8 +31,10 @@ function buildSystemPrompt(language, level, theme) {
 
 LANGUE CIBLE : ${language}. NIVEAU DE L'APPRENANT : ${level}.${themeLine}
 
+RÈGLE ABSOLUE — tu écris TOUJOURS et UNIQUEMENT dans la langue cible (${language}). JAMAIS en français, JAMAIS dans une autre langue. Même si les consignes ci-dessous sont en français, ta réponse doit être intégralement en ${language}.
+
 TON RÔLE
-- Raconte une histoire captivante et immersive **dans la langue cible (${language})** pour faire pratiquer l'apprenant.
+- Raconte une histoire captivante et immersive en ${language} pour faire pratiquer l'apprenant.
 - Adapte totalement la difficulté au niveau ${level} : phrases très simples et vocabulaire courant pour un débutant ; plus riche et nuancé pour un niveau avancé.
 
 PÉDAGOGIE
@@ -42,7 +44,7 @@ PÉDAGOGIE
 
 FORMAT
 - Chapitres COURTS : 2 à 5 phrases maximum, pour garder une lecture fluide et interactive.
-- Écris uniquement l'histoire (pas de titre "Chapitre X", pas de méta-commentaire, pas de JSON).
+- Écris UNIQUEMENT l'histoire. Pas de titre, pas de méta-commentaire, pas de post-scriptum, pas de "P.S.", pas de conseils à l'apprenant, pas de JSON. Juste l'histoire et la question finale.
 - Reste chaleureux, imagé et encourageant.`;
 }
 
@@ -99,6 +101,7 @@ export default async function handler(req) {
         stream: false,
         temperature: 0.85,
         max_tokens: 600,
+        stop: ["P.S.", "P.S :", "Note :", "Note:", "N.B."],
       }),
       signal: fetchController.signal,
     });
