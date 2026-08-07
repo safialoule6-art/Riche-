@@ -575,10 +575,12 @@ async function callAI(userReply){
     if(clientTimeoutId !== null) clearTimeout(clientTimeoutId);
     try{ loadingEl.remove(); }catch(_){}
     if(sceneCard) sceneCard.classList.remove('thinking','speaking');
+    // Log l'erreur réelle pour diagnostic
+    console.error('[CLIENT] Erreur callAI — name=' + (err.name || '?') + ' message=' + (err.message || '?') + ' stack=' + ((err.stack || '').slice(0, 300)));
     if(err.name === 'AbortError'){
-      addMsg('feedback wrong', '⏱️ Le conteur met trop de temps à répondre, réessaie.');
+      addMsg('feedback wrong', '⏱️ Le conteur met trop de temps à répondre, réessaie. [' + err.name + ']');
     } else {
-      addMsg('feedback wrong', 'Erreur réseau : ' + err.message);
+      addMsg('feedback wrong', 'Erreur réseau : ' + err.message + ' [' + (err.name || 'Erreur') + ']');
     }
     sendBtn.disabled = false; input.disabled = false;
   }
