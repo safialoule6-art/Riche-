@@ -233,6 +233,8 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 .msg.feedback{align-self:center; font-size:12px; font-weight:800; color:var(--muted); text-align:center; padding:5px 12px;}
 .msg.feedback.wrong{color:var(--err);}
 .msg.feedback.right{color:var(--ok);}
+.msg.grammar-feedback{align-self:center; font-size:12px; font-weight:600; color:var(--foam); background:var(--surf); border:1px solid var(--muted); text-align:left; padding:8px 14px; border-radius:12px; margin:4px 0; max-width:85%; opacity:0.9; line-height:1.5;}
+.msg.grammar-feedback .grammar-icon{font-size:14px; margin-right:4px;}
 .loading{font-size:14px; color:var(--muted); font-weight:800; align-self:flex-start; letter-spacing:2px; animation:blink 1.1s steps(3) infinite;}
 @keyframes blink{50%{opacity:.35;}}
 
