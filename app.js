@@ -416,6 +416,11 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   const { data } = await supabase.auth.getSession();
   if(data.session){ enterApp(data.session.user.email, data.session.user.id); }
   else { window.location.replace('/'); }
+
+  // Service Worker pour mode hors-ligne
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
 });
 supabase.auth.onAuthStateChange((event, session)=>{
   if(session){ enterApp(session.user.email, session.user.id); }
@@ -621,3 +626,77 @@ function sendReply(){
   callAI(val);
 }
 window.sendReply = sendReply;
+
+/* ===== VOICE INPUT (Web Speech Recognition, gratuit) ===== */
+const SPEECH_LANG = {
+  anglais:'en-US', espagnol:'es-ES', allemand:'de-DE', italien:'it-IT',
+  arabe:'ar-SA', portugais:'pt-PT'
+};
+let recognition = null;
+let isListening = false;
+
+function initSpeechRecognition(){
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognition) return null;
+  const r = new SpeechRecognition();
+  r.continuous = false;
+  r.interimResults = true;
+  r.lang = SPEECH_LANG[pickedLang] || 'en-US';
+  return r;
+}
+
+window.toggleVoiceInput = function(){
+  if(isListening){ stopListening(); return; }
+  startListening();
+};
+
+function startListening(){
+  recognition = initSpeechRecognition();
+  if(!recognition){
+    alert('La reconnaissance vocale n\'est pas supportée sur ce navigateur. Utilise Chrome ou Edge.');
+    return;
+  }
+  const micBtn = document.getElementById('micBtn');
+  const input = document.getElementById('userInput');
+  isListening = true;
+  micBtn.classList.add('listening');
+  micBtn.textContent = '🔴';
+  input.placeholder = '🎙️ Parle maintenant...';
+
+  recognition.onresult = (event) => {
+    let transcript = '';
+    for(let i = event.resultIndex; i < event.results.length; i++){
+      transcript += event.results[i][0].transcript;
+    }
+    input.value = transcript;
+    if(event.results[0].isFinal){
+      stopListening();
+      // Auto-send after a short delay
+      setTimeout(() => {
+        if(input.value.trim()){
+          sendReply();
+        }
+      }, 400);
+    }
+  };
+
+  recognition.onerror = (event) => {
+    console.error('[VOICE] Erreur — ' + event.error);
+    stopListening();
+  };
+
+  recognition.onend = () => {
+    if(isListening) stopListening();
+  };
+
+  try { recognition.start(); } catch(e) { stopListening(); }
+}
+
+function stopListening(){
+  isListening = false;
+  if(recognition){ try { recognition.stop(); } catch(e) {} }
+  const micBtn = document.getElementById('micBtn');
+  const input = document.getElementById('userInput');
+  if(micBtn){ micBtn.classList.remove('listening'); micBtn.textContent = '🎤'; }
+  if(input) input.placeholder = 'Réponds dans la langue cible...';
+}
