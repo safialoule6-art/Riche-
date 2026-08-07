@@ -49,9 +49,16 @@ const LEVEL_GUIDE = {
   "C1-C2 (advanced)": "Use all tenses, rich vocabulary, idioms, complex structures. Natural, native-level prose.",
 };
 
-function buildSystemPrompt(language, level, theme) {
+function buildSystemPrompt(language, level, theme, hasUserReply) {
   const themeLine = theme && THEME_HINTS[theme] ? `\n${THEME_HINTS[theme]}\n` : "";
   const levelGuide = LEVEL_GUIDE[level] || "";
+  const grammarInstruction = hasUserReply ? `
+GRAMMAR CORRECTION
+After your story and question, add a line with exactly "---" on its own, then write a SHORT grammar note in French (max 2 sentences):
+- If the learner made mistakes: gently point out 1-2 errors and show the correct form. Example: "Tu as écrit 'I go yesterday' → on dit 'I went yesterday' (passé)."
+- If the learner wrote perfectly: give a short encouraging comment. Example: "Parfait ! Ta réponse est correcte et bien formulée."
+- Keep it brief, friendly, and in French.` : "";
+
   return `You are the storyteller of "Sunami", a language teacher who teaches through STORYTELLING.
 
 TARGET LANGUAGE: ${language}. LEARNER LEVEL: ${level}.${themeLine}
@@ -61,6 +68,11 @@ CRITICAL RULE: You write ONLY in ${language}. Never in French, never in any othe
 DIFFICULTY RULES FOR ${level}:
 ${levelGuide}
 
+STORY CONTINUITY
+- This is an ongoing saga. The learner is the protagonist. Keep characters, places, and plot consistent across episodes.
+- Refer back to previous events naturally. Build a real narrative arc over multiple episodes.
+- If this is the first episode, introduce the protagonist (the learner) and the setting.
+
 YOUR ROLE
 - Tell a captivating, immersive story in ${language} for the learner to practice.
 - Adapt strictly to ${level} difficulty.
@@ -68,7 +80,7 @@ YOUR ROLE
 PEDAGOGY
 - Highlight 1-3 key words or expressions in **bold** (surround with double asterisks), followed by a short translation or explanation in French in parentheses. Example: **el bosque** (la forêt).
 - ALWAYS end your message with ONE simple question in ${language} that invites the learner to reply and advance the story.
-- Build on what the learner just wrote to continue the narrative coherently. If they make a small mistake, naturally reformulate the correct version in the story without harsh correction.
+- Build on what the learner just wrote to continue the narrative coherently. If they make a small mistake, naturally reformulate the correct version in the story without harsh correction.${grammarInstruction}
 
 FORMAT
 - SHORT chapters: 2 to 5 sentences maximum, for fluid and interactive reading.
@@ -103,8 +115,10 @@ export default async function handler(req) {
 
   const trimmed = Array.isArray(history) ? history.slice(-10) : [];
 
+  const hasUserReply = !!userReply;
+
   const messages = [
-    { role: "system", content: buildSystemPrompt(targetLanguage, cefrLevel, storyTheme) },
+    { role: "system", content: buildSystemPrompt(targetLanguage, cefrLevel, storyTheme, hasUserReply) },
     ...trimmed,
     { role: "user", content: userReply || "Start a new story and ask me your first question." },
   ];
@@ -172,5 +186,18 @@ export default async function handler(req) {
     return jsonResponse({ error: "Le conteur n'a rien répondu, réessaie." }, 500);
   }
 
-  return jsonResponse({ text: content }, 200);
+  // Parse story and optional grammar feedback (separated by "---")
+  let storyText = content;
+  let grammarFeedback = "";
+  const sepIndex = content.indexOf("\n---\n");
+  if (sepIndex !== -1) {
+    storyText = content.slice(0, sepIndex).trim();
+    grammarFeedback = content.slice(sepIndex + 5).trim();
+  } else if (content.indexOf("\n---") !== -1) {
+    const idx = content.indexOf("\n---");
+    storyText = content.slice(0, idx).trim();
+    grammarFeedback = content.slice(idx + 4).trim();
+  }
+
+  return jsonResponse({ text: storyText, grammar: grammarFeedback || null }, 200);
 }

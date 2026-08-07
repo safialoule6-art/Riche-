@@ -512,6 +512,7 @@ async function callAI(userReply){
     }
 
     const fullText = data.text || '';
+    const grammar = data.grammar || null;
     loadingEl.remove();
 
     if(!fullText.trim()){
@@ -551,6 +552,15 @@ async function callAI(userReply){
     registerChapter(fullText);
     if(settings.autoplay) speak(speech);
     else if(sceneCard) sceneCard.classList.remove('speaking');
+
+    // Afficher la correction grammaticale si présente
+    if(grammar && userReply){
+      const correctionEl = document.createElement('div');
+      correctionEl.className = 'msg grammar-feedback';
+      correctionEl.innerHTML = '<span class="grammar-icon">📝</span> ' + escapeHtml(grammar);
+      document.getElementById('chatLog').appendChild(correctionEl);
+      scrollChat();
+    }
 
     sendBtn.disabled = false; input.disabled = false; input.focus();
     scrollChat();
