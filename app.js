@@ -79,7 +79,75 @@ window.shareProgress = async function(){
   }catch(e){}
 };
 
-document.addEventListener('keydown', e => { if(e.key === 'Escape'){ window.closeSettings(); window.closeCelebration && window.closeCelebration(); } });
+/* ===== VOCABULARY LIBRARY ===== */
+window.openVocabLibrary = function(){
+  const modal = document.getElementById('vocabModal');
+  const list = document.getElementById('vocabList');
+  const total = document.getElementById('vocabTotal');
+  const review = document.getElementById('vocabReview');
+  if(!modal || !list) return;
+
+  const words = [...stats.words].sort((a,b) => (b.lastSeen || '').localeCompare(a.lastSeen || ''));
+  total.textContent = words.length + ' mot' + (words.length !== 1 ? 's' : '');
+  const due = words.filter(w => w.nextReview <= todayKey()).length;
+  review.textContent = due + ' à réviser aujourd\'hui';
+
+  if(words.length === 0){
+    list.innerHTML = '<div class="vocab-empty">Aucun mot appris. Lis ton premier chapitre !</div>';
+  } else {
+    list.innerHTML = words.map(w => {
+      const isDue = w.nextReview <= todayKey();
+      const lastSeen = w.lastSeen ? ' · vu le ' + w.lastSeen.split('-').reverse().join('/') : '';
+      const reviewInfo = ' · prochaine révision ' + w.nextReview.split('-').reverse().join('/');
+      return `<div class="vocab-word${isDue ? ' due' : ''}">
+        <span class="vocab-word-text">${w.word}</span>
+        <span class="vocab-word-meta">${isDue ? '🔁 À réviser' + lastSeen : '✅' + reviewInfo}</span>
+      </div>`;
+    }).join('');
+  }
+
+  modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
+};
+
+window.closeVocabLibrary = function(){
+  const m = document.getElementById('vocabModal');
+  if(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
+};
+
+/* ===== DAILY NOTIFICATION ===== */
+function requestNotificationPermission(){
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'default'){
+    Notification.requestPermission();
+  }
+}
+
+function scheduleDailyReminder(){
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  // Schedule a reminder for ~18h if not already scheduled
+  const now = new Date();
+  const reminder = new Date();
+  reminder.setHours(18, 0, 0, 0);
+  if(now > reminder) reminder.setDate(reminder.getDate() + 1);
+  const delay = reminder.getTime() - now.getTime();
+  setTimeout(() => {
+    new Notification('Sunami 🌊', {
+      body: 'Ton épisode du jour t\'attend ! Reviens continuer ton histoire.',
+      icon: '/icon-192.png',
+      tag: 'sunami-daily'
+    });
+    // Schedule next day
+    scheduleDailyReminder();
+  }, delay);
+}
+
+// Ask for notification permission on first app open
+setTimeout(() => {
+  requestNotificationPermission();
+  scheduleDailyReminder();
+}, 5000);
+
+document.addEventListener('keydown', e => { if(e.key === 'Escape'){ window.closeSettings(); window.closeCelebration && window.closeCelebration(); window.closeVocabLibrary && window.closeVocabLibrary(); } });
 document.addEventListener('DOMContentLoaded', applySettings);
 
 /* ===== XP & NIVEAUX (gratuit) ===== */

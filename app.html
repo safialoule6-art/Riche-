@@ -145,10 +145,27 @@
     <div class="set-group">
       <div class="set-title">Compte</div>
       <div class="set-account" id="setEmail"></div>
+      <button class="btn ghost" id="vocabBtn" onclick="openVocabLibrary()">📚 Mon vocabulaire</button>
       <button class="btn ghost" id="shareBtn" onclick="shareProgress()">🔗 Partager ma progression</button>
       <button class="btn ghost danger" onclick="resetProgress()">↺ Réinitialiser ma progression</button>
       <button class="btn ghost danger" onclick="logout()">Déconnexion</button>
     </div>
+  </div>
+</div>
+
+<!-- ================= VOCABULARY LIBRARY MODAL ================= -->
+<div id="vocabModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Vocabulaire">
+  <div class="modal-backdrop" onclick="closeVocabLibrary()"></div>
+  <div class="modal-card vocab-card">
+    <div class="modal-head">
+      <h2>📚 Mon vocabulaire</h2>
+      <button class="icon-btn" onclick="closeVocabLibrary()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="vocab-stats-row">
+      <span id="vocabTotal">0 mots</span>
+      <span id="vocabReview">0 à réviser aujourd'hui</span>
+    </div>
+    <div class="vocab-list" id="vocabList"></div>
   </div>
 </div>
 

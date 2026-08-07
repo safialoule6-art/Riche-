@@ -425,6 +425,17 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 @keyframes celPop{0%{transform:scale(0) rotate(-20deg);}60%{transform:scale(1.25) rotate(8deg);}100%{transform:scale(1) rotate(0);}}
 .cel-card .btn{margin-top:4px;}
 
+/* ---- Vocabulary Library ---- */
+.vocab-card{max-height:80vh; overflow-y:auto;}
+.vocab-stats-row{display:flex; justify-content:space-between; padding:8px 0 16px; font-size:13px; color:var(--muted); font-weight:700;}
+.vocab-list{display:flex; flex-direction:column; gap:6px;}
+.vocab-word{display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-radius:10px; background:var(--surf); font-size:14px; gap:8px;}
+.vocab-word.due{background:rgba(245,165,36,.1); border:1px solid rgba(245,165,36,.3);}
+.vocab-word-text{font-weight:800; color:var(--foam);}
+.vocab-word-meta{font-size:12px; color:var(--muted); white-space:nowrap;}
+.vocab-word.due .vocab-word-meta{color:var(--gold);}
+.vocab-empty{text-align:center; padding:24px; color:var(--muted); font-size:14px;}
+
 @media (prefers-reduced-motion: reduce){
   .pick-card{opacity:1 !important;}
   .xp-float{display:none !important;}
