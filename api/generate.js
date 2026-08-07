@@ -65,6 +65,7 @@ export default async function handler(req) {
       headers: { "content-type": "application/json" },
     });
   }
+  console.log("[GROQ] Clé API présente — préfixe=" + apiKey.slice(0, 6) + "… longueur=" + apiKey.length);
 
   let body;
   try { body = await req.json(); } catch { body = {}; }
@@ -85,6 +86,10 @@ export default async function handler(req) {
   let groqRes;
   const fetchController = new AbortController();
   const fetchTimeoutId = setTimeout(() => fetchController.abort(), GROQ_CONNECT_TIMEOUT_MS);
+
+  const t0 = Date.now();
+  console.log("[GROQ] Avant fetch — t=" + t0 + " langue=" + targetLanguage + " niveau=" + cefrLevel + " thème=" + (storyTheme || "aucun") + " messages=" + messages.length);
+
   try {
     groqRes = await fetch(GROQ_URL, {
       method: "POST",
@@ -103,6 +108,7 @@ export default async function handler(req) {
     });
   } catch (err) {
     clearTimeout(fetchTimeoutId);
+    console.log("[GROQ] Échec fetch — t=" + Date.now() + " delta=" + (Date.now() - t0) + "ms err=" + (err.name || "unknown") + " msg=" + (err.message || ""));
     if (err.name === "AbortError") {
       return new Response(
         JSON.stringify({ error: "Le conteur met trop de temps à répondre, réessaie." }),
@@ -116,20 +122,27 @@ export default async function handler(req) {
   }
   clearTimeout(fetchTimeoutId);
 
+  const tHeaders = Date.now();
+  console.log("[GROQ] Headers reçus — status=" + groqRes.status + " delta=" + (tHeaders - t0) + "ms contentType=" + (groqRes.headers.get("content-type") || "?"));
+
   // Gestion propre de la limite de requêtes
   if (groqRes.status === 429) {
+    console.log("[GROQ] Rate limit 429 — headers reçus, arrêt.");
     return new Response(JSON.stringify({ error: "rate_limit" }), {
       status: 429,
       headers: { "content-type": "application/json" },
     });
   }
   if (!groqRes.ok || !groqRes.body) {
-    const detail = await groqRes.text().catch(() => "");
-    return new Response(JSON.stringify({ error: "Groq: " + detail.slice(0, 200) }), {
+    const errBody = await groqRes.text().catch(() => "");
+    console.log("[GROQ] Réponse non-OK — status=" + groqRes.status + " body=" + errBody.slice(0, 300));
+    return new Response(JSON.stringify({ error: "Groq: " + errBody.slice(0, 200) }), {
       status: groqRes.status || 500,
       headers: { "content-type": "application/json" },
     });
   }
+
+  console.log("[GROQ] Début streaming — t=" + tHeaders + " prêt à lire le flux.");
 
   // Transforme le flux SSE de Groq en flux de texte simple (les deltas de contenu)
   const encoder = new TextEncoder();
@@ -147,6 +160,8 @@ export default async function handler(req) {
     try { controller.close(); } catch {}
   }
 
+  let firstChunk = true;
+
   const stream = new ReadableStream({
     async pull(controller) {
       if (closed) return;
@@ -154,6 +169,7 @@ export default async function handler(req) {
       // Timeout entre deux chunks : si Groq se fige, on prévient et on ferme.
       chunkTimeoutId = setTimeout(() => {
         chunkTimeoutId = null;
+        console.log("[GROQ] STREAM STALL — aucun chunk depuis " + GROQ_STREAM_STALL_MS + "ms, fermeture du flux.");
         controller.enqueue(
           encoder.encode("\n\n⏱️ Le conteur met trop de temps à répondre, réessaie.")
         );
@@ -165,7 +181,15 @@ export default async function handler(req) {
         // Chunk reçu : on annule le timeout
         if (chunkTimeoutId !== null) { clearTimeout(chunkTimeoutId); chunkTimeoutId = null; }
 
-        if (done) { closeStream(controller); return; }
+        if (firstChunk) {
+          firstChunk = false;
+          console.log("[GROQ] Premier chunk reçu — delta=" + (Date.now() - tHeaders) + "ms depuis headers, " + (Date.now() - t0) + "ms depuis début.");
+        }
+
+        if (done) {
+          console.log("[GROQ] Stream terminé (done=true) — total=" + (Date.now() - t0) + "ms");
+          closeStream(controller); return;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
@@ -183,6 +207,7 @@ export default async function handler(req) {
         }
       } catch (err) {
         // reader.read() a échoué (ex: reader annulé par le timeout)
+        console.log("[GROQ] Erreur lecture stream — " + (err.name || "error") + " " + (err.message || ""));
         if (!closed) {
           controller.enqueue(
             encoder.encode("\n\n⏱️ Le conteur met trop de temps à répondre, réessaie.")
@@ -192,6 +217,7 @@ export default async function handler(req) {
       }
     },
     cancel() {
+      console.log("[GROQ] Stream cancel appelé — total=" + (Date.now() - t0) + "ms");
       closeStream(null);
     },
   });
