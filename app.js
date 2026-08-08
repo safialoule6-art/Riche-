@@ -619,6 +619,13 @@ function addFeedback(){
 }
 
 function escapeHtml(s){ return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function setMascotColor(color){
+  const av = document.getElementById('sceneAvatar');
+  if(!av) return;
+  av.classList.remove('mascot-yellow','mascot-red');
+  if(color === 'yellow') av.classList.add('mascot-yellow');
+  if(color === 'red') av.classList.add('mascot-red');
+}
 function formatStory(s){ return escapeHtml(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>'); }
 function cleanForSpeech(s){ return s.replace(/\*\*/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim(); }
 
@@ -638,6 +645,7 @@ async function callAI(userReply){
   sendBtn.disabled = true; input.disabled = true;
   const sceneCard = document.querySelector('.scene-card');
   if(sceneCard){ sceneCard.classList.add('thinking'); sceneCard.classList.remove('speaking'); }
+  setMascotColor('green');
 
   // Indicateur "le conteur écrit…"
   const loadingEl = document.createElement('div');
@@ -663,6 +671,7 @@ async function callAI(userReply){
     if(res.status === 429){
       loadingEl.remove();
       if(sceneCard) sceneCard.classList.remove('thinking');
+      setMascotColor('red');
       addMsg('feedback wrong', '⏳ Trop de demandes d\u2019un coup — patiente ~30 secondes puis réessaie.');
       sendBtn.disabled = false; input.disabled = false;
       return;
@@ -673,6 +682,7 @@ async function callAI(userReply){
     if(!res.ok || data.error){
       loadingEl.remove();
       if(sceneCard) sceneCard.classList.remove('thinking');
+      setMascotColor('red');
       addMsg('feedback wrong', 'Erreur : ' + (data.error || ('HTTP ' + res.status)));
       sendBtn.disabled = false; input.disabled = false;
       return;
@@ -684,6 +694,7 @@ async function callAI(userReply){
 
     if(!fullText.trim()){
       if(sceneCard) sceneCard.classList.remove('thinking');
+      setMascotColor('red');
       addMsg('feedback wrong', 'Le conteur n\u2019a rien répondu — réessaie.');
       sendBtn.disabled = false; input.disabled = false;
       return;
@@ -727,6 +738,11 @@ async function callAI(userReply){
       correctionEl.innerHTML = '<span class="grammar-icon">📝</span> ' + escapeHtml(grammar);
       document.getElementById('chatLog').appendChild(correctionEl);
       scrollChat();
+      // Mascotte : jaune si erreurs, vert si parfait
+      const isPerfect = /parfait|correcte?|bien|impeccable|bravo|aucune erreur/i.test(grammar);
+      setMascotColor(isPerfect ? 'green' : 'yellow');
+    } else if(userReply){
+      setMascotColor('green');
     }
 
     sendBtn.disabled = false; input.disabled = false; input.focus();
@@ -735,6 +751,7 @@ async function callAI(userReply){
     clearTimeout(clientTimeoutId);
     try{ loadingEl.remove(); }catch(_){}
     if(sceneCard) sceneCard.classList.remove('thinking','speaking');
+    setMascotColor('red');
     console.error('[CLIENT] Erreur callAI — name=' + (err.name || '?') + ' message=' + (err.message || '?'));
     if(err.name === 'AbortError'){
       addMsg('feedback wrong', '⏱️ Le conteur met trop de temps à répondre, réessaie.');

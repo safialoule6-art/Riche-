@@ -409,6 +409,11 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 @keyframes think{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-5px) rotate(3deg);}}
 .scene-card.speaking .mascot{animation:bob 1.4s ease-in-out infinite;}
 
+/* Mascotte : couleurs selon qualité de réponse */
+.scene-avatar{--mascot-light:#2dd4bf; --mascot-dark:#14b8a6; transition:--mascot-light .4s var(--ease), --mascot-dark .4s var(--ease);}
+.scene-avatar.mascot-yellow{--mascot-light:#f5a524; --mascot-dark:#d68a00;}
+.scene-avatar.mascot-red{--mascot-light:#ff5a5f; --mascot-dark:#e0484f;}
+
 /* accueil / empty-state du conteur */
 .story-welcome{display:flex; flex-direction:column; align-items:center; text-align:center;
   gap:6px; padding:22px 16px; color:var(--muted); font-weight:700; font-size:13px;
