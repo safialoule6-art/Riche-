@@ -414,6 +414,24 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 .scene-avatar.mascot-yellow{--mascot-light:#f5a524; --mascot-dark:#d68a00;}
 .scene-avatar.mascot-red{--mascot-light:#ff5a5f; --mascot-dark:#e0484f;}
 
+/* Mascotte : expressions faciales */
+.me-eyes, .me-mouth{transition:opacity .25s var(--ease);}
+.me-normal, .me-smile{opacity:1;}
+.me-happy, .me-wide, .me-bigsmile, .me-o, .me-think{opacity:0;}
+/* happy */
+.scene-avatar.emo-happy .me-normal, .scene-avatar.emo-happy .me-smile{opacity:0;}
+.scene-avatar.emo-happy .me-happy, .scene-avatar.emo-happy .me-bigsmile{opacity:1;}
+/* surprised */
+.scene-avatar.emo-surprised .me-normal, .scene-avatar.emo-surprised .me-smile{opacity:0;}
+.scene-avatar.emo-surprised .me-wide, .scene-avatar.emo-surprised .me-o{opacity:1;}
+/* thinking */
+.scene-avatar.emo-think .me-smile{opacity:0;}
+.scene-avatar.emo-think .me-think{opacity:1;}
+
+/* Previously banner */
+.prev-banner{background:linear-gradient(120deg,rgba(20,184,166,.1),rgba(45,212,191,.06)); border:1px solid rgba(20,184,166,.2); border-radius:12px; padding:10px 14px; margin-bottom:14px; font-size:12px; font-weight:600; color:var(--muted); line-height:1.5; animation:msgIn .35s var(--ease) both;}
+.prev-banner .prev-label{font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--wave); margin-bottom:4px;}
+
 /* accueil / empty-state du conteur */
 .story-welcome{display:flex; flex-direction:column; align-items:center; text-align:center;
   gap:6px; padding:22px 16px; color:var(--muted); font-weight:700; font-size:13px;

@@ -30,15 +30,50 @@
     </defs>
     <path d="M60 8 C60 8 102 62 102 92 A42 42 0 1 1 18 92 C18 62 60 8 60 8 Z" fill="url(#mgrad)"/>
     <path d="M60 8 C60 8 78 32 88 54 C72 44 52 46 40 60 C46 40 60 8 60 8 Z" fill="#ffffff" opacity="0.18"/>
-    <ellipse cx="47" cy="93" rx="12" ry="14" fill="#ffffff"/>
-    <ellipse cx="76" cy="93" rx="12" ry="14" fill="#ffffff"/>
-    <circle cx="49" cy="96" r="6" fill="#0f2e2b"/>
-    <circle cx="74" cy="96" r="6" fill="#0f2e2b"/>
-    <circle cx="51" cy="93" r="2.2" fill="#ffffff"/>
-    <circle cx="76" cy="93" r="2.2" fill="#ffffff"/>
+    <!-- Yeux normaux -->
+    <g class="me-eyes me-normal">
+      <ellipse cx="47" cy="93" rx="12" ry="14" fill="#ffffff"/>
+      <ellipse cx="76" cy="93" rx="12" ry="14" fill="#ffffff"/>
+      <circle cx="49" cy="96" r="6" fill="#0f2e2b"/>
+      <circle cx="74" cy="96" r="6" fill="#0f2e2b"/>
+      <circle cx="51" cy="93" r="2.2" fill="#ffffff"/>
+      <circle cx="76" cy="93" r="2.2" fill="#ffffff"/>
+    </g>
+    <!-- Yeux heureux (arcs) -->
+    <g class="me-eyes me-happy">
+      <path d="M35 96 Q47 83 59 96" stroke="#0f2e2b" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M64 96 Q76 83 88 96" stroke="#0f2e2b" stroke-width="4" fill="none" stroke-linecap="round"/>
+    </g>
+    <!-- Yeux grands (surpris) -->
+    <g class="me-eyes me-wide">
+      <circle cx="47" cy="93" r="9" fill="#ffffff" stroke="#0f2e2b" stroke-width="2.5"/>
+      <circle cx="76" cy="93" r="9" fill="#ffffff" stroke="#0f2e2b" stroke-width="2.5"/>
+      <circle cx="47" cy="93" r="4.5" fill="#0f2e2b"/>
+      <circle cx="76" cy="93" r="4.5" fill="#0f2e2b"/>
+      <circle cx="49" cy="90" r="2" fill="#ffffff"/>
+      <circle cx="78" cy="90" r="2" fill="#ffffff"/>
+    </g>
+    <!-- Joues -->
     <circle cx="33" cy="108" r="6" fill="#ff8a8f" opacity="0.55"/>
     <circle cx="90" cy="108" r="6" fill="#ff8a8f" opacity="0.55"/>
-    <path d="M51 113 Q61.5 123 72 113" stroke="#0f2e2b" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+    <!-- Bouche sourire -->
+    <g class="me-mouth me-smile">
+      <path d="M51 113 Q61.5 123 72 113" stroke="#0f2e2b" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+    </g>
+    <!-- Bouche grand sourire -->
+    <g class="me-mouth me-bigsmile">
+      <path d="M47 112 Q61.5 130 76 112" stroke="#0f2e2b" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+      <path d="M52 118 Q61.5 124 71 118" fill="#ff8a8f" opacity="0.5"/>
+    </g>
+    <!-- Bouche O -->
+    <g class="me-mouth me-o">
+      <ellipse cx="61.5" cy="116" rx="7" ry="9" fill="#0f2e2b"/>
+      <ellipse cx="61.5" cy="113" rx="3" ry="2" fill="#ffffff" opacity="0.7"/>
+    </g>
+    <!-- Bouche réflexion -->
+    <g class="me-mouth me-think">
+      <path d="M53 115 Q57 110 61.5 115 Q66 120 70 115" stroke="#0f2e2b" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </g>
   </symbol>
 </svg>
 

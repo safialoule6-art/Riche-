@@ -303,6 +303,11 @@ function registerChapter(fullText){
     }
   });
   const gained = stats.words.length - before;
+  // "Previously on" — sauvegarde les 2 premières phrases pour le prochain épisode
+  const sentences = fullText.split(/[.!?]+/).filter(s => s.trim().length > 10);
+  if(sentences.length >= 2){
+    localStorage.setItem('sunami_prev', sentences.slice(0,2).join('. ') + '.');
+  }
   saveStats();
   updateProgressChips();
   track('chapter_complete', { chapter: stats.chapters, new_words: gained });
@@ -626,6 +631,14 @@ function setMascotColor(color){
   if(color === 'yellow') av.classList.add('mascot-yellow');
   if(color === 'red') av.classList.add('mascot-red');
 }
+function setMascotExpression(emo){
+  const av = document.getElementById('sceneAvatar');
+  if(!av) return;
+  av.classList.remove('emo-happy','emo-surprised','emo-think');
+  if(emo === 'happy') av.classList.add('emo-happy');
+  if(emo === 'surprised') av.classList.add('emo-surprised');
+  if(emo === 'think') av.classList.add('emo-think');
+}
 function formatStory(s){ return escapeHtml(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>'); }
 function cleanForSpeech(s){ return s.replace(/\*\*/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim(); }
 
@@ -644,8 +657,22 @@ async function callAI(userReply){
   const input = document.getElementById('userInput');
   sendBtn.disabled = true; input.disabled = true;
   const sceneCard = document.querySelector('.scene-card');
+
+  // "Previously on Sunami" — affiche un résumé de l'épisode précédent
+  if(userReply && chatHistory.length > 0){
+    const prev = localStorage.getItem('sunami_prev');
+    if(prev){
+      const banner = document.createElement('div');
+      banner.className = 'prev-banner';
+      banner.innerHTML = '<div class="prev-label">📺 Previously on Sunami…</div>' + escapeHtml(prev);
+      document.getElementById('chatLog').appendChild(banner);
+      scrollChat();
+    }
+  }
+
   if(sceneCard){ sceneCard.classList.add('thinking'); sceneCard.classList.remove('speaking'); }
   setMascotColor('green');
+  setMascotExpression('think');
 
   // Indicateur "le conteur écrit…"
   const loadingEl = document.createElement('div');
@@ -717,6 +744,7 @@ async function callAI(userReply){
     bubble.appendChild(cursor);
     document.getElementById('chatLog').appendChild(bubble);
     if(sceneCard){ sceneCard.classList.remove('thinking'); sceneCard.classList.add('speaking'); }
+    setMascotExpression('happy');
 
     // Animation machine à écrire : affiche le texte progressivement
     await typewriter(span, fullText);
