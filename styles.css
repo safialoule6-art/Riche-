@@ -552,32 +552,41 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 .price-card .perks{margin:0 0 18px;}
 .price-card .btn{width:100%;}
 
-/* ---- Avant / Après (phone mockups) ---- */
-.ba-wrap{display:flex; align-items:center; gap:10px; justify-content:center;}
-.ba-vs{font-family:'Baloo 2',sans-serif; font-weight:900; font-size:18px; color:var(--muted); flex-shrink:0; letter-spacing:.04em;}
-.ba-phone{flex:0 0 140px; border-radius:18px; overflow:hidden; border:2px solid;}
-.ba-phone.ba-bad{border-color:rgba(255,90,95,.3); background:linear-gradient(180deg,#fef2f2,#f9e4e4);}
-.ba-phone.ba-good{border-color:rgba(20,184,166,.35); background:linear-gradient(180deg,#f0fdfa,#ddf4f0);}
-.ba-phone-inner{padding:12px 10px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px; min-height:240px;}
-.ba-phone-brand{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:13px; color:var(--foam);}
-.ba-phone-emoji{font-size:32px;}
-.ba-phone-exercise{font-size:11px; font-weight:700; color:var(--muted); background:rgba(0,0,0,.06); padding:6px 8px; border-radius:8px; width:100%;}
-.ba-phone-choices{display:flex; flex-direction:column; gap:4px; width:100%;}
-.ba-phone-choices span{font-size:10px; font-weight:600; color:var(--muted); padding:5px 7px; border-radius:6px; border:1px solid rgba(0,0,0,.1); text-align:left;}
-.ba-phone-choices span.ba-pick{background:rgba(255,90,95,.15); border-color:rgba(255,90,95,.3);}
-.ba-phone-feedback{font-size:11px; font-weight:800; color:var(--accent);}
-.ba-phone-feedback.good{color:var(--ok);}
-.ba-phone-vibe{font-size:24px; margin-top:auto;}
-.ba-phone-story{font-size:10px; font-weight:600; color:var(--muted); font-style:italic; background:rgba(20,184,166,.1); padding:6px 8px; border-radius:8px; width:100%;}
-.ba-phone-reply{font-size:10px; font-weight:700; color:#fff; background:var(--wave); padding:5px 7px; border-radius:6px 6px 2px 6px; width:100%; text-align:left;}
-.ba-mascot{width:36px; height:42px; display:block;}
-[data-theme="dark"] .ba-phone.ba-bad{background:linear-gradient(180deg,#2a1515,#1f1010); border-color:rgba(255,90,95,.2);}
-[data-theme="dark"] .ba-phone.ba-good{background:linear-gradient(180deg,#0f2a26,#0a1f1c); border-color:rgba(20,184,166,.2);}
+/* ---- Avant / Après (phone mockups premium) ---- */
+.ba-wrap{display:flex; align-items:stretch; gap:0; justify-content:center; position:relative;}
+.ba-phone{flex:0 0 155px; border-radius:20px; overflow:hidden; border:2px solid; position:relative;}
+.ba-phone.ba-bad{border-color:rgba(255,90,95,.25); background:linear-gradient(180deg,#fff5f5,#fde8e8);}
+.ba-phone.ba-good{border-color:rgba(20,184,166,.3); background:linear-gradient(180deg,#f0fcfa,#d8f5f0);}
+.ba-notch{width:40px; height:5px; background:rgba(0,0,0,.12); border-radius:99px; margin:8px auto 0;}
+.ba-phone-inner{padding:10px 12px 14px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:7px; min-height:280px;}
+.ba-time{font-size:9px; font-weight:800; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; background:rgba(0,0,0,.05); padding:3px 8px; border-radius:99px;}
+.ba-avatar{font-size:34px; line-height:1;}
+.ba-app-name{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:13px; color:var(--foam);}
+.ba-hearts{font-size:12px; letter-spacing:2px;}
+.ba-exercise{font-size:10px; font-weight:700; color:var(--foam); background:rgba(0,0,0,.05); padding:6px 8px; border-radius:8px; width:100%; line-height:1.4;}
+.ba-answer{font-size:9px; font-weight:700; padding:5px 8px; border-radius:5px; width:100%; text-align:left;}
+.ba-answer.wrong{color:var(--accent); background:rgba(255,90,95,.12); border:1px solid rgba(255,90,95,.2);}
+.ba-answer.right{color:#fff; background:var(--wave); border:1px solid var(--wave);}
+.ba-result{font-size:10px; font-weight:800; color:var(--accent);}
+.ba-result.good{color:var(--ok);}
+.ba-progress{font-size:9px; font-weight:700; color:var(--muted); background:rgba(0,0,0,.04); padding:3px 8px; border-radius:99px;}
+.ba-progress.good{color:var(--wave-dim); background:rgba(20,184,166,.1);}
+.ba-bottom{font-size:9px; font-weight:800; color:rgba(255,90,95,.5); margin-top:auto; letter-spacing:.03em;}
+.ba-bottom.good{color:var(--wave);}
+.ba-story{font-size:9px; font-weight:600; color:var(--foam); font-style:italic; background:rgba(20,184,166,.1); padding:6px 8px; border-radius:8px; width:100%; line-height:1.4; text-align:left;}
+.ba-streak{font-size:10px; font-weight:800; color:var(--accent); letter-spacing:.02em;}
+/* VS */
+.ba-vs{display:flex; align-items:center; justify-content:center; flex-shrink:0; margin:0 -8px; z-index:2;}
+.ba-vs-circle{width:32px; height:32px; border-radius:50%; background:var(--card); border:2px solid var(--card-border); display:flex; align-items:center; justify-content:center; font-family:'Baloo 2',sans-serif; font-weight:900; font-size:11px; color:var(--muted); box-shadow:0 2px 8px rgba(0,0,0,.1);}
+[data-theme="dark"] .ba-phone.ba-bad{background:linear-gradient(180deg,#271515,#1c0f0f); border-color:rgba(255,90,95,.2);}
+[data-theme="dark"] .ba-phone.ba-good{background:linear-gradient(180deg,#0e2622,#091c19); border-color:rgba(20,184,166,.2);}
+[data-theme="dark"] .ba-vs-circle{background:var(--deep);}
 @media(max-width:420px){
-  .ba-phone{flex:0 0 130px;}
-  .ba-phone-inner{min-height:220px; padding:10px 8px; gap:6px;}
-  .ba-phone-emoji{font-size:26px;}
-  .ba-phone-exercise, .ba-phone-story{font-size:9px;}
-  .ba-phone-choices span, .ba-phone-reply{font-size:9px;}
+  .ba-phone{flex:0 0 140px;}
+  .ba-phone-inner{min-height:260px; padding:8px 10px 12px; gap:5px;}
+  .ba-avatar{font-size:28px;}
+  .ba-exercise, .ba-story{font-size:8px;}
+  .ba-answer{font-size:8px;}
+  .ba-vs-circle{width:28px; height:28px; font-size:10px;}
 }
 
