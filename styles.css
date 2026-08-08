@@ -168,10 +168,22 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
 .faq-item p{font-size:14px; color:var(--muted); font-weight:600; line-height:1.55; padding:0 0 16px; animation:faqIn .3s var(--ease);}
 @keyframes faqIn{from{opacity:0; transform:translateY(-6px);}to{opacity:1; transform:none;}}
 
-footer{text-align:center; color:var(--muted); font-size:12px; font-weight:700; margin-top:48px; line-height:1.7;}
+footer{text-align:center; color:var(--muted); font-size:13px; font-weight:700; margin-top:48px; line-height:1.8;}
 footer b{color:var(--wave);}
-footer a{color:var(--muted); text-decoration:underline; text-underline-offset:2px;}
-footer a:hover{color:var(--wave);}
+footer a{color:var(--wave); text-decoration:none; font-weight:800;}
+footer a:hover{text-decoration:underline; text-underline-offset:3px;}
+
+/* ---- Header/footer communs pour pages légales, pricing, support ---- */
+.landing-header{display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-bottom:2px solid var(--card-border); background:var(--deep);}
+.landing-header .logo{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:20px; color:var(--foam); text-decoration:none; display:flex; align-items:center; gap:6px;}
+.landing-header .logo span{color:var(--wave);}
+.landing-header nav{display:flex; gap:14px;}
+.landing-header nav a{font-size:13px; font-weight:700; color:var(--muted); text-decoration:none;}
+.landing-header nav a:hover{color:var(--wave);}
+.landing-footer{text-align:center; color:var(--muted); font-size:13px; font-weight:700; margin-top:48px; padding:0 20px 40px; line-height:1.8;}
+.landing-footer a{color:var(--wave); text-decoration:none; font-weight:800;}
+.landing-footer a:hover{text-decoration:underline; text-underline-offset:3px;}
+.landing-footer .footer-copy{font-size:12px; color:var(--muted); font-weight:600;}
 
 /* ---- Legal Pages ---- */
 .legal-page{max-width:720px; margin:32px auto; padding:0 24px 80px;}

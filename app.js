@@ -382,7 +382,7 @@ window.unsubscribe = async function(){
     alert('Abonnement résilié. Tu es maintenant en offre Gratuit.');
     window.closeSettings();
     location.reload();
-  }catch(e){ alert('Erreur. Contacte ahmedyas09030@gmail.com'); }
+  }catch(e){ alert('Erreur. Contacte ahmedyas09020@gmail.com'); }
 };
 
 window.logout = async function(){
