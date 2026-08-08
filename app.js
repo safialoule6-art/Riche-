@@ -44,6 +44,9 @@ function speak(text, btn){
 window.openSettings = function(){
   applySettings();
   updateStatsPanel();
+  renderAchievements();
+  renderCharacters();
+  renderStoryMap();
   const em = document.getElementById('setEmail');
   const lbl = document.getElementById('userLabel');
   if(em && lbl) em.textContent = lbl.textContent ? ('Connecté : ' + lbl.textContent) : '';
@@ -308,8 +311,17 @@ function registerChapter(fullText){
   if(sentences.length >= 2){
     localStorage.setItem('sunami_prev', sentences.slice(0,2).join('. ') + '.');
   }
+  // Détection personnages et lieux
+  detectCharacter(fullText);
+  detectLocation(fullText);
+  // Track langues et thèmes
+  if(!stats.languagesUsed) stats.languagesUsed = [];
+  if(pickedLang && !stats.languagesUsed.includes(pickedLang)){ stats.languagesUsed.push(pickedLang); }
+  if(!stats.themesUsed) stats.themesUsed = [];
+  if(pickedTheme && !stats.themesUsed.includes(pickedTheme)){ stats.themesUsed.push(pickedTheme); }
   saveStats();
   updateProgressChips();
+  checkAchievements();
   track('chapter_complete', { chapter: stats.chapters, new_words: gained });
   if(gained > 0){
     const chip = document.getElementById('wordsChip');
@@ -358,6 +370,152 @@ window.closeCelebration = function(){
   if(m){ m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); }
   const box = document.getElementById('confetti'); if(box) box.innerHTML = '';
 };
+
+/* ===== SUCCÈS (ACHIEVEMENTS) ===== */
+const ACHIEVEMENTS = [
+  { id:'first_word', emoji:'📖', name:'Premier mot', desc:'Apprends ton premier mot de vocabulaire', tier:'free' },
+  { id:'first_chapter', emoji:'📕', name:'Premier épisode', desc:'Termine ton premier chapitre', tier:'free' },
+  { id:'streak_3', emoji:'🔥', name:'3 jours', desc:'Garde ta série 3 jours', tier:'free' },
+  { id:'streak_7', emoji:'🔥', name:'7 jours', desc:'Garde ta série 7 jours', tier:'premium' },
+  { id:'streak_30', emoji:'💎', name:'30 jours', desc:'Garde ta série 30 jours', tier:'pro' },
+  { id:'words_50', emoji:'📚', name:'50 mots', desc:'Apprends 50 mots', tier:'free' },
+  { id:'words_100', emoji:'📚', name:'100 mots', desc:'Apprends 100 mots', tier:'premium' },
+  { id:'words_500', emoji:'🏆', name:'500 mots', desc:'Apprends 500 mots', tier:'pro' },
+  { id:'xp_100', emoji:'⭐', name:'100 XP', desc:'Gagne 100 XP', tier:'free' },
+  { id:'xp_1000', emoji:'🌟', name:'1000 XP', desc:'Gagne 1000 XP', tier:'premium' },
+  { id:'polyglot', emoji:'🌍', name:'Polyglotte', desc:'Essaie 3 langues différentes', tier:'premium' },
+  { id:'writer', emoji:'✍️', name:'Écrivain', desc:'10 réponses parfaites', tier:'premium' },
+  { id:'nightowl', emoji:'🦉', name:'Noctambule', desc:'Utilise le mode sombre', tier:'free' },
+  { id:'explorer', emoji:'🗺️', name:'Explorateur', desc:'Explore 5 thèmes différents', tier:'pro' },
+  { id:'chapter_10', emoji:'📖', name:'10 épisodes', desc:'Termine 10 chapitres', tier:'premium' },
+];
+let unlockedAchievements = [];
+try{ unlockedAchievements = JSON.parse(localStorage.getItem('sunami-achievements') || '[]'); }catch(e){}
+
+function unlockAchievement(id){
+  if(unlockedAchievements.includes(id)) return;
+  const ach = ACHIEVEMENTS.find(a => a.id === id);
+  if(!ach) return;
+  unlockedAchievements.push(id);
+  localStorage.setItem('sunami-achievements', JSON.stringify(unlockedAchievements));
+  // Petite célébration légère
+  const m = document.getElementById('celModal');
+  if(!m || m.classList.contains('open')) return; // pas de popup si déjà une célébration
+  celebrate({ emoji:ach.emoji, title:'Succès débloqué !', sub:ach.name + ' — ' + ach.desc });
+}
+
+function checkAchievements(){
+  if(stats.words.length >= 1) unlockAchievement('first_word');
+  if(stats.words.length >= 50) unlockAchievement('words_50');
+  if(stats.words.length >= 100) unlockAchievement('words_100');
+  if(stats.words.length >= 500) unlockAchievement('words_500');
+  if(stats.chapters >= 1) unlockAchievement('first_chapter');
+  if(stats.chapters >= 10) unlockAchievement('chapter_10');
+  if(xp >= 100) unlockAchievement('xp_100');
+  if(xp >= 1000) unlockAchievement('xp_1000');
+  if((progress.streak || 0) >= 3) unlockAchievement('streak_3');
+  if((progress.streak || 0) >= 7) unlockAchievement('streak_7');
+  if((progress.streak || 0) >= 30) unlockAchievement('streak_30');
+  if(document.documentElement.getAttribute('data-theme') === 'dark') unlockAchievement('nightowl');
+  // perfectCount + languagesCount tracked via stats extensions
+  if((stats.perfectCount || 0) >= 10) unlockAchievement('writer');
+  if((stats.languagesUsed || []).length >= 3) unlockAchievement('polyglot');
+  if((stats.themesUsed || []).length >= 5) unlockAchievement('explorer');
+}
+
+function renderAchievements(){
+  const container = document.getElementById('achievementsList');
+  if(!container) return;
+  container.innerHTML = ACHIEVEMENTS.map(a => {
+    const unlocked = unlockedAchievements.includes(a.id);
+    const locked = !unlocked && (a.tier === 'premium' && !isPremium()) || (a.tier === 'pro' && !isPro());
+    return '<div class="ach-badge' + (unlocked ? ' ach-unlocked' : '') + (locked ? ' ach-locked' : '') + '">' +
+      '<span class="ach-emoji">' + a.emoji + '</span>' +
+      '<div><b>' + a.name + '</b><small>' + (unlocked ? '✓ ' + a.desc : (locked ? '🔒 ' + a.tier.toUpperCase() : a.desc)) + '</small></div>' +
+    '</div>';
+  }).join('');
+}
+
+/* ===== FICHES PERSONNAGES ===== */
+let characters = [];
+try{ characters = JSON.parse(localStorage.getItem('sunami-characters') || '[]'); }catch(e){}
+function detectCharacter(text){
+  const namePatterns = [
+    /\b(Madame|Monsieur|M\.|Mme)\s+([A-Z][a-zàâäéèêëîïôöùûüç]+)/g,
+    /\b(Dr|Professeur|Capitaine|Chef|Sergent)\s+([A-Z][a-zàâäéèêëîïôöùûüç]+)/g,
+    /\b([A-Z][a-zàâäéèêëîïôöùûüç]+)\b/g
+  ];
+  const found = [];
+  namePatterns.forEach(pat => {
+    let m;
+    while((m = pat.exec(text))){
+      const name = m[2] || m[1];
+      if(name && name.length > 2 && !['Vous','Tu','Bonjour','Comment','Pourquoi','Quand','Où'].includes(name)){
+        found.push(name);
+      }
+    }
+  });
+  found.forEach(name => {
+    if(!characters.find(c => c.name === name)){
+      characters.push({ name, role:'Personnage rencontré', chapter: stats.chapters, firstSeen: todayKey() });
+    }
+  });
+  if(characters.length > 10) characters = characters.slice(-10);
+  localStorage.setItem('sunami-characters', JSON.stringify(characters));
+}
+
+function renderCharacters(){
+  const container = document.getElementById('charactersList');
+  if(!container) return;
+  if(characters.length === 0){
+    container.innerHTML = '<div class="ach-empty">Aucun personnage rencontré. Continue l\'histoire !</div>';
+    return;
+  }
+  container.innerHTML = characters.map(c =>
+    '<div class="char-card">' +
+      '<div class="char-avatar">' + c.name.charAt(0).toUpperCase() + '</div>' +
+      '<div><b>' + c.name + '</b><small>' + c.role + ' · Chapitre ' + c.chapter + '</small></div>' +
+    '</div>'
+  ).join('');
+}
+
+/* ===== CARTE DE L'HISTOIRE (Pro) ===== */
+let storyLocations = [];
+try{ storyLocations = JSON.parse(localStorage.getItem('sunami-locations') || '[]'); }catch(e){}
+function detectLocation(text){
+  const locPatterns = [
+    /\b(à|au|en|dans|sur|vers)\s+(le|la|l'|les)?\s*([A-Z][a-zàâäéèêëîïôöùûüç]+)/g,
+  ];
+  locPatterns.forEach(pat => {
+    let m;
+    while((m = pat.exec(text))){
+      const loc = m[3];
+      if(loc && loc.length > 3 && !['Vous','Bonjour','Comment','Pourquoi','Quand','Où','Cette','Cette'].includes(loc)){
+        if(!storyLocations.find(l => l.name === loc)){
+          storyLocations.push({ name:loc, chapter:stats.chapters, emoji:'📍' });
+        }
+      }
+    }
+  });
+  if(storyLocations.length > 10) storyLocations = storyLocations.slice(-10);
+  localStorage.setItem('sunami-locations', JSON.stringify(storyLocations));
+}
+
+function renderStoryMap(){
+  const container = document.getElementById('storyMapContainer');
+  if(!container) return;
+  if(!isPro()){ container.innerHTML = '<div class="ach-empty">🔒 Carte interactive — disponible en offre Pro</div>'; return; }
+  if(storyLocations.length === 0){ container.innerHTML = '<div class="ach-empty">Aucun lieu exploré. Continue l\'histoire !</div>'; return; }
+  container.innerHTML = '<div class="story-map">' +
+    storyLocations.map((l,i) =>
+      '<div class="map-node">' +
+        (i > 0 ? '<div class="map-line"></div>' : '') +
+        '<div class="map-dot">' + l.emoji + '</div>' +
+        '<div class="map-label">' + l.name + '<small>Ch. ' + l.chapter + '</small></div>' +
+      '</div>'
+    ).join('') +
+  '</div>';
+}
 
 /* ===== PREMIUM ===== */
 function isPremium(){ return progress.plan === 'premium' || progress.plan === 'pro'; }
@@ -769,6 +927,7 @@ async function callAI(userReply){
       // Mascotte : jaune si erreurs, vert si parfait
       const isPerfect = /parfait|correcte?|bien|impeccable|bravo|aucune erreur/i.test(grammar);
       setMascotColor(isPerfect ? 'green' : 'yellow');
+      if(isPerfect){ stats.perfectCount = (stats.perfectCount || 0) + 1; saveStats(); checkAchievements(); }
     } else if(userReply){
       setMascotColor('green');
     }
