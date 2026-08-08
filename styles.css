@@ -170,6 +170,17 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
 
 footer{text-align:center; color:var(--muted); font-size:12px; font-weight:700; margin-top:48px; line-height:1.7;}
 footer b{color:var(--wave);}
+footer a{color:var(--muted); text-decoration:underline; text-underline-offset:2px;}
+footer a:hover{color:var(--wave);}
+
+/* ---- Legal Pages ---- */
+.legal-page{max-width:720px; margin:32px auto; padding:0 24px 80px;}
+.legal-page h1{font-size:28px; margin-bottom:4px; color:var(--foam);}
+.legal-page h2{font-size:18px; margin-top:32px; margin-bottom:8px; color:var(--foam);}
+.legal-page p,.legal-page li{font-size:15px; color:var(--muted); line-height:1.7;}
+.legal-page ul{padding-left:20px; margin:8px 0;}
+.legal-page .legal-date{color:var(--wave); font-weight:700; font-size:13px; margin-bottom:24px;}
+.legal-page a{color:var(--wave); text-decoration:underline;}
 
 /* ===== APP SCREEN ===== */
 #appScreen{display:none; min-height:100vh; flex-direction:column;}
