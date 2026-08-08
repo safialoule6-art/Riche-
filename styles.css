@@ -552,3 +552,23 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 .price-card .perks{margin:0 0 18px;}
 .price-card .btn{width:100%;}
 
+/* ---- Avant / Après ---- */
+.before-after{display:flex; align-items:center; gap:12px;}
+.before-after .ba-arrow{font-size:28px; font-weight:900; color:var(--wave); flex-shrink:0;}
+.ba-card{flex:1; border-radius:16px; padding:16px 14px; text-align:center;}
+.ba-card.bad{background:rgba(255,90,95,.08); border:2px solid rgba(255,90,95,.25);}
+.ba-card.good{background:rgba(20,184,166,.08); border:2px solid rgba(20,184,166,.3);}
+.ba-emoji{font-size:28px; margin-bottom:4px;}
+.ba-label{font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; margin-bottom:4px;}
+.ba-card.bad .ba-label{color:var(--accent);}
+.ba-card.good .ba-label{color:var(--wave);}
+.ba-app{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:16px; color:var(--foam); margin-bottom:10px;}
+.ba-list{list-style:none; text-align:left; font-size:12px; font-weight:700; color:var(--muted); display:flex; flex-direction:column; gap:5px; padding:0;}
+.ba-list li::before{content:"• "; font-weight:900;}
+.ba-card.bad .ba-list li::before{color:var(--accent);}
+.ba-card.good .ba-list li::before{color:var(--wave);}
+@media(max-width:420px){
+  .before-after{flex-direction:column;}
+  .before-after .ba-arrow{transform:rotate(90deg);}
+}
+
