@@ -69,6 +69,7 @@
   <div class="nav-links">
     <a href="#features">Fonctionnalités</a>
     <a href="#pricing">Tarifs</a>
+    <button class="theme-toggle-inline" onclick="toggleTheme()" aria-label="Changer de thème" title="Changer de thème">🌙</button>
     <a href="/app" class="btn small">Se connecter</a>
   </div>
 </nav>
@@ -87,6 +88,7 @@
         <div class="error-msg" id="authError"></div>
         <div class="auth-divider"><span>ou</span></div>
         <button class="text-link" id="emailToggleBtn" type="button" onclick="toggleEmailAuth()">Continuer avec un email</button>
+        <button class="btn ghost mobile-login-btn" type="button" onclick="toggleEmailAuth();setTimeout(()=>document.getElementById('authEmail').focus(),100)">Se connecter</button>
 
         <form id="emailAuthBox" class="email-auth" style="display:none" onsubmit="return false;">
           <input id="authEmail" type="email" autocomplete="email" placeholder="ton@email.com">
