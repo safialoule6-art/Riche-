@@ -76,6 +76,9 @@
       <div class="error-msg" id="authError"></div>
       <div class="auth-divider"><span>ou</span></div>
       <button class="text-link" id="emailToggleBtn" type="button" onclick="toggleEmailAuth()">Continuer avec un email</button>
+      <div style="margin-top:6px;">
+        <button class="text-link small" type="button" onclick="toggleEmailAuth();setTimeout(()=>document.getElementById('authEmail').focus(),100)">Déjà un compte ? Se connecter</button>
+      </div>
 
       <form id="emailAuthBox" class="email-auth" style="display:none" onsubmit="return false;">
         <input id="authEmail" type="email" autocomplete="email" placeholder="ton@email.com">
@@ -198,8 +201,10 @@
           <ul class="perks">
             <li>✅ 2 épisodes / jour</li>
             <li>✅ 3 langues</li>
-            <li>✅ Progression sauvegardée</li>
+            <li>✅ Mascotte expressive</li>
+            <li>✅ Succès à débloquer</li>
             <li>✅ Streak &amp; XP</li>
+            <li>✅ Fiches personnages</li>
           </ul>
           <button class="btn" onclick="loginWithGoogle()">Commencer gratuitement</button>
         </div>
@@ -214,6 +219,8 @@
             <li>✅ Micro &amp; Audio</li>
             <li>✅ Répétition espacée</li>
             <li>✅ Biblio vocabulaire</li>
+            <li>✅ Tous les succès</li>
+            <li>✅ Fiches personnages</li>
           </ul>
           <a href="/pricing" class="btn super-btn">Voir les offres</a>
         </div>
@@ -227,6 +234,8 @@
             <li>✅ Créer tes sagas</li>
             <li>✅ Support prioritaire</li>
             <li>✅ Accès anticipé</li>
+            <li>✅ Carte interactive</li>
+            <li>✅ Badges exclusifs</li>
           </ul>
           <a href="/pricing" class="btn ghost">En savoir plus</a>
         </div>
