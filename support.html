@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Support — Sunami</title>
+<link rel="stylesheet" href="/styles.css">
+<meta name="theme-color" content="#14b8a6">
+</head>
+<body>
+<header class="landing-header">
+  <a href="/" class="logo">🌊 sunami<span>.</span></a>
+</header>
+
+<main class="support-page">
+  <h1>🤖 Support 24h/24</h1>
+  <p class="support-sub">Une IA répond à tes questions. Remboursement, bug, suggestion — parle-lui.</p>
+
+  <div class="chatbot-box" id="chatbot">
+    <div class="chatbot-log" id="chatbotLog">
+      <div class="cb-msg bot">Bonjour ! Je suis l'assistant Sunami. Je peux t'aider pour : remboursement, problème technique, question sur les offres. Que puis-je faire pour toi ?</div>
+    </div>
+    <div class="chatbot-input">
+      <input id="chatbotInput" placeholder="Écris ton message..." onkeydown="if(event.key==='Enter')sendChatbot()">
+      <button class="btn" onclick="sendChatbot()">Envoyer</button>
+    </div>
+  </div>
+</main>
+
+<script>
+async function sendChatbot(){
+  const input = document.getElementById('chatbotInput');
+  const log = document.getElementById('chatbotLog');
+  const msg = input.value.trim();
+  if(!msg) return;
+  
+  log.innerHTML += '<div class="cb-msg user">' + msg + '</div>';
+  input.value = '';
+  log.innerHTML += '<div class="cb-msg bot typing">...</div>';
+  log.scrollTop = log.scrollHeight;
+
+  try{
+    const res = await fetch('/api/support', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ message: msg })
+    });
+    const data = await res.json();
+    document.querySelector('.cb-msg.typing').remove();
+    log.innerHTML += '<div class="cb-msg bot">' + (data.reply || 'Désolé, une erreur est survenue.') + '</div>';
+  }catch(e){
+    document.querySelector('.cb-msg.typing').remove();
+    log.innerHTML += '<div class="cb-msg bot">Désolé, le support est momentanément indisponible. Contacte ahmedyas09030@gmail.com</div>';
+  }
+  log.scrollTop = log.scrollHeight;
+}
+</script>
+
+<footer class="landing-footer">
+  <p>🌊 <strong>Sunami</strong> — vis une histoire, apprends une langue.</p>
+  <p><a href="/privacy">Confidentialité</a> · <a href="/terms">Conditions</a> · <a href="/legal">Mentions légales</a></p>
+  <p class="footer-copy">Fait avec ❤️ pour les curieux · © 2026</p>
+</footer>
+</body>
+</html>

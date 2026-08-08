@@ -47,6 +47,19 @@ window.openSettings = function(){
   const em = document.getElementById('setEmail');
   const lbl = document.getElementById('userLabel');
   if(em && lbl) em.textContent = lbl.textContent ? ('Connecté : ' + lbl.textContent) : '';
+  // Premium badge
+  const badge = document.getElementById('planBadge');
+  const unsub = document.getElementById('unsubBtn');
+  if(badge){
+    if(isPremium()){
+      badge.style.display = 'block';
+      badge.innerHTML = '<span style="background:var(--wave);color:#fff;padding:4px 12px;border-radius:99px;font-weight:800;font-size:13px;">💎 ' + progress.plan.toUpperCase() + '</span><br><small style="color:var(--muted);">Merci de soutenir Sunami !</small>';
+    } else {
+      badge.style.display = 'block';
+      badge.innerHTML = '<span style="color:var(--muted);font-size:13px;">🌊 Offre Gratuit</span> · <a href="/pricing" style="color:var(--wave);font-weight:700;font-size:13px;">Passer Premium →</a>';
+    }
+  }
+  if(unsub) unsub.style.display = isPremium() ? 'block' : 'none';
   const m = document.getElementById('settingsModal');
   m.classList.add('open'); m.setAttribute('aria-hidden','false');
 };
@@ -341,6 +354,37 @@ window.closeCelebration = function(){
   const box = document.getElementById('confetti'); if(box) box.innerHTML = '';
 };
 
+/* ===== PREMIUM ===== */
+function isPremium(){ return progress.plan === 'premium' || progress.plan === 'pro'; }
+function isPro(){ return progress.plan === 'pro'; }
+function dailyEpisodesLeft(){
+  if(isPremium()) return Infinity;
+  const today = todayKey();
+  const key = 'sunami-episodes-' + today;
+  const used = parseInt(localStorage.getItem(key) || '0', 10);
+  return Math.max(0, 2 - used);
+}
+function useDailyEpisode(){
+  if(isPremium()) return true;
+  const today = todayKey();
+  const key = 'sunami-episodes-' + today;
+  const used = parseInt(localStorage.getItem(key) || '0', 10);
+  if(used >= 2) return false;
+  localStorage.setItem(key, String(used + 1));
+  return true;
+}
+
+window.unsubscribe = async function(){
+  if(!confirm('Résilier ton abonnement ? Ta progression est sauvegardée. Tu repasses en gratuit.')) return;
+  try{
+    progress.plan = 'free';
+    await saveProgress();
+    alert('Abonnement résilié. Tu es maintenant en offre Gratuit.');
+    window.closeSettings();
+    location.reload();
+  }catch(e){ alert('Erreur. Contacte ahmedyas09030@gmail.com'); }
+};
+
 window.logout = async function(){
   window.closeSettings && window.closeSettings();
   appEntered = false;
@@ -448,7 +492,7 @@ function updateSceneMeta(){
 }
 
 let userId = null;
-let progress = { season: 1, episode: 1, streak: 0, last_active: null, language: null, level: null };
+let progress = { season: 1, episode: 1, streak: 0, last_active: null, language: null, level: null, plan: 'free' }; // plan: free | premium | pro
 
 async function loadProgress(uid){
   const { data } = await supabase.from('progress').select('*').eq('user_id', uid).maybeSingle();
@@ -489,7 +533,8 @@ async function saveProgress(){
     streak: progress.streak,
     last_active: progress.last_active,
     language: progress.language,
-    level: progress.level
+    level: progress.level,
+    plan: progress.plan || 'free'
   });
 }
 
@@ -724,6 +769,10 @@ function typewriter(span, fullText){
 }
 
 function startScene(){
+  if(!useDailyEpisode()){
+    addMsg('feedback wrong', '🎬 Tu as utilisé tes 2 épisodes gratuits du jour. Reviens demain ou passe Premium pour l\'illimité !');
+    return;
+  }
   chapter = 0;
   chatHistory = [];
   track('story_start', { language: pickedLang, level: pickedLevel, theme: pickedTheme || 'aucun' });
@@ -738,6 +787,10 @@ function sendReply(){
   const input = document.getElementById('userInput');
   const val = input.value.trim();
   if(!val) return;
+  if(!useDailyEpisode()){
+    addMsg('feedback wrong', '🎬 Tu as utilisé tes 2 épisodes gratuits du jour. Reviens demain ou <a href="/pricing" style="color:var(--wave);">passe Premium</a> pour l\'illimité !');
+    return;
+  }
   addMsg('user', val);
   input.value = '';
   callAI(val);
