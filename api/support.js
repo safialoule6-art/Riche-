@@ -11,7 +11,7 @@ ABOUT SUNAMI:
 - Website: sunami-rho.vercel.app
 - 3 plans: Free (0€, 2 episodes/day, 3 languages), Premium (5€/month, unlimited, 6 languages, grammar correction, voice), Pro (9€/month, all Premium + offline, advanced stats, custom sagas)
 - Payment: Dodo Payment (coming September 2026)
-- Contact email: ahmedyas09030@gmail.com
+- Contact email: ahmedyas09020@gmail.com
 - Refund policy: 100% satisfied or refunded within 7 days, no questions asked
 
 YOUR ROLE:
@@ -31,7 +31,7 @@ export default async function handler(req) {
   if (req.method !== "POST") return jsonResponse({ error: "POST only" }, 405);
 
   const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) return jsonResponse({ reply: "Support indisponible. Contacte ahmedyas09030@gmail.com" }, 200);
+  if (!apiKey) return jsonResponse({ reply: "Support indisponible. Contacte ahmedyas09020@gmail.com" }, 200);
 
   let body;
   try { body = await req.json(); } catch { body = {}; }
@@ -51,13 +51,13 @@ export default async function handler(req) {
     });
 
     if (!groqRes.ok) {
-      return jsonResponse({ reply: "Support momentanément indisponible. Contacte ahmedyas09030@gmail.com" }, 200);
+      return jsonResponse({ reply: "Support momentanément indisponible. Contacte ahmedyas09020@gmail.com" }, 200);
     }
 
     const data = await groqRes.json();
     const reply = data.choices?.[0]?.message?.content || "Je n'ai pas compris. Peux-tu reformuler ?";
     return jsonResponse({ reply }, 200);
   } catch {
-    return jsonResponse({ reply: "Support momentanément indisponible. Contacte ahmedyas09030@gmail.com" }, 200);
+    return jsonResponse({ reply: "Support momentanément indisponible. Contacte ahmedyas09020@gmail.com" }, 200);
   }
 }
