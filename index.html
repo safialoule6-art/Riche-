@@ -63,6 +63,16 @@
 <div class="bg-glow" aria-hidden="true"></div>
 <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Changer de thème" title="Changer de thème">🌙</button>
 
+<!-- Nav desktop -->
+<nav class="landing-nav">
+  <a href="/" class="nav-logo"><svg class="badge mascot"><use href="#mascot"/></svg>sunami<em>.</em></a>
+  <div class="nav-links">
+    <a href="#features">Fonctionnalités</a>
+    <a href="#pricing">Tarifs</a>
+    <a href="/app" class="btn small">Se connecter</a>
+  </div>
+</nav>
+
 <!-- ================= LANDING ================= -->
 <div id="authScreen">
   <div class="landing">
@@ -70,26 +80,24 @@
 
     <div class="hero">
       <svg class="hero-mascot mascot idle" aria-hidden="true"><use href="#mascot"/></svg>
-      <h1 class="hero-title">Vis une histoire.<br><span class="hl">Apprends une langue.</span></h1>
-      <p class="hero-sub">Un tuteur IA te fait parler dans un épisode qui continue chaque jour — pas des exercices barbants.</p>
-      <button class="btn" id="googleBtn" onclick="loginWithGoogle()">Commencer — c'est gratuit</button>
-      <div class="error-msg" id="authError"></div>
-      <div class="auth-divider"><span>ou</span></div>
-      <button class="text-link" id="emailToggleBtn" type="button" onclick="toggleEmailAuth()">Continuer avec un email</button>
-      <div style="margin-top:6px;">
-        <button class="text-link small" type="button" onclick="toggleEmailAuth();setTimeout(()=>document.getElementById('authEmail').focus(),100)">Déjà un compte ? Se connecter</button>
-      </div>
+      <div class="hero-text">
+        <h1 class="hero-title">Vis une histoire.<br><span class="hl">Apprends une langue.</span></h1>
+        <p class="hero-sub">Un tuteur IA te fait parler dans un épisode qui continue chaque jour — pas des exercices barbants.</p>
+        <button class="btn" id="googleBtn" onclick="loginWithGoogle()">Commencer — c'est gratuit</button>
+        <div class="error-msg" id="authError"></div>
+        <div class="auth-divider"><span>ou</span></div>
+        <button class="text-link" id="emailToggleBtn" type="button" onclick="toggleEmailAuth()">Continuer avec un email</button>
 
-      <form id="emailAuthBox" class="email-auth" style="display:none" onsubmit="return false;">
-        <input id="authEmail" type="email" autocomplete="email" placeholder="ton@email.com">
-        <input id="authPassword" type="password" autocomplete="current-password" placeholder="Mot de passe (6 caractères min.)">
-        <div class="email-auth-actions">
-          <button class="btn small" id="emailSigninBtn" type="button" onclick="loginWithEmail()">Se connecter</button>
-          <button class="btn ghost small" id="emailSignupBtn" type="button" onclick="signupWithEmail()">Créer un compte</button>
-        </div>
-        <button class="text-link small" type="button" onclick="resetPassword()">Mot de passe oublié ?</button>
-        <div class="error-msg" id="emailAuthMsg"></div>
-      </form>
+        <form id="emailAuthBox" class="email-auth" style="display:none" onsubmit="return false;">
+          <input id="authEmail" type="email" autocomplete="email" placeholder="ton@email.com">
+          <input id="authPassword" type="password" autocomplete="current-password" placeholder="Mot de passe (6 caractères min.)">
+          <div class="email-auth-actions">
+            <button class="btn small" id="emailSigninBtn" type="button" onclick="loginWithEmail()">Se connecter</button>
+            <button class="btn ghost small" id="emailSignupBtn" type="button" onclick="signupWithEmail()">Créer un compte</button>
+          </div>
+          <button class="text-link small" type="button" onclick="resetPassword()">Mot de passe oublié ?</button>
+          <div class="error-msg" id="emailAuthMsg"></div>
+        </form>
 
       <form id="recoveryBox" class="email-auth" style="display:none" onsubmit="return false;">
         <p class="hero-sub" style="margin:0 0 2px;font-size:14px;">Choisis ton nouveau mot de passe :</p>
@@ -109,6 +117,7 @@
         <span class="lang-pill">🇵🇹 Portugais</span>
       </div>
       <div class="proof">6 langues <span class="dot"></span> tuteur IA <span class="dot"></span> nouvel épisode chaque jour</div>
+      </div><!-- /hero-text -->
     </div>
 
     <!-- Démo -->
@@ -132,7 +141,7 @@
     </div>
 
     <!-- Features -->
-    <div class="section reveal">
+    <div class="section reveal" id="features">
       <div class="eyebrow">Pourquoi Sunami</div>
       <div class="features">
         <div class="feature-card">
@@ -192,7 +201,7 @@
     </div>
 
     <!-- Pricing -->
-    <div class="section reveal">
+    <div class="section reveal" id="pricing">
       <div class="eyebrow">Offres</div>
       <div class="pricing">
         <div class="price-card">
