@@ -191,25 +191,44 @@ function renderDemoScene(i){
 }
 renderDemoScene(0);
 
-/* Animated demo */
+/* Animated demo — simulation complète de l'app */
 (function(){
   const chat = document.getElementById('adChat');
   if(!chat) return;
   const caps = document.querySelectorAll('.ad-cap');
-  let step = 0;
+  const input = document.getElementById('adInput');
+  const xpEl = document.getElementById('adXp');
+  const streakEl = document.getElementById('adStreak');
+  let xp = 0, streak = 1;
 
   const script = [
-    { msg:'ai', text:'<b>Bonjour !</b> You must be tired — how do you say hello in English?', cap:0 },
-    { delay:1500 },
-    { msg:'user', text:'Hello, nice to meet you!', cap:1 },
-    { delay:1200 },
-    { msg:'ai', text:'✅ <b>Parfait !</b> Bienvenue à Marseille. Suivez-moi, la voiture est par ici…', cap:2 },
-    { delay:2000 },
-    { msg:'ai', text:'📖 <b>Chapitre 2</b> — demain, même heure. <b>Ne casse pas ton streak !</b> 🔥', cap:3 },
-    { delay:2000, loop:true },
+    { msg:'ai', text:'<b>Bonjour !</b> You must be tired from the flight. How do you say <b>hello</b> in English?', cap:0, delay:2000 },
+    { msg:'typing', delay:1200 },
+    { msg:'user', text:'Hello, nice to meet you!', cap:1, delay:1500 },
+    { msg:'ai', text:'✅ <b>Parfait !</b> Bienvenue à Marseille. <b>Suivez-moi</b> (follow me), la voiture est par ici…', cap:3, xp:15, delay:2200 },
+    { msg:'ai', text:'📝 Ton anglais est bon ! Petit conseil : on dit plutôt <b>\"I am tired\"</b> que \"I tired\".', cap:2, delay:2500 },
+    { msg:'user', text:'Thank you! Where are we going?', cap:1, delay:1400 },
+    { msg:'ai', text:'🌟 <b>Excellent !</b> On va au Vieux-Port. Regarde, la mer est magnifique au coucher du soleil. <b>Do you like the sea?</b>', cap:4, xp:12, streak:2, delay:2500 },
+    { msg:'user', text:'Yes, I love the sea!', cap:1, delay:1300 },
+    { msg:'ai', text:'🔥 <b>Streak 7 jours !</b> Tu progresses vite. Demain, on explore le marché. <b>À demain !</b>', cap:5, xp:10, streak:7, delay:2500 },
+    { msg:'reset', delay:3000 },
   ];
 
+  let step = 0;
+
+  function showTyping(){
+    const div = document.createElement('div');
+    div.className = 'ad-msg ai';
+    div.innerHTML = '<div class="ad-bubble"><span class="ad-dot">●</span><span class="ad-dot">●</span><span class="ad-dot">●</span></div>';
+    div.id = 'ad-typing';
+    chat.appendChild(div);
+  }
+
   function addBubble(s){
+    // Remove typing indicator
+    const typing = document.getElementById('ad-typing');
+    if(typing) typing.remove();
+
     const div = document.createElement('div');
     div.className = 'ad-msg ' + s.msg;
     div.innerHTML = '<div class="ad-bubble">' + s.text + '</div>';
@@ -218,29 +237,33 @@ renderDemoScene(0);
     div.style.transform = 'translateY(6px)';
     div.style.transition = 'all .3s ease';
     requestAnimationFrame(() => { div.style.opacity = '1'; div.style.transform = 'translateY(0)'; });
-    if(s.msg === 'ai') chat.scrollTop = chat.scrollHeight;
+    chat.scrollTop = chat.scrollHeight;
+
+    // Update XP
+    if(s.xp){ xp += s.xp; if(xpEl) xpEl.textContent = xp; }
+    if(s.streak && streakEl){ streakEl.textContent = s.streak; }
+
     // Highlight caption
     if(s.cap !== undefined){
       caps.forEach(c => c.classList.remove('active'));
       if(caps[s.cap]) caps[s.cap].classList.add('active');
     }
+
+    // Update input placeholder
+    if(s.msg === 'user' && input) input.textContent = 'Écris ta réponse...';
   }
 
   function run(){
-    if(step >= script.length) step = 0;
+    if(step >= script.length){ step = 0; chat.innerHTML = ''; xp = 0; streak = 1; if(xpEl) xpEl.textContent = '0'; if(streakEl) streakEl.textContent = '1'; caps.forEach(c => c.classList.remove('active')); }
     const s = script[step];
-    if(s.msg){
-      // Clear old bubbles if looping
-      if(s.loop && chat.children.length > 4){
-        while(chat.children.length > 1) chat.lastChild.remove();
-      }
-      addBubble(s);
-    }
+    if(s.msg === 'reset'){ step = 0; chat.innerHTML = ''; xp = 0; streak = 1; if(xpEl) xpEl.textContent = '0'; if(streakEl) streakEl.textContent = '1'; caps.forEach(c => c.classList.remove('active')); setTimeout(run, s.delay); return; }
+    if(s.msg === 'typing'){ showTyping(); }
+    else { addBubble(s); }
     step++;
     setTimeout(run, s.delay || 1800);
   }
 
-  setTimeout(run, 500);
+  setTimeout(run, 600);
 })();
 
 /* ===== Reveal au scroll ===== */
