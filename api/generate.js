@@ -33,6 +33,7 @@ const LANG_NAME = {
   italien: "Italian",
   arabe: "Arabic",
   portugais: "Portuguese",
+  francais: "French",
 };
 
 // Map French level codes to English.
