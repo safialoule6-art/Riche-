@@ -123,6 +123,10 @@
       </div>
       <div class="proof"><span data-i18n="hero_langs">7 langues</span> <span class="dot"></span> <span data-i18n="hero_dot">tuteur IA</span> <span class="dot"></span> <span data-i18n="hero_dot2">nouvel épisode chaque jour</span></div>
       </div><!-- /hero-text -->
+      <!-- Mobile language switcher -->
+      <div class="mobile-lang-switch">
+        <button class="btn ghost small" id="langSwitchMobile" onclick="switchLang()" data-i18n="lang_switch">🇫🇷 FR</button>
+      </div>
       <!-- Phone mockup -->
       <div class="hero-mockup">
         <div class="hm-phone">
@@ -158,36 +162,36 @@
 
     <!-- Comment ça marche -->
     <div class="section reveal">
-      <div class="eyebrow">Comment ça marche</div>
+      <div class="eyebrow" data-i18n="how_title">Comment ça marche</div>
       <div class="steps">
-        <div class="step"><div class="step-num">🌍</div><div><b>Choisis ta langue &amp; ton niveau</b><span>7 langues, du débutant (A1) à l'avancé (C2).</span></div></div>
-        <div class="step"><div class="step-num">📖</div><div><b>Plonge dans l'épisode du jour</b><span>Une histoire continue avec des personnages récurrents.</span></div></div>
-        <div class="step"><div class="step-num">💬</div><div><b>Réponds, l'histoire avance</b><span>Le tuteur IA calibre chaque réplique à ton niveau.</span></div></div>
+        <div class="step"><div class="step-num">🌍</div><div><b data-i18n="how_s1t">Choisis ta langue &amp; ton niveau</b><span data-i18n="how_s1s">7 langues, du débutant (A1) à l'avancé (C2).</span></div></div>
+        <div class="step"><div class="step-num">📖</div><div><b data-i18n="how_s2t">Plonge dans l'épisode du jour</b><span data-i18n="how_s2s">Une histoire continue avec des personnages récurrents.</span></div></div>
+        <div class="step"><div class="step-num">💬</div><div><b data-i18n="how_s3t">Réponds, l'histoire avance</b><span data-i18n="how_s3s">Le tuteur IA calibre chaque réplique à ton niveau.</span></div></div>
       </div>
     </div>
 
     <!-- Features -->
     <div class="section reveal" id="features">
-      <div class="eyebrow">Pourquoi Sunami</div>
+      <div class="eyebrow" data-i18n="why_title">Pourquoi Sunami</div>
       <div class="features">
         <div class="feature-card">
           <div class="feature-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h11a1 1 0 0 1 1 1v13"/><path d="M6 17h12v3a1 1 0 0 1-1 1H7a3 3 0 0 1-3-3 2 2 0 0 1 2-2Z"/></svg></div>
-          <div><b>Histoire continue</b><span>Chaque jour, un nouvel épisode de la même intrigue.</span></div>
+          <div><b data-i18n="why1t">Histoire continue</b><span data-i18n="why1s">Chaque jour, un nouvel épisode de la même intrigue.</span></div>
         </div>
         <div class="feature-card">
           <div class="feature-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s5 4 5 9a5 5 0 0 1-10 0c0-1.5.7-2.7 1.5-3.5C8.5 10 9 12 12 12c0-3-2-5 0-9Z"/></svg></div>
-          <div><b>Streak &amp; XP quotidiens</b><span>Reviens chaque jour, garde ta série et gagne de l'XP.</span></div>
+          <div><b data-i18n="why2t">Streak &amp; XP quotidiens</b><span data-i18n="why2s">Reviens chaque jour, garde ta série et gagne de l'XP.</span></div>
         </div>
         <div class="feature-card">
           <div class="feature-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></svg></div>
-          <div><b>Calibré à ton niveau</b><span>Niveau CECR A1 → C2, ajusté à chaque réponse.</span></div>
+          <div><b data-i18n="why3t">Calibré à ton niveau</b><span data-i18n="why3s">Niveau CECR A1 → C2, ajusté à chaque réponse.</span></div>
         </div>
       </div>
     </div>
 
     <!-- Avant / Après -->
     <div class="section reveal">
-      <div class="eyebrow">Avant / Après</div>
+      <div class="eyebrow" data-i18n="vs_title">Avant / Après</div>
       <div class="ba-wrap">
         <!-- Avant -->
         <div class="ba-phone ba-bad">
@@ -228,38 +232,38 @@
 
     <!-- Témoignages -->
     <div class="section reveal">
-      <div class="eyebrow">Ils ont essayé</div>
+      <div class="eyebrow" data-i18n="t_title">Ils ont essayé</div>
       <div class="testimonials">
         <div class="t-card">
           <div class="t-stars">★★★★★</div>
-          <p class="t-quote">"J'ai essayé Duolingo, Babbel, Rosetta Stone… Sunami c'est le seul qui m'a fait revenir 7 jours d'affilée. L'histoire te donne envie de savoir la suite."</p>
+          <p class="t-quote" data-i18n="t1_q">"J'ai essayé Duolingo, Babbel, Rosetta Stone… Sunami c'est le seul qui m'a fait revenir 7 jours d'affilée. L'histoire te donne envie de savoir la suite."</p>
           <div class="t-author">
             <div class="t-avatar" style="background:#ff6b6b;">S</div>
             <div>
-              <div class="t-name">Sarah M.</div>
-              <div class="t-role">Apprend l'anglais · Niveau A2</div>
+              <div class="t-name" data-i18n="t1_n">Sarah M.</div>
+              <div class="t-role" data-i18n="t1_r">Apprend l'anglais · Niveau A2</div>
             </div>
           </div>
         </div>
         <div class="t-card">
           <div class="t-stars">★★★★★</div>
-          <p class="t-quote">"Enfin une app où je ne traduis pas des phrases débiles. Je vis une histoire à Marseille, je parle avec des personnages, et j'apprends sans m'en rendre compte."</p>
+          <p class="t-quote" data-i18n="t2_q">"Enfin une app où je ne traduis pas des phrases débiles. Je vis une histoire à Marseille, je parle avec des personnages, et j'apprends sans m'en rendre compte."</p>
           <div class="t-author">
             <div class="t-avatar" style="background:#4ecdc4;">T</div>
             <div>
-              <div class="t-name">Thomas L.</div>
-              <div class="t-role">Apprend l'espagnol · Niveau B1</div>
+              <div class="t-name" data-i18n="t2_n">Thomas L.</div>
+              <div class="t-role" data-i18n="t2_r">Apprend l'espagnol · Niveau B1</div>
             </div>
           </div>
         </div>
         <div class="t-card">
           <div class="t-stars">★★★★★</div>
-          <p class="t-quote">"Le streak et l'XP me motivent, mais c'est vraiment le tuteur IA qui fait la diff. Il corrige mes erreurs sans me juger, et l'histoire continue."</p>
+          <p class="t-quote" data-i18n="t3_q">"Le streak et l'XP me motivent, mais c'est vraiment le tuteur IA qui fait la diff. Il corrige mes erreurs sans me juger, et l'histoire continue."</p>
           <div class="t-author">
             <div class="t-avatar" style="background:#ffd93d;">A</div>
             <div>
-              <div class="t-name">Aïcha K.</div>
-              <div class="t-role">Apprend l'allemand · Niveau A1</div>
+              <div class="t-name" data-i18n="t3_n">Aïcha K.</div>
+              <div class="t-role" data-i18n="t3_r">Apprend l'allemand · Niveau A1</div>
             </div>
           </div>
         </div>
@@ -268,51 +272,51 @@
 
     <!-- Pricing -->
     <div class="section reveal" id="pricing">
-      <div class="eyebrow">Offres</div>
+      <div class="eyebrow" data-i18n="pricing_title">Offres</div>
       <div class="pricing">
         <div class="price-card">
-          <div class="price-name">🌊 Gratuit</div>
-          <div class="price-amt">0€ <span>à vie</span></div>
+          <div class="price-name">🌊 <span data-i18n="p_free">Gratuit</span></div>
+          <div class="price-amt">0€ <span data-i18n="p_free_price">à vie</span></div>
           <ul class="perks">
-            <li>✅ 2 épisodes / jour</li>
-            <li>✅ 3 langues</li>
-            <li>✅ Mascotte expressive</li>
-            <li>✅ Succès à débloquer</li>
-            <li>✅ Streak &amp; XP</li>
-            <li>✅ Fiches personnages</li>
+            <li data-i18n="p_free_1">✅ 2 épisodes / jour</li>
+            <li data-i18n="p_free_2">✅ 3 langues</li>
+            <li data-i18n="p_free_3">✅ Mascotte expressive</li>
+            <li data-i18n="p_free_4">✅ Succès à débloquer</li>
+            <li data-i18n="p_free_5">✅ Streak &amp; XP</li>
+            <li data-i18n="p_free_6">✅ Fiches personnages</li>
           </ul>
-          <button class="btn" onclick="loginWithGoogle()">Commencer gratuitement</button>
+          <button class="btn" onclick="loginWithGoogle()" data-i18n="p_free_cta">Commencer gratuitement</button>
         </div>
         <div class="price-card super">
-          <div class="price-badge">⭐ Le plus populaire</div>
-          <div class="price-name">⭐ Premium</div>
-          <div class="price-amt">5€ <span>/mois</span></div>
+          <div class="price-badge" data-i18n="p_prem_badge">⭐ Le plus populaire</div>
+          <div class="price-name">⭐ <span data-i18n="p_prem">Premium</span></div>
+          <div class="price-amt">5€ <span data-i18n="p_prem_price">/mois</span></div>
           <ul class="perks">
-            <li>✅ Épisodes illimités</li>
-            <li>✅ 7 langues</li>
-            <li>✅ Correction grammaire</li>
-            <li>✅ Micro &amp; Audio</li>
-            <li>✅ Répétition espacée</li>
-            <li>✅ Biblio vocabulaire</li>
-            <li>✅ Tous les succès</li>
-            <li>✅ Fiches personnages</li>
+            <li data-i18n="p_prem_1">✅ Épisodes illimités</li>
+            <li data-i18n="p_prem_2">✅ 7 langues</li>
+            <li data-i18n="p_prem_3">✅ Correction grammaire</li>
+            <li data-i18n="p_prem_4">✅ Micro &amp; Audio</li>
+            <li data-i18n="p_prem_5">✅ Répétition espacée</li>
+            <li data-i18n="p_prem_6">✅ Biblio vocabulaire</li>
+            <li data-i18n="p_prem_7">✅ Tous les succès</li>
+            <li data-i18n="p_prem_8">✅ Fiches personnages</li>
           </ul>
-          <a href="/pricing" class="btn super-btn">Voir les offres</a>
+          <a href="/pricing" class="btn super-btn" data-i18n="p_prem_cta">Voir les offres</a>
         </div>
         <div class="price-card">
-          <div class="price-name">💎 Pro</div>
-          <div class="price-amt">9€ <span>/mois</span></div>
+          <div class="price-name">💎 <span data-i18n="p_pro">Pro</span></div>
+          <div class="price-amt">9€ <span data-i18n="p_pro_price">/mois</span></div>
           <ul class="perks">
-            <li>✅ Tout Premium +</li>
-            <li>✅ Mode hors-ligne</li>
-            <li>✅ Stats avancées</li>
-            <li>✅ Créer tes sagas</li>
-            <li>✅ Support prioritaire</li>
-            <li>✅ Accès anticipé</li>
-            <li>✅ Carte interactive</li>
-            <li>✅ Badges exclusifs</li>
+            <li data-i18n="p_pro_1">✅ Tout Premium +</li>
+            <li data-i18n="p_pro_2">✅ Mode hors-ligne</li>
+            <li data-i18n="p_pro_3">✅ Stats avancées</li>
+            <li data-i18n="p_pro_4">✅ Créer tes sagas</li>
+            <li data-i18n="p_pro_5">✅ Support prioritaire</li>
+            <li data-i18n="p_pro_6">✅ Accès anticipé</li>
+            <li data-i18n="p_pro_7">✅ Carte interactive</li>
+            <li data-i18n="p_pro_8">✅ Badges exclusifs</li>
           </ul>
-          <a href="/pricing" class="btn ghost">En savoir plus</a>
+          <a href="/pricing" class="btn ghost" data-i18n="p_pro_cta">En savoir plus</a>
         </div>
       </div>
     </div>
@@ -320,11 +324,11 @@
     <!-- Lead capture -->
     <div class="section reveal">
       <div class="lead-box">
-        <div class="lead-head">📬 Pas prêt à te connecter ?</div>
-        <p>Laisse ton email, on te prévient quand l'épisode 2 sort.</p>
+        <div class="lead-head" data-i18n="lead_title">📬 Pas prêt à te connecter ?</div>
+        <p data-i18n="lead_sub">Laisse ton email, on te prévient quand l'épisode 2 sort.</p>
         <div class="lead-row">
           <input id="leadEmail" type="email" placeholder="ton@email.com">
-          <button class="btn ghost small" id="leadBtn" onclick="submitLead()">Ok</button>
+          <button class="btn ghost small" id="leadBtn" onclick="submitLead()" data-i18n="lead_btn">Ok</button>
         </div>
         <div class="error-msg" id="leadMsg"></div>
       </div>
@@ -332,12 +336,12 @@
 
     <!-- FAQ -->
     <div class="section reveal">
-      <div class="eyebrow">Questions fréquentes</div>
+      <div class="eyebrow" data-i18n="faq_title">Questions fréquentes</div>
       <div class="faq">
-        <details class="faq-item"><summary><span>C'est vraiment gratuit ?</span><i>+</i></summary><p>Oui, l'offre gratuite donne 2 épisodes par jour avec 3 langues. Les offres Premium et Pro débloquent les épisodes illimités, 7 langues, la correction de grammaire et plus. <a href="/pricing">Voir les offres →</a></p></details>
-        <details class="faq-item"><summary><span>Ça marche pour mon niveau ?</span><i>+</i></summary><p>Débutant à avancé (A1 à C2) — l'IA calibre chaque réplique à ton niveau.</p></details>
-        <details class="faq-item"><summary><span>Je peux changer de langue en cours de route ?</span><i>+</i></summary><p>Oui, à tout moment depuis l'écran de conversation.</p></details>
-        <details class="faq-item"><summary><span>Mes données sont sauvegardées où ?</span><i>+</i></summary><p>Ta progression est liée à ton compte (Google ou email), accessible depuis n'importe quel appareil.</p></details>
+        <details class="faq-item"><summary><span data-i18n="faq1_q">C'est vraiment gratuit ?</span><i>+</i></summary><p><span data-i18n="faq1_a">Oui, l'offre gratuite donne 2 épisodes par jour avec 3 langues. Les offres Premium et Pro débloquent les épisodes illimités, 7 langues, la correction de grammaire et plus.</span> <a href="/pricing" data-i18n="faq1_link">Voir les offres →</a></p></details>
+        <details class="faq-item"><summary><span data-i18n="faq2_q">Ça marche pour mon niveau ?</span><i>+</i></summary><p data-i18n="faq2_a">Débutant à avancé (A1 à C2) — l'IA calibre chaque réplique à ton niveau.</p></details>
+        <details class="faq-item"><summary><span data-i18n="faq3_q">Je peux changer de langue en cours de route ?</span><i>+</i></summary><p data-i18n="faq3_a">Oui, à tout moment depuis l'écran de conversation.</p></details>
+        <details class="faq-item"><summary><span data-i18n="faq4_q">Mes données sont sauvegardées où ?</span><i>+</i></summary><p data-i18n="faq4_a">Ta progression est liée à ton compte (Google ou email), accessible depuis n'importe quel appareil.</p></details>
       </div>
     </div>
 
