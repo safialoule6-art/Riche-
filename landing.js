@@ -191,6 +191,17 @@ function renderDemoScene(i){
 }
 renderDemoScene(0);
 
+/* Video demo */
+window.playVideo = function(){
+  const ph = document.getElementById('videoPlaceholder');
+  const iframe = document.getElementById('demoVideo');
+  if(!ph || !iframe) return;
+  // URL de la vidéo Loom/YouTube — à remplacer par ta vidéo
+  iframe.src = 'https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1';
+  ph.style.display = 'none';
+  iframe.style.display = 'block';
+};
+
 /* ===== Reveal au scroll ===== */
 document.addEventListener('DOMContentLoaded', ()=>{
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
