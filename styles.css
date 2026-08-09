@@ -119,8 +119,11 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
 
 @media(min-width:768px){
   .hero-mockup{display:block;}
-  .hm-phone{width:250px;}
-  .hm-screen{min-height:360px;}
+  .hm-phone{width:290px;}
+  .hm-screen{min-height:400px; padding:14px 14px 8px; gap:9px;}
+  .hm-bubble{font-size:10px;}
+  .hm-header{font-size:12px;}
+  .hm-input{font-size:10px;}
 }
 
 .email-auth{display:flex; flex-direction:column; gap:10px; max-width:320px; margin:6px auto 0;}
