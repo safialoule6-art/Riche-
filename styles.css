@@ -122,11 +122,11 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
 
 @media(min-width:768px){
   .hero-mockup{display:block;}
-  .hm-phone{width:290px;}
-  .hm-screen{min-height:400px; padding:14px 14px 8px; gap:9px;}
-  .hm-bubble{font-size:10px;}
-  .hm-header{font-size:12px;}
-  .hm-input{font-size:10px;}
+  .hm-phone{width:330px;}
+  .hm-screen{min-height:440px; padding:16px 16px 10px; gap:10px;}
+  .hm-bubble{font-size:11px; padding:7px 10px;}
+  .hm-header{font-size:13px;}
+  .hm-input{font-size:11px;}
 }
 
 .email-auth{display:flex; flex-direction:column; gap:10px; max-width:320px; margin:6px auto 0;}
@@ -701,7 +701,7 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
   .brand{display:none;}
   #authScreen{padding:20px 32px 80px;}
   .landing{max-width:1000px; margin:0 auto;}
-  .hero{display:flex; align-items:center; gap:40px; text-align:left; padding:40px 0 24px;}
+  .hero{display:flex; align-items:center; gap:30px; text-align:left; padding:40px 0 24px;}
   .hero-mascot{width:180px; height:205px; margin:0; flex-shrink:0;}
   .hero-title{font-size:48px; margin-bottom:14px;}
   .hero-sub{font-size:18px; margin:0 0 24px; max-width:500px;}
