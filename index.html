@@ -35,6 +35,7 @@
 
 <!-- Tracking centralisé (GA4 + TikTok) — configure les IDs dans /analytics.js -->
 <script src="/analytics.js"></script>
+<script src="/i18n.js"></script>
 </head>
 <body>
 
@@ -67,10 +68,10 @@
 <nav class="landing-nav">
   <a href="/" class="nav-logo"><svg class="badge mascot"><use href="#mascot"/></svg>sunami<em>.</em></a>
   <div class="nav-links">
-    <a href="#features">Fonctionnalités</a>
-    <a href="#pricing">Tarifs</a>
+    <a href="#features" data-i18n="nav_features">Fonctionnalités</a>
+    <a href="#pricing" data-i18n="nav_pricing">Tarifs</a>
     <button class="theme-toggle-inline" onclick="toggleTheme()" aria-label="Changer de thème" title="Changer de thème">🌙</button>
-    <a href="/app" class="btn ghost small">Se connecter</a>
+    <a href="/app" class="btn ghost small" data-i18n="nav_login">Se connecter</a>
   </div>
 </nav>
 
@@ -82,13 +83,13 @@
     <div class="hero">
       <svg class="hero-mascot mascot idle" aria-hidden="true"><use href="#mascot"/></svg>
       <div class="hero-text">
-        <h1 class="hero-title">Vis une histoire.<br><span class="hl">Apprends une langue.</span></h1>
-        <p class="hero-sub">Un tuteur IA te fait parler dans un épisode qui continue chaque jour — pas des exercices barbants.</p>
-        <button class="btn" id="googleBtn" onclick="loginWithGoogle()">Commencer — c'est gratuit</button>
+        <h1 class="hero-title"><span data-i18n="hero_title_1">Vis une histoire.</span><br><span class="hl" data-i18n="hero_title_2">Apprends une langue.</span></h1>
+        <p class="hero-sub" data-i18n="hero_sub">Un tuteur IA te fait parler dans un épisode qui continue chaque jour — pas des exercices barbants.</p>
+        <button class="btn" id="googleBtn" onclick="loginWithGoogle()" data-i18n="hero_cta">Commencer — c'est gratuit</button>
         <div class="error-msg" id="authError"></div>
-        <div class="auth-divider"><span>ou</span></div>
-        <button class="text-link" id="emailToggleBtn" type="button" onclick="toggleEmailAuth()">Continuer avec un email</button>
-        <div class="login-link">Déjà un compte ? <button class="text-link" type="button" onclick="toggleEmailAuth();setTimeout(()=>document.getElementById('authEmail').focus(),100)">Se connecter</button></div>
+        <div class="auth-divider"><span data-i18n="hero_ou">ou</span></div>
+        <button class="text-link" id="emailToggleBtn" type="button" onclick="toggleEmailAuth()" data-i18n="hero_email">Continuer avec un email</button>
+        <div class="login-link"><span data-i18n="hero_login">Déjà un compte ?</span> <button class="text-link" type="button" onclick="toggleEmailAuth();setTimeout(()=>document.getElementById('authEmail').focus(),100)">Se connecter</button></div>
 
         <form id="emailAuthBox" class="email-auth" style="display:none" onsubmit="return false;">
           <input id="authEmail" type="email" autocomplete="email" placeholder="ton@email.com">
@@ -108,7 +109,7 @@
         <div class="error-msg" id="recoveryMsg"></div>
       </form>
 
-      <div class="cta-note">via Google ou email · <b>100% gratuit</b> · sur tous tes appareils</div>
+      <div class="cta-note"><span data-i18n="hero_note">via Google ou email</span> · <b data-i18n="hero_free">100% gratuit</b> · <span data-i18n="hero_devices">sur tous tes appareils</span></div>
 
       <div class="lang-pills">
         <span class="lang-pill">🇫🇷 Français</span>
@@ -119,7 +120,7 @@
         <span class="lang-pill">🇸🇦 Arabe</span>
         <span class="lang-pill">🇵🇹 Portugais</span>
       </div>
-      <div class="proof">7 langues <span class="dot"></span> tuteur IA <span class="dot"></span> nouvel épisode chaque jour</div>
+      <div class="proof"><span data-i18n="hero_langs">7 langues</span> <span class="dot"></span> <span data-i18n="hero_dot">tuteur IA</span> <span class="dot"></span> <span data-i18n="hero_dot2">nouvel épisode chaque jour</span></div>
       </div><!-- /hero-text -->
       <!-- Phone mockup -->
       <div class="hero-mockup">
@@ -146,9 +147,9 @@
 
     <!-- Démo -->
     <div class="section reveal">
-      <div class="eyebrow">Essaie tout de suite</div>
+      <div class="eyebrow" data-i18n="demo_title">Essaie tout de suite</div>
       <div class="demo-box">
-        <div class="demo-head"><svg class="badge mascot"><use href="#mascot"/></svg> Démo · sans compte</div>
+        <div class="demo-head"><svg class="badge mascot"><use href="#mascot"/></svg> <span data-i18n="demo_badge">Démo · sans compte</span></div>
         <div id="demoText"></div>
         <div class="demo-choices" id="demoChoices"></div>
       </div>
@@ -339,9 +340,10 @@
       </div>
     </div>
 
-    <footer>🌊 <b>Sunami</b> — vis une histoire, apprends une langue.<br>
-<a href="/pricing">Tarifs</a> · <a href="/privacy">Confidentialité</a> · <a href="/terms">Conditions</a> · <a href="/legal">Mentions légales</a><br>
-Fait avec ❤️ pour les curieux · © 2026</footer>
+    <footer>🌊 <b data-i18n="footer_brand">Sunami</b> — <span data-i18n="footer_tagline">vis une histoire, apprends une langue.</span><br>
+<a href="/pricing" data-i18n="footer_pricing">Tarifs</a> · <a href="/privacy" data-i18n="footer_privacy">Confidentialité</a> · <a href="/terms" data-i18n="footer_terms">Conditions</a> · <a href="/legal" data-i18n="footer_legal">Mentions légales</a><br>
+<span data-i18n="footer_copy">Fait avec ❤️ pour les curieux · © 2026</span> · 
+<button class="text-link" id="langSwitch" onclick="switchLang()" data-i18n="lang_switch" style="font-size:11px;">🇫🇷 FR</button></footer>
   </div>
 </div>
 
