@@ -71,6 +71,22 @@ window.closeSettings = function(){
   const m = document.getElementById('settingsModal');
   m.classList.remove('open'); m.setAttribute('aria-hidden','true');
 };
+
+window.toggleSidebar = function(){
+  const s = document.getElementById('sidebar');
+  const b = document.getElementById('sidebarBackdrop');
+  if(!s || !b) return;
+  const open = !s.classList.contains('open');
+  s.classList.toggle('open', open);
+  b.classList.toggle('open', open);
+  if(open) document.body.style.overflow = 'hidden';
+  else document.body.style.overflow = '';
+};
+
+window.scrollToChat = function(){
+  const log = document.getElementById('chatLog');
+  if(log) log.scrollTop = log.scrollHeight;
+};
 window.setAutoplay = function(el){ settings.autoplay = el.checked; saveSettings(); };
 window.setRate = function(el){ settings.rate = parseFloat(el.value); document.getElementById('setRateVal').textContent = settings.rate.toFixed(1) + '×'; saveSettings(); };
 window.setFont = function(f){ settings.font = f; saveSettings(); applySettings(); };
