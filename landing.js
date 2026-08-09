@@ -194,6 +194,27 @@ function renderDemoScene(i){
 }
 renderDemoScene(0);
 
+/* PWA Install */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if(localStorage.getItem('sunami-pwa-dismissed')) return;
+  const banner = document.getElementById('installBanner');
+  if(banner) banner.classList.add('show');
+});
+window.installPwa = async function(){
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('installBanner')?.classList.remove('show');
+};
+window.dismissInstall = function(){
+  localStorage.setItem('sunami-pwa-dismissed', '1');
+  document.getElementById('installBanner')?.classList.remove('show');
+};
+
 /* Animated demo — simulation complète de l'app */
 (function(){
   const chat = document.getElementById('adChat');

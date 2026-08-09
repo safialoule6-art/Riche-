@@ -78,6 +78,16 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
 .lang-toggle:active{transform:translateY(3px); box-shadow:0 0 0 var(--line);}
 @media(min-width:768px){.lang-toggle{display:none;}}
 
+/* ---- PWA Install Banner ---- */
+.install-banner{display:none; position:fixed; bottom:16px; left:16px; right:16px; z-index:60; background:var(--card); border:2px solid var(--wave); border-radius:16px; padding:12px 14px; align-items:center; gap:10px; box-shadow:0 8px 32px rgba(20,184,166,.2); animation:ibIn .4s var(--ease);}
+.install-banner.show{display:flex;}
+@keyframes ibIn{from{opacity:0; transform:translateY(20px);}to{opacity:1; transform:translateY(0);}}
+.ib-text{flex:1; min-width:0;}
+.ib-text b{display:block; font-size:13px; font-weight:800; color:var(--foam);}
+.ib-text span{font-size:11px; color:var(--muted); font-weight:600;}
+.ib-close{background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px; padding:4px; flex-shrink:0;}
+@media(min-width:768px){.install-banner{display:none!important;}}
+
 /* ===== SCROLL REVEAL ===== */
 .reveal{opacity:0; transform:translateY(20px); transition:opacity .6s var(--ease), transform .6s var(--ease);}
 .reveal.in{opacity:1; transform:none;}
