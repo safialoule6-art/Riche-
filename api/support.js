@@ -10,7 +10,7 @@ const MODEL = "llama-3.1-8b-instant";
 const FAQ = [
   { 
     keys: ["gratuit","prix","tarif","payer","coût","cout","free","abonnement","combien"],
-    reply: "🌊 Sunami a 3 offres : Gratuit (0€, 2 épisodes/jour, 3 langues), Premium (5€/mois, illimité, 6 langues, correction grammaire, audio), et Pro (9€/mois, tout + hors-ligne, stats avancées). Pas de carte bancaire pour commencer !"
+    reply: "🌊 Sunami a 3 offres : Wave (0€, 2 épisodes/jour, 3 langues), Sigma (5€/mois, illimité, 7 langues, correction grammaire, audio), et Ultra (9€/mois, tout + hors-ligne, stats avancées). Pas de carte bancaire pour commencer !"
   },
   {
     keys: ["remboursement","rembourser","annuler","résilier","resilier","argent"],
@@ -22,7 +22,7 @@ const FAQ = [
   },
   {
     keys: ["langue","langues","langage","disponible","quelle","quelles"],
-    reply: "🌍 6 langues dispos : Anglais 🇬🇧, Espagnol 🇪🇸, Allemand 🇩🇪, Italien 🇮🇹, Arabe 🇸🇦, Portugais 🇵🇹. En gratuit tu as 3 langues, en Premium/Pro les 6."
+    reply: "🌍 7 langues dispos : Français 🇫🇷, Anglais 🇬🇧, Espagnol 🇪🇸, Allemand 🇩🇪, Italien 🇮🇹, Arabe 🇸🇦, Portugais 🇵🇹. En Wave tu as 3 langues, en Sigma/Ultra les 7."
   },
   {
     keys: ["niveau","débutant","debutant","avancé","intermédiaire","intermediaire","difficile","facile"],
@@ -38,7 +38,7 @@ const FAQ = [
   },
   {
     keys: ["xp","streak","point","points","niveau","progression","progresser","série","serie"],
-    reply: "⭐ Tu gagnes 8-15 XP par réponse. Garde ton streak quotidien 🔥 pour débloquer des succès. Tout est dans tes Paramètres → Succès. En gratuit : 2 épisodes/jour, en Premium : illimité !"
+    reply: "⭐ Tu gagnes 8-15 XP par réponse. Garde ton streak quotidien 🔥 pour débloquer des succès. En Wave : 2 épisodes/jour, en Sigma : illimité !"
   },
   {
     keys: ["épisode","episode","histoire","chapitre","histoire","saga","conte","narration","personnage"],
@@ -46,7 +46,7 @@ const FAQ = [
   },
   {
     keys: ["micro","audio","voix","parler","prononcer","prononciation","écouter","ecouter"],
-    reply: "🎤 La saisie vocale et la synthèse audio sont disponibles en Premium et Pro. Tu peux parler tes réponses et écouter la prononciation du conteur. En gratuit, tu écris tes réponses."
+    reply: "🎤 La saisie vocale et la synthèse audio sont disponibles en Sigma et Ultra. Tu peux parler tes réponses et écouter la prononciation du conteur. En Wave, tu écris tes réponses."
   },
   {
     keys: ["contact","email","mail","équipe","equipe","joindre","parler","humain","aide"],
@@ -54,7 +54,7 @@ const FAQ = [
   },
   {
     keys: ["parrainage","parrainer","parrain","filleul","affiliation","inviter","invitation","ami"],
-    reply: "🤝 Tu as un lien de parrainage unique dans tes Paramètres. Partage-le ! Chaque personne qui s'inscrit avec ton lien te rapporte +50 XP. Si elle passe Premium, tu gagnes 1 mois offert."
+    reply: "🤝 Tu as un lien de parrainage unique dans tes Paramètres. Chaque personne qui s'inscrit avec ton lien te rapporte +50 XP. Si elle passe à Sigma, tu gagnes 1 mois offert."
   }
 ];
 
@@ -91,7 +91,7 @@ export default async function handler(req) {
 
   const SYSTEM_PROMPT = `You are the support assistant for "Sunami", a language learning app.
 ABOUT SUNAMI:
-- 3 plans: Free (0€, 2 episodes/day, 3 languages), Premium (5€/month, unlimited, 6 languages, grammar correction, voice), Pro (9€/month, all Premium + offline, advanced stats, custom sagas)
+- 3 plans: Wave (0€, 2 episodes/day, 3 languages), Sigma (5€/month, unlimited, 7 languages, grammar correction, voice), Ultra (9€/month, all Sigma + offline, advanced stats, custom sagas)
 - Payment: Dodo Payment (coming September 2026)
 - Contact email: ahmedyas09020@gmail.com
 - Refund: 100% satisfied or refunded within 7 days
