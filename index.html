@@ -65,17 +65,7 @@
 <div class="bg-glow2" aria-hidden="true"></div>
 <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Changer de thème" title="Changer de thème">🌙</button>
 <button class="lang-toggle" id="langToggleMobile" onclick="switchLang()" data-i18n="lang_switch" aria-label="Changer de langue">🇫🇷</button>
-
-<!-- PWA Install Banner -->
-<div class="install-banner" id="installBanner">
-  <svg class="badge mascot" style="width:30px;height:34px;flex-shrink:0;"><use href="#mascot"/></svg>
-  <div class="ib-text">
-    <b>Sunami</b>
-    <span>Ajoute l'app à ton écran</span>
-  </div>
-  <button class="btn small" id="installBtn" onclick="installPwa()">Installer</button>
-  <button class="ib-close" onclick="dismissInstall()" aria-label="Fermer">✕</button>
-</div>
+<button class="install-btn" id="installBtnTop" onclick="installPwa()" aria-label="Installer l'app" title="Installer l'app">📱 App</button>
 
 <!-- Nav desktop -->
 <nav class="landing-nav">
