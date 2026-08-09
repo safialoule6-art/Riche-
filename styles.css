@@ -102,6 +102,9 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
 .mobile-login-btn{margin-top:12px; font-size:15px;}
 .theme-toggle-inline{display:none;}
 
+.login-link{font-size:12px; color:var(--muted); font-weight:600; margin-top:8px;}
+.login-link .text-link{font-size:12px;}
+
 /* Hero phone mockup */
 .hero-mockup{display:none; flex-shrink:0;}
 .hm-phone{width:240px; background:var(--card); border:3px solid var(--card-border); border-radius:28px; overflow:hidden; box-shadow:0 20px 50px -15px rgba(0,0,0,.15);}
@@ -733,6 +736,7 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
   .theme-toggle-inline{display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; border:2px solid var(--line); background:var(--card); color:var(--foam); cursor:pointer; font-size:16px; transition:transform .12s;}
   .theme-toggle-inline:active{transform:scale(.92);}
   .mobile-login-btn{display:none;}
+  .login-link{display:none;}
 }
 @media(min-width:1024px){
   .hero-title{font-size:60px;}
