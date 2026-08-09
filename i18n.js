@@ -108,5 +108,7 @@ const I18N = {
     if(sw) sw.textContent = label;
     const swNav = document.getElementById('langSwitchNav');
     if(swNav) swNav.textContent = label;
+    const swMobile = document.getElementById('langSwitchMobile');
+    if(swMobile) swMobile.textContent = label;
   }
 })();
