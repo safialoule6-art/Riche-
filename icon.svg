@@ -2,26 +2,20 @@
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#2dd4bf"/>
-      <stop offset="1" stop-color="#0f766e"/>
+      <stop offset="1" stop-color="#14b8a6"/>
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="120" fill="url(#bg)"/>
-  <!-- Mascot body/face -->
-  <path d="M256 60 C256 60 400 260 400 380 A144 144 0 1 1 112 380 C112 260 256 60 256 60 Z" fill="#ffffff"/>
-  <!-- Highlight/shine -->
-  <path d="M256 60 C256 60 320 170 360 260 C300 230 250 240 220 280 C240 220 256 60 256 60 Z" fill="#ffffff" opacity="0.3"/>
-  <!-- Eyes -->
-  <ellipse cx="210" cy="390" rx="40" ry="50" fill="#ffffff"/>
-  <ellipse cx="310" cy="390" rx="40" ry="50" fill="#ffffff"/>
-  <!-- Pupils -->
-  <circle cx="216" cy="400" r="20" fill="#0f2e2b"/>
-  <circle cx="304" cy="400" r="20" fill="#0f2e2b"/>
-  <!-- Eye shine -->
-  <circle cx="222" cy="392" r="8" fill="#ffffff"/>
-  <circle cx="310" cy="392" r="8" fill="#ffffff"/>
-  <!-- Blush -->
-  <circle cx="155" cy="440" r="20" fill="#ff8a8f" opacity="0.5"/>
-  <circle cx="365" cy="440" r="20" fill="#ff8a8f" opacity="0.5"/>
-  <!-- Smile -->
-  <path d="M220 455 Q258 490 300 455" stroke="#0f2e2b" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <!-- Mascot — exact same design as original -->
+  <path d="M256 30 C256 30 430 260 430 390 A174 174 0 1 1 82 390 C82 260 256 30 256 30 Z" fill="#ffffff"/>
+  <path d="M256 30 C256 30 330 140 370 230 C310 210 230 220 190 260 C210 180 256 30 256 30 Z" fill="#ffffff" opacity="0.18"/>
+  <ellipse cx="200" cy="395" rx="48" ry="56" fill="#ffffff"/>
+  <ellipse cx="320" cy="395" rx="48" ry="56" fill="#ffffff"/>
+  <circle cx="208" cy="405" r="24" fill="#0f2e2b"/>
+  <circle cx="312" cy="405" r="24" fill="#0f2e2b"/>
+  <circle cx="216" cy="390" r="9" fill="#ffffff"/>
+  <circle cx="320" cy="390" r="9" fill="#ffffff"/>
+  <circle cx="140" cy="450" r="24" fill="#ff8a8f" opacity="0.55"/>
+  <circle cx="380" cy="450" r="24" fill="#ff8a8f" opacity="0.55"/>
+  <path d="M210 465 Q256 510 310 465" stroke="#0f2e2b" stroke-width="14" fill="none" stroke-linecap="round"/>
 </svg>

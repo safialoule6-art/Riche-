@@ -83,7 +83,7 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
 @media(min-width:768px){.nav-install-btn{display:inline-flex;align-items:center;gap:3px;}}
 
 /* Mobile install button */
-.install-btn-mobile{position:fixed; top:14px; right:66px; z-index:50; height:40px; padding:0 14px; border-radius:99px; border:none; background:linear-gradient(135deg,var(--wave-2),var(--wave)); color:#fff; cursor:pointer; font-size:13px; font-weight:800; box-shadow:0 4px 16px rgba(20,184,166,.35); display:flex; align-items:center; gap:3px;}
+.install-btn-mobile{position:fixed; top:14px; left:66px; z-index:50; height:40px; padding:0 14px; border-radius:99px; border:none; background:linear-gradient(135deg,var(--wave-2),var(--wave)); color:#fff; cursor:pointer; font-size:13px; font-weight:800; box-shadow:0 4px 16px rgba(20,184,166,.35); display:flex; align-items:center; gap:3px;}
 .install-btn-mobile:active{transform:scale(.94);}
 @media(min-width:768px){.install-btn-mobile{display:none;}}
 
