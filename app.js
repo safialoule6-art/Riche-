@@ -53,7 +53,7 @@ window.openSettings = function(){
   if(em && lbl) em.textContent = lbl.textContent ? ('Connecté : ' + lbl.textContent) : '';
   // Premium badge
   const badge = document.getElementById('planBadge');
-  const unsub = document.getElementById('unsubBtn');
+  const billing = document.getElementById('billingSection');
   if(badge){
     if(isPremium()){
       badge.style.display = 'block';
@@ -63,7 +63,7 @@ window.openSettings = function(){
       badge.innerHTML = '<span style="color:var(--muted);font-size:13px;">🌊 Offre Gratuit</span> · <a href="/pricing" style="color:var(--wave);font-weight:700;font-size:13px;">Passer Premium →</a>';
     }
   }
-  if(unsub) unsub.style.display = isPremium() ? 'block' : 'none';
+  if(billing) billing.style.display = isPremium() ? 'block' : 'none';
   const m = document.getElementById('settingsModal');
   m.classList.add('open'); m.setAttribute('aria-hidden','false');
 };
@@ -538,15 +538,23 @@ function useDailyEpisode(){
   return true;
 }
 
-window.unsubscribe = async function(){
-  if(!confirm('Résilier ton abonnement ? Ta progression est sauvegardée. Tu repasses en gratuit.')) return;
+window.cancelSubscription = async function(){
+  if(!confirm('Annuler ton abonnement ? Tu restes Premium jusqu\'à la fin du mois. Ta progression est sauvegardée.')) return;
   try{
     progress.plan = 'free';
+    progress.planExpires = new Date(Date.now() + 30*24*3600*1000).toISOString();
     await saveProgress();
-    alert('Abonnement résilié. Tu es maintenant en offre Gratuit.');
+    alert('Abonnement annulé. Tu restes Premium jusqu\'à la fin du mois, puis tu repasseras en Gratuit.');
     window.closeSettings();
     location.reload();
   }catch(e){ alert('Erreur. Contacte ahmedyas09020@gmail.com'); }
+};
+
+window.requestRefund = function(){
+  if(!confirm('Demander un remboursement intégral ? Traité sous 3-5 jours.')) return;
+  // Pour l'instant : redirige vers l'email. Quand Dodo Payment sera live, appel API.
+  alert('📧 Ta demande est envoyée à ahmedyas09020@gmail.com. Remboursement sous 3-5 jours.\n\n(Satisfait ou remboursé — 7 jours)');
+  window.closeSettings();
 };
 
 window.logout = async function(){
