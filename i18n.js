@@ -79,12 +79,17 @@ const I18N = {
 (function(){
   let lang = localStorage.getItem('sunami-lang');
   if(!lang){
-    lang = (navigator.language || '').slice(0,2) === 'fr' ? 'fr' : 'en';
+    // Vérifier toutes les langues du navigateur (pas juste la principale)
+    const browserLangs = (navigator.languages || [navigator.language || 'fr']);
+    const hasEnglish = browserLangs.some(l => l.slice(0,2) === 'en');
+    const hasFrench = browserLangs.some(l => l.slice(0,2) === 'fr');
+    // Si le navigateur a l'anglais en priorité, utiliser l'anglais
+    lang = (hasEnglish && !hasFrench) ? 'en' : 'fr';
   }
   applyI18n(lang);
 
   window.switchLang = function(){
-    const current = localStorage.getItem('sunami-lang') || ((navigator.language||'').slice(0,2)==='fr'?'fr':'en');
+    const current = localStorage.getItem('sunami-lang') || 'fr';
     const next = current === 'fr' ? 'en' : 'fr';
     localStorage.setItem('sunami-lang', next);
     applyI18n(next);
@@ -97,7 +102,11 @@ const I18N = {
       const key = el.getAttribute('data-i18n');
       if(t[key]) el.textContent = t[key];
     });
+    // Mettre à jour les deux boutons de langue
+    const label = t.lang_switch || 'EN';
     const sw = document.getElementById('langSwitch');
-    if(sw) sw.textContent = t.lang_switch || 'EN';
+    if(sw) sw.textContent = label;
+    const swNav = document.getElementById('langSwitchNav');
+    if(swNav) swNav.textContent = label;
   }
 })();
