@@ -102,6 +102,26 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
 .mobile-login-btn{margin-top:12px; font-size:15px;}
 .theme-toggle-inline{display:none;}
 
+/* Hero phone mockup */
+.hero-mockup{display:none; flex-shrink:0;}
+.hm-phone{width:240px; background:var(--card); border:3px solid var(--card-border); border-radius:28px; overflow:hidden; box-shadow:0 20px 50px -15px rgba(0,0,0,.15);}
+.hm-notch{width:60px; height:6px; background:var(--card-border); border-radius:99px; margin:10px auto 0;}
+.hm-screen{padding:10px 12px 6px; display:flex; flex-direction:column; gap:7px; min-height:340px; background:var(--abyss);}
+.hm-header{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:11px; color:var(--foam); text-align:center; padding-bottom:4px; border-bottom:1px solid var(--card-border);}
+.hm-msg{display:flex; gap:6px; align-items:flex-end;}
+.hm-msg.user{justify-content:flex-end;}
+.hm-avatar-mini{flex-shrink:0;}
+.hm-bubble{font-size:9px; font-weight:600; padding:6px 8px; border-radius:10px; line-height:1.4; max-width:85%;}
+.hm-msg.ai .hm-bubble{background:var(--surf); color:var(--foam); border-bottom-left-radius:2px;}
+.hm-msg.ai .hm-bubble b{color:var(--wave-dim);}
+.hm-msg.user .hm-bubble{background:var(--wave); color:#fff; border-bottom-right-radius:2px;}
+.hm-input{font-size:9px; color:var(--muted); text-align:center; padding:8px; background:var(--surf); border-radius:8px; margin-top:auto; font-weight:600;}
+
+@media(min-width:768px){
+  .hero-mockup{display:block;}
+  .hm-phone{width:250px;}
+  .hm-screen{min-height:360px;}
+
 .email-auth{display:flex; flex-direction:column; gap:10px; max-width:320px; margin:6px auto 0;}
 .email-auth input{margin-bottom:0;}
 .email-auth-actions{display:flex; gap:8px;}
