@@ -194,7 +194,7 @@ function renderDemoScene(i){
 }
 renderDemoScene(0);
 
-/* PWA Install — bouton en haut comme LumiaAI */
+/* PWA Install — déclenche le dialogue natif */
 let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
@@ -203,11 +203,10 @@ window.addEventListener('beforeinstallprompt', (e) => {
 window.installPwa = async function(){
   if(deferredPrompt){
     deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
+    const { outcome } = await deferredPrompt.userChoice;
     deferredPrompt = null;
   } else {
-    // Fallback : expliquer comment installer manuellement
-    alert('📱 Pour installer Sunami :\n\nChrome → Menu ⋮ → "Ajouter à l\'écran d\'accueil"\nSafari → Partager → "Sur l\'écran d\'accueil"');
+    alert('📱 Ouvre le menu du navigateur → "Ajouter à l\'écran d\'accueil"');
   }
 };
 

@@ -78,11 +78,14 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
 .lang-toggle:active{transform:translateY(3px); box-shadow:0 0 0 var(--line);}
 @media(min-width:768px){.lang-toggle{display:none;}}
 
-/* PWA Install button — top right like LumiaAI */
-.install-btn{display:flex; align-items:center; gap:3px; position:fixed; top:14px; right:66px; z-index:50; height:40px; padding:0 14px; border-radius:99px; border:none; background:linear-gradient(135deg,var(--wave-2),var(--wave)); color:#fff; cursor:pointer; font-size:13px; font-weight:800; box-shadow:0 4px 16px rgba(20,184,166,.35); transition:transform .12s, box-shadow .2s;}
-.install-btn:hover{box-shadow:0 6px 20px rgba(20,184,166,.5);}
-.install-btn:active{transform:scale(.94);}
-@media(min-width:768px){.install-btn{display:none!important;}}
+/* PWA Install button in nav */
+.nav-install-btn{display:none;}
+@media(min-width:768px){.nav-install-btn{display:inline-flex;align-items:center;gap:3px;}}
+
+/* Mobile install button */
+.install-btn-mobile{position:fixed; top:14px; right:66px; z-index:50; height:40px; padding:0 14px; border-radius:99px; border:none; background:linear-gradient(135deg,var(--wave-2),var(--wave)); color:#fff; cursor:pointer; font-size:13px; font-weight:800; box-shadow:0 4px 16px rgba(20,184,166,.35); display:flex; align-items:center; gap:3px;}
+.install-btn-mobile:active{transform:scale(.94);}
+@media(min-width:768px){.install-btn-mobile{display:none;}}
 
 /* ===== SCROLL REVEAL ===== */
 .reveal{opacity:0; transform:translateY(20px); transition:opacity .6s var(--ease), transform .6s var(--ease);}
