@@ -199,17 +199,16 @@ let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  if(localStorage.getItem('sunami-pwa-dismissed')) return;
-  const btn = document.getElementById('installBtnTop');
-  if(btn) btn.classList.add('show');
 });
 window.installPwa = async function(){
-  if(!deferredPrompt) return;
-  deferredPrompt.prompt();
-  await deferredPrompt.userChoice;
-  deferredPrompt = null;
-  document.getElementById('installBtnTop')?.classList.remove('show');
-  localStorage.setItem('sunami-pwa-dismissed', '1');
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+  } else {
+    // Fallback : expliquer comment installer manuellement
+    alert('📱 Pour installer Sunami :\n\nChrome → Menu ⋮ → "Ajouter à l\'écran d\'accueil"\nSafari → Partager → "Sur l\'écran d\'accueil"');
+  }
 };
 
 /* Animated demo — simulation complète de l'app */
