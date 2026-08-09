@@ -191,6 +191,58 @@ function renderDemoScene(i){
 }
 renderDemoScene(0);
 
+/* Animated demo */
+(function(){
+  const chat = document.getElementById('adChat');
+  if(!chat) return;
+  const caps = document.querySelectorAll('.ad-cap');
+  let step = 0;
+
+  const script = [
+    { msg:'ai', text:'<b>Bonjour !</b> You must be tired — how do you say hello in English?', cap:0 },
+    { delay:1500 },
+    { msg:'user', text:'Hello, nice to meet you!', cap:1 },
+    { delay:1200 },
+    { msg:'ai', text:'✅ <b>Parfait !</b> Bienvenue à Marseille. Suivez-moi, la voiture est par ici…', cap:2 },
+    { delay:2000 },
+    { msg:'ai', text:'📖 <b>Chapitre 2</b> — demain, même heure. <b>Ne casse pas ton streak !</b> 🔥', cap:3 },
+    { delay:2000, loop:true },
+  ];
+
+  function addBubble(s){
+    const div = document.createElement('div');
+    div.className = 'ad-msg ' + s.msg;
+    div.innerHTML = '<div class="ad-bubble">' + s.text + '</div>';
+    chat.appendChild(div);
+    div.style.opacity = '0';
+    div.style.transform = 'translateY(6px)';
+    div.style.transition = 'all .3s ease';
+    requestAnimationFrame(() => { div.style.opacity = '1'; div.style.transform = 'translateY(0)'; });
+    if(s.msg === 'ai') chat.scrollTop = chat.scrollHeight;
+    // Highlight caption
+    if(s.cap !== undefined){
+      caps.forEach(c => c.classList.remove('active'));
+      if(caps[s.cap]) caps[s.cap].classList.add('active');
+    }
+  }
+
+  function run(){
+    if(step >= script.length) step = 0;
+    const s = script[step];
+    if(s.msg){
+      // Clear old bubbles if looping
+      if(s.loop && chat.children.length > 4){
+        while(chat.children.length > 1) chat.lastChild.remove();
+      }
+      addBubble(s);
+    }
+    step++;
+    setTimeout(run, s.delay || 1800);
+  }
+
+  setTimeout(run, 500);
+})();
+
 /* ===== Reveal au scroll ===== */
 document.addEventListener('DOMContentLoaded', ()=>{
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

@@ -162,6 +162,25 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
   border-radius:14px; transition:.15s var(--ease);}
 .demo-choice:hover{border-color:var(--wave); transform:translateX(3px);}
 .demo-choice.wrong-flash{border-color:var(--err); color:var(--err); animation:shake .4s;}
+
+/* ---- Animated Demo ---- */
+.animated-demo{display:flex; align-items:center; gap:24px; max-width:700px; margin:0 auto; flex-wrap:wrap; justify-content:center;}
+.ad-phone{width:240px; background:var(--card); border:3px solid var(--card-border); border-radius:28px; overflow:hidden; box-shadow:0 20px 50px -15px rgba(0,0,0,.15); flex-shrink:0;}
+.ad-notch{width:50px; height:5px; background:var(--card-border); border-radius:99px; margin:8px auto 0;}
+.ad-screen{padding:8px 10px 6px; background:var(--abyss); min-height:300px; display:flex; flex-direction:column;}
+.ad-header{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:10px; color:var(--foam); text-align:center; padding-bottom:6px; border-bottom:1px solid var(--card-border); margin-bottom:6px;}
+.ad-chat{flex:1; display:flex; flex-direction:column; gap:6px; overflow:hidden;}
+.ad-msg{display:flex; max-width:88%;}
+.ad-msg.ai{align-self:flex-start;}
+.ad-msg.user{align-self:flex-end;}
+.ad-bubble{font-size:9px; font-weight:600; padding:5px 7px; border-radius:8px; line-height:1.4;}
+.ad-msg.ai .ad-bubble{background:var(--surf); color:var(--foam); border-bottom-left-radius:2px;}
+.ad-msg.user .ad-bubble{background:var(--wave); color:#fff; border-bottom-right-radius:2px;}
+.ad-input{font-size:9px; color:var(--muted); text-align:center; padding:6px; background:var(--surf); border-radius:6px; margin-top:6px; font-weight:600;}
+.ad-captions{display:flex; flex-direction:column; gap:8px; min-width:200px;}
+.ad-cap{font-size:13px; font-weight:700; color:var(--muted); padding:8px 12px; border-radius:8px; border:1px solid transparent; transition:all .3s;}
+.ad-cap.active{color:var(--wave); background:rgba(20,184,166,.08); border-color:rgba(20,184,166,.2);}
+@media(max-width:600px){.animated-demo{flex-direction:column;}.ad-captions{flex-direction:row; flex-wrap:wrap; justify-content:center;}.ad-cap{font-size:11px; padding:6px 10px;}}
 @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
 
 /* steps */
