@@ -60,7 +60,7 @@ window.openSettings = function(){
       badge.innerHTML = '<span style="background:var(--wave);color:#fff;padding:4px 12px;border-radius:99px;font-weight:800;font-size:13px;">💎 ' + progress.plan.toUpperCase() + '</span><br><small style="color:var(--muted);">Merci de soutenir Sunami !</small>';
     } else {
       badge.style.display = 'block';
-      badge.innerHTML = '<span style="color:var(--muted);font-size:13px;">🌊 Offre Gratuit</span> · <a href="/pricing" style="color:var(--wave);font-weight:700;font-size:13px;">Passer Premium →</a>';
+      badge.innerHTML = '<span style="color:var(--muted);font-size:13px;">🌊 Offre Wave</span> · <a href="/pricing" style="color:var(--wave);font-weight:700;font-size:13px;">Passer à Sigma →</a>';
     }
   }
   if(billing) billing.style.display = isPremium() ? 'block' : 'none';
@@ -565,7 +565,7 @@ window.cancelSubscription = async function(){
     progress.plan = 'free';
     progress.planExpires = new Date(Date.now() + 30*24*3600*1000).toISOString();
     await saveProgress();
-    alert('Abonnement annulé. Tu restes Premium jusqu\'à la fin du mois, puis tu repasseras en Gratuit.');
+    alert('Abonnement annulé. Tu restes Sigma jusqu\'à la fin du mois, puis tu repasseras en Wave.');
     window.closeSettings();
     location.reload();
   }catch(e){ alert('Erreur. Contacte ahmedyas09020@gmail.com'); }
