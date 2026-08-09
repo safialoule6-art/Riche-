@@ -1,13 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" rx="128" fill="#14b8a6"/>
-  <path d="M256 40 C256 40 420 260 420 380 A164 164 0 1 1 92 380 C92 260 256 40 256 40 Z" fill="#ffffff"/>
-  <ellipse cx="200" cy="395" rx="48" ry="56" fill="#ffffff"/>
-  <ellipse cx="320" cy="395" rx="48" ry="56" fill="#ffffff"/>
-  <circle cx="208" cy="405" r="24" fill="#0f2e2b"/>
-  <circle cx="312" cy="405" r="24" fill="#0f2e2b"/>
-  <circle cx="216" cy="395" r="9" fill="#ffffff"/>
-  <circle cx="320" cy="395" r="9" fill="#ffffff"/>
-  <circle cx="140" cy="450" r="24" fill="#ff8a8f" opacity="0.55"/>
-  <circle cx="380" cy="450" r="24" fill="#ff8a8f" opacity="0.55"/>
-  <path d="M210 470 Q252 510 310 470" stroke="#0f2e2b" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2dd4bf"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#bg)"/>
+  <!-- Mascot body/face -->
+  <path d="M256 60 C256 60 400 260 400 380 A144 144 0 1 1 112 380 C112 260 256 60 256 60 Z" fill="#ffffff"/>
+  <!-- Highlight/shine -->
+  <path d="M256 60 C256 60 320 170 360 260 C300 230 250 240 220 280 C240 220 256 60 256 60 Z" fill="#ffffff" opacity="0.3"/>
+  <!-- Eyes -->
+  <ellipse cx="210" cy="390" rx="40" ry="50" fill="#ffffff"/>
+  <ellipse cx="310" cy="390" rx="40" ry="50" fill="#ffffff"/>
+  <!-- Pupils -->
+  <circle cx="216" cy="400" r="20" fill="#0f2e2b"/>
+  <circle cx="304" cy="400" r="20" fill="#0f2e2b"/>
+  <!-- Eye shine -->
+  <circle cx="222" cy="392" r="8" fill="#ffffff"/>
+  <circle cx="310" cy="392" r="8" fill="#ffffff"/>
+  <!-- Blush -->
+  <circle cx="155" cy="440" r="20" fill="#ff8a8f" opacity="0.5"/>
+  <circle cx="365" cy="440" r="20" fill="#ff8a8f" opacity="0.5"/>
+  <!-- Smile -->
+  <path d="M220 455 Q258 490 300 455" stroke="#0f2e2b" stroke-width="14" fill="none" stroke-linecap="round"/>
 </svg>
