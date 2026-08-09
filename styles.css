@@ -83,9 +83,6 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
 @media(min-width:768px){.nav-install-btn{display:inline-flex;align-items:center;gap:3px;}}
 
 /* Mobile install button */
-.install-btn-mobile{position:fixed; top:14px; left:66px; z-index:50; height:40px; padding:0 14px; border-radius:99px; border:none; background:linear-gradient(135deg,var(--wave-2),var(--wave)); color:#fff; cursor:pointer; font-size:13px; font-weight:800; box-shadow:0 4px 16px rgba(20,184,166,.35); display:flex; align-items:center; gap:3px;}
-.install-btn-mobile:active{transform:scale(.94);}
-@media(min-width:768px){.install-btn-mobile{display:none;}}
 
 /* ===== SCROLL REVEAL ===== */
 .reveal{opacity:0; transform:translateY(20px); transition:opacity .6s var(--ease), transform .6s var(--ease);}
@@ -100,7 +97,7 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
 .brand{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:24px; display:flex; align-items:center; justify-content:center; gap:9px; margin-bottom:26px;}
 .brand .badge{width:36px; height:36px;}
 .brand em{color:var(--wave); font-style:normal;}
-.beta-badge{font-family:'Nunito',sans-serif; font-size:9px; font-weight:800; background:var(--wave); color:#fff; padding:2px 6px; border-radius:4px; margin-left:4px; letter-spacing:.04em; vertical-align:middle; position:relative; top:-1px;}
+.brand-install-btn{font-family:'Nunito',sans-serif; font-size:10px; font-weight:800; background:linear-gradient(135deg,var(--wave-2),var(--wave)); color:#fff; border:none; padding:3px 10px; border-radius:99px; cursor:pointer; margin-left:6px; letter-spacing:.02em; vertical-align:middle;}
 
 .hero{text-align:center;}
 .hero-mascot{width:132px; height:150px; margin:0 auto 6px;}
