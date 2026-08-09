@@ -30,7 +30,10 @@ h1,h2,h3{font-family:'Baloo 2', sans-serif; font-weight:800; line-height:1.12; l
 
 /* subtle static hero glow (calme, pas d'aurora animée) */
 .bg-glow{position:fixed; top:-18vmax; left:50%; transform:translateX(-50%); width:80vmax; height:52vmax; z-index:-1;
-  background:radial-gradient(60% 60% at 50% 40%, rgba(20,184,166,.14), transparent 70%); pointer-events:none;}
+  background:radial-gradient(60% 60% at 50% 40%, rgba(20,184,166,.18), transparent 70%); pointer-events:none;}
+/* Second glow — plus large, plus doux */
+.bg-glow2{position:fixed; top:20vmax; left:50%; transform:translateX(-50%); width:100vmax; height:60vmax; z-index:-2;
+  background:radial-gradient(50% 50% at 50% 50%, rgba(45,212,191,.06), transparent 70%); pointer-events:none;}
 
 /* mascot sprite */
 .mascot{display:block;}
@@ -88,6 +91,7 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
 .brand{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:24px; display:flex; align-items:center; justify-content:center; gap:9px; margin-bottom:26px;}
 .brand .badge{width:36px; height:36px;}
 .brand em{color:var(--wave); font-style:normal;}
+.beta-badge{font-family:'Nunito',sans-serif; font-size:9px; font-weight:800; background:var(--wave); color:#fff; padding:2px 6px; border-radius:4px; margin-left:4px; letter-spacing:.04em; vertical-align:middle; position:relative; top:-1px;}
 
 .hero{text-align:center;}
 .hero-mascot{width:132px; height:150px; margin:0 auto 6px;}
@@ -166,6 +170,7 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
 /* ---- Animated Demo ---- */
 .animated-demo{display:flex; align-items:center; gap:24px; max-width:700px; margin:0 auto; flex-wrap:wrap; justify-content:center;}
 .ad-phone{width:240px; background:var(--card); border:3px solid var(--card-border); border-radius:28px; overflow:hidden; box-shadow:0 20px 50px -15px rgba(0,0,0,.15); flex-shrink:0;}
+@media(min-width:768px){.ad-phone{width:280px;}.ad-screen{min-height:380px;}.ad-bubble{font-size:10px;}}
 .ad-notch{width:50px; height:5px; background:var(--card-border); border-radius:99px; margin:8px auto 0;}
 .ad-screen{padding:8px 10px 6px; background:var(--abyss); min-height:300px; display:flex; flex-direction:column;}
 .ad-header{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:10px; color:var(--foam); padding-bottom:6px; border-bottom:1px solid var(--card-border); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;}
