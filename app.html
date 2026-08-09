@@ -89,9 +89,32 @@
       <span class="chip words-chip" id="wordsChip" style="display:none;" title="Mots-clés appris">📚 <span id="wordsCount">0</span></span>
       <span class="chip" id="streakChip" style="display:none;" title="Ta série de jours"><span class="flame">🔥</span> <span id="streakCount">0</span></span>
       <span id="userLabel" style="display:none;"></span>
-      <button class="icon-btn" id="settingsBtn" onclick="openSettings()" aria-label="Paramètres" title="Paramètres">⚙️</button>
+      <button class="icon-btn" id="menuBtn" onclick="toggleSidebar()" aria-label="Menu" title="Menu">☰</button>
     </div>
   </header>
+
+  <!-- Sidebar drawer -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-brand">🌊 sunami<em>.</em></span>
+      <button class="icon-btn" onclick="toggleSidebar()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="sidebar-body">
+      <a class="sidebar-item" onclick="toggleSidebar();scrollToChat()"><span class="si-icon">💬</span> Mon histoire</a>
+      <a class="sidebar-item" onclick="toggleSidebar();openVocabLibrary()"><span class="si-icon">📚</span> Mon vocabulaire</a>
+      <div class="sidebar-divider"></div>
+      <a class="sidebar-item" onclick="toggleSidebar();openSettings()"><span class="si-icon">🏆</span> Succès & Stats</a>
+      <a class="sidebar-item" onclick="toggleSidebar();openSettings()"><span class="si-icon">👤</span> Personnages</a>
+      <a class="sidebar-item" onclick="toggleSidebar();openSettings()"><span class="si-icon">🗺️</span> Carte de l'histoire</a>
+      <div class="sidebar-divider"></div>
+      <a class="sidebar-item" onclick="toggleSidebar();openSettings()"><span class="si-icon">🤝</span> Parrainage</a>
+      <a class="sidebar-item" onclick="toggleSidebar();openSettings()"><span class="si-icon">💳</span> Abonnement</a>
+      <div class="sidebar-divider"></div>
+      <a class="sidebar-item" href="/support"><span class="si-icon">❓</span> Support</a>
+      <a class="sidebar-item" onclick="toggleSidebar();logout()"><span class="si-icon">🚪</span> Déconnexion</a>
+    </div>
+  </nav>
 
   <div class="xp-bar" aria-hidden="true"><div class="xp-bar-fill" id="xpBarFill"></div></div>
 
