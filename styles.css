@@ -168,7 +168,13 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
 .ad-phone{width:240px; background:var(--card); border:3px solid var(--card-border); border-radius:28px; overflow:hidden; box-shadow:0 20px 50px -15px rgba(0,0,0,.15); flex-shrink:0;}
 .ad-notch{width:50px; height:5px; background:var(--card-border); border-radius:99px; margin:8px auto 0;}
 .ad-screen{padding:8px 10px 6px; background:var(--abyss); min-height:300px; display:flex; flex-direction:column;}
-.ad-header{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:10px; color:var(--foam); text-align:center; padding-bottom:6px; border-bottom:1px solid var(--card-border); margin-bottom:6px;}
+.ad-header{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:10px; color:var(--foam); padding-bottom:6px; border-bottom:1px solid var(--card-border); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;}
+.ad-stats{font-size:8px; font-weight:700; color:var(--muted);}
+.ad-stats b{color:var(--wave);}
+.ad-dot{animation:adDot 1.2s ease-in-out infinite; color:var(--muted);}
+.ad-dot:nth-child(2){animation-delay:.2s;}
+.ad-dot:nth-child(3){animation-delay:.4s;}
+@keyframes adDot{0%,100%{opacity:.3;}50%{opacity:1;}}
 .ad-chat{flex:1; display:flex; flex-direction:column; gap:6px; overflow:hidden;}
 .ad-msg{display:flex; max-width:88%;}
 .ad-msg.ai{align-self:flex-start;}
