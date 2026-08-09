@@ -11,6 +11,13 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 function isRecoveryLink(){ return window.location.hash.includes('type=recovery'); }
 let inRecovery = isRecoveryLink();
 
+/* Capture du code de parrainage dans l'URL (?ref=CODE) */
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const ref = params.get('ref');
+  if(ref){ localStorage.setItem('sunami_ref', ref); }
+})();
+
 /* Déjà connecté ? -> on file directement vers l'app (sauf lien de récupération en cours) */
 (async function(){
   if(inRecovery) return;

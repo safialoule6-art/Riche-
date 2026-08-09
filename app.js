@@ -47,6 +47,7 @@ window.openSettings = function(){
   renderAchievements();
   renderCharacters();
   renderStoryMap();
+  loadReferralStats().then(()=>renderReferral());
   const em = document.getElementById('setEmail');
   const lbl = document.getElementById('userLabel');
   if(em && lbl) em.textContent = lbl.textContent ? ('Connecté : ' + lbl.textContent) : '';
@@ -556,6 +557,85 @@ window.logout = async function(){
   window.location.replace('/');
 };
 
+/* ===== PARRAINAGE ===== */
+let referralCode = localStorage.getItem('sunami_ref_code') || '';
+let referralStats = { total: 0, pending: 0, converted: 0 };
+
+async function loadReferralCode(){
+  const { data } = await supabase.auth.getSession();
+  if(!data.session) return;
+  const userId = data.session.user.id;
+  try{
+    const res = await fetch('/api/referral', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'generate', userId })
+    });
+    const d = await res.json();
+    if(d.code){
+      referralCode = d.code;
+      localStorage.setItem('sunami_ref_code', d.code);
+    }
+  }catch(e){}
+}
+
+async function loadReferralStats(){
+  const { data } = await supabase.auth.getSession();
+  if(!data.session) return;
+  try{
+    const res = await fetch('/api/referral', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'stats', userId: data.session.user.id })
+    });
+    referralStats = await res.json();
+  }catch(e){}
+}
+
+async function claimReferral(){
+  const ref = localStorage.getItem('sunami_ref');
+  if(!ref) return;
+  const { data } = await supabase.auth.getSession();
+  if(!data.session) return;
+  try{
+    await fetch('/api/referral', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'claim', userId: data.session.user.id, referralCode: ref })
+    });
+    localStorage.removeItem('sunami_ref');
+  }catch(e){}
+}
+
+window.copyReferralLink = function(){
+  const link = 'https://sunami-rho.vercel.app?ref=' + referralCode;
+  navigator.clipboard.writeText(link).then(() => {
+    const b = document.getElementById('copyRefBtn');
+    if(b){ b.textContent = '✓ Copié !'; setTimeout(()=>b.textContent = '📋 Copier mon lien', 2000); }
+  });
+};
+
+function renderReferral(){
+  const el = document.getElementById('referralInfo');
+  if(!el) return;
+  if(!referralCode){
+    el.innerHTML = '<div class="ach-empty">Connecte-toi pour générer ton lien de parrainage.</div>';
+    return;
+  }
+  const link = 'https://sunami-rho.vercel.app?ref=' + referralCode;
+  el.innerHTML = 
+    '<div class="ref-stats">' +
+      '<div class="ref-stat"><b>' + (referralStats.total || 0) + '</b><span>filleuls</span></div>' +
+      '<div class="ref-stat"><b>' + (referralStats.converted || 0) + '</b><span>convertis</span></div>' +
+      '<div class="ref-stat"><b>+50</b><span>XP/filleul</span></div>' +
+    '</div>' +
+    '<div class="ref-link-box">' +
+      '<code>' + link + '</code>' +
+      '<button class="btn small" id="copyRefBtn" onclick="copyReferralLink()">📋 Copier mon lien</button>' +
+    '</div>' +
+    '<p class="ref-note">Partage ton lien. Quand quelqu\'un s\'inscrit avec, tu gagnes +50 XP. S\'il passe Premium, tu reçois 1 mois offert.</p>';
+}
+
 const LANGUAGES = [
   {code:'anglais', label:'Anglais', flag:'🇬🇧'},
   {code:'espagnol', label:'Espagnol', flag:'🇪🇸'},
@@ -741,6 +821,10 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   const { data } = await supabase.auth.getSession();
   if(data.session){ enterApp(data.session.user.email, data.session.user.id); }
   else { window.location.replace('/'); }
+
+  // Parrainage
+  claimReferral();
+  loadReferralCode();
 
   // Service Worker pour mode hors-ligne
   if('serviceWorker' in navigator){
