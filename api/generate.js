@@ -105,7 +105,8 @@ export default async function handler(req) {
   }
 
   const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
+  const apiKey2 = process.env.GROQ_API_KEY_2;
+  if (!apiKey && !apiKey2) {
     return jsonResponse({ error: "GROQ_API_KEY manquante sur le serveur" }, 500);
   }
   console.log("[GROQ] Clé API présente — préfixe=" + apiKey.slice(0, 6) + "… longueur=" + apiKey.length);
@@ -152,6 +153,16 @@ export default async function handler(req) {
       }),
       signal: fetchController.signal,
     });
+    // Fallback sur la 2e clé si rate limit
+    if(groqRes.status === 429 && apiKey2){
+      console.log("[GROQ] Rate limit clé 1 — bascule sur clé 2");
+      groqRes = await fetch(GROQ_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${apiKey2}` },
+        body: JSON.stringify({ model: MODEL, messages, stream: false, temperature: 0.85, max_tokens: 600, stop: ["P.S.", "P.S :", "Note :", "Note:"] }),
+        signal: fetchController.signal,
+      });
+    }
   } catch (err) {
     clearTimeout(fetchTimeoutId);
     console.log("[GROQ] Échec fetch — delta=" + (Date.now() - t0) + "ms err=" + (err.name || "unknown") + " msg=" + (err.message || ""));

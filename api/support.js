@@ -86,7 +86,8 @@ export default async function handler(req) {
 
   // 2. Fallback Groq (question complexe uniquement)
   const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) return jsonResponse({ reply: "Support indisponible. Contacte ahmedyas09020@gmail.com" }, 200);
+  const apiKey2 = process.env.GROQ_API_KEY_2;
+  if (!apiKey && !apiKey2) return jsonResponse({ reply: "Support indisponible. Contacte ahmedyas09020@gmail.com" }, 200);
 
   const SYSTEM_PROMPT = `You are the support assistant for "Sunami", a language learning app.
 ABOUT SUNAMI:
@@ -97,11 +98,19 @@ ABOUT SUNAMI:
 YOUR ROLE: Answer in French, be friendly, concise (max 3-4 sentences). If you don't know: say "Je transmets ta question à l'équipe, tu auras une réponse par email."`;
 
   try {
-    const groqRes = await fetch(GROQ_URL, {
+    let groqRes = await fetch(GROQ_URL, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({ model: MODEL, messages: [{ role:"system", content: SYSTEM_PROMPT }, { role:"user", content: message }], stream: false, temperature: 0.7, max_tokens: 200 }),
     });
+    // Fallback sur la 2e clé si rate limit
+    if(groqRes.status === 429 && apiKey2){
+      groqRes = await fetch(GROQ_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${apiKey2}` },
+        body: JSON.stringify({ model: MODEL, messages: [{ role:"system", content: SYSTEM_PROMPT }, { role:"user", content: message }], stream: false, temperature: 0.7, max_tokens: 200 }),
+      });
+    }
 
     if (!groqRes.ok) {
       return jsonResponse({ reply: "Support momentanément indisponible. Contacte ahmedyas09020@gmail.com" }, 200);
