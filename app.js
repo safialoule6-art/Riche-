@@ -849,11 +849,12 @@ let chatHistory = [];
 
 function scrollChat(){ const log = document.getElementById('chatLog'); log.scrollTop = log.scrollHeight; }
 
-function addMsg(type, text){
+function addMsg(type, text, html){
   const log = document.getElementById('chatLog');
   const div = document.createElement('div');
   div.className = 'msg ' + type;
-  div.textContent = text;
+  if(html) div.innerHTML = text;
+  else div.textContent = text;
   log.appendChild(div);
   scrollChat();
   return div;
@@ -1066,7 +1067,7 @@ function typewriter(span, fullText){
 
 function startScene(){
   if(!useDailyEpisode()){
-    addMsg('feedback wrong', '🎬 Tu as utilisé tes 2 épisodes gratuits du jour. Reviens demain ou passe Premium pour l\'illimité !');
+    addMsg('feedback wrong', '🎬 Tes 2 épisodes gratuits du jour sont terminés. Reviens demain, ou <a href="/pricing" style="color:var(--wave);font-weight:800;">passe Premium</a> pour l\'illimité !', true);
     return;
   }
   chapter = 0;
@@ -1084,7 +1085,7 @@ function sendReply(){
   const val = input.value.trim();
   if(!val) return;
   if(!useDailyEpisode()){
-    addMsg('feedback wrong', '🎬 Tu as utilisé tes 2 épisodes gratuits du jour. Reviens demain ou <a href="/pricing" style="color:var(--wave);">passe Premium</a> pour l\'illimité !');
+    addMsg('feedback wrong', '🎬 Tes 2 épisodes gratuits du jour sont terminés. Reviens demain, ou <a href="/pricing" style="color:var(--wave);font-weight:800;">passe Premium</a> pour l\'illimité !', true);
     return;
   }
   addMsg('user', val);
