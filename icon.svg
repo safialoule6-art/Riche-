@@ -1,13 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="mg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#2dd4bf"/>
       <stop offset="1" stop-color="#14b8a6"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="120" fill="url(#bg)"/>
-  <!-- Mascot — exact same design as original -->
-  <path d="M256 30 C256 30 430 260 430 390 A174 174 0 1 1 82 390 C82 260 256 30 256 30 Z" fill="#ffffff"/>
+  <rect width="512" height="512" rx="120" fill="#0f2e2b"/>
+  <path d="M256 30 C256 30 430 260 430 390 A174 174 0 1 1 82 390 C82 260 256 30 256 30 Z" fill="url(#mg)"/>
   <path d="M256 30 C256 30 330 140 370 230 C310 210 230 220 190 260 C210 180 256 30 256 30 Z" fill="#ffffff" opacity="0.18"/>
   <ellipse cx="200" cy="395" rx="48" ry="56" fill="#ffffff"/>
   <ellipse cx="320" cy="395" rx="48" ry="56" fill="#ffffff"/>
