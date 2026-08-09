@@ -171,9 +171,12 @@ const demoScenes = [
   }
 ];
 function renderDemoScene(i){
+  const demoText = document.getElementById('demoText');
+  const demoChoices = document.getElementById('demoChoices');
+  if(!demoText || !demoChoices) return; // Démo remplacée par version animée
   const s = demoScenes[i];
-  document.getElementById('demoText').innerHTML = s.text;
-  const c = document.getElementById('demoChoices');
+  demoText.innerHTML = s.text;
+  const c = demoChoices;
   c.innerHTML = '';
   s.choices.forEach(choice=>{
     const b = document.createElement('button');
