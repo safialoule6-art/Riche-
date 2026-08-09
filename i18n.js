@@ -110,5 +110,7 @@ const I18N = {
     if(swNav) swNav.textContent = label;
     const swMobile = document.getElementById('langSwitchMobile');
     if(swMobile) swMobile.textContent = label;
+    const swToggle = document.getElementById('langToggleMobile');
+    if(swToggle) swToggle.textContent = lang === 'fr' ? '🇫🇷' : '🇬🇧';
   }
 })();
