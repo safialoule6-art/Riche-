@@ -181,6 +181,14 @@
       <div class="set-title">Compte</div>
       <div class="set-account" id="setEmail"></div>
       <div id="planBadge" style="display:none;"></div>
+      <!-- Gestion abonnement (Premium/Pro) -->
+      <div id="billingSection" style="display:none;">
+        <div class="set-title">💳 Abonnement</div>
+        <div class="refund-badge">🛡️ Satisfait ou remboursé sous 7 jours</div>
+        <button class="btn ghost" onclick="cancelSubscription()">Annuler mon abonnement</button>
+        <button class="btn ghost danger" onclick="requestRefund()">💸 Demander un remboursement</button>
+        <p class="refund-note">Remboursement intégral si demandé dans les 7 jours suivant le paiement. Traité sous 3-5 jours.</p>
+      </div>
       <!-- Succès -->
       <div class="set-title">🏆 Succès <span id="achCount" style="font-weight:400;color:var(--muted);"></span></div>
       <div id="achievementsList" class="ach-grid"></div>
@@ -195,7 +203,6 @@
       <div id="referralInfo"></div>
       <button class="btn ghost" id="vocabBtn" onclick="openVocabLibrary()">📚 Mon vocabulaire</button>
       <button class="btn ghost" id="shareBtn" onclick="shareProgress()">🔗 Partager ma progression</button>
-      <button class="btn ghost" id="unsubBtn" style="display:none;" onclick="unsubscribe()">⬇️ Résilier mon abonnement</button>
       <button class="btn ghost danger" onclick="resetProgress()">↺ Réinitialiser ma progression</button>
       <button class="btn ghost danger" onclick="logout()">Déconnexion</button>
     </div>
