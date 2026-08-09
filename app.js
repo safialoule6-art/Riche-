@@ -8,7 +8,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 window.supabase = supabase;
 
 /* ===== PARAMÈTRES + SYNTHÈSE VOCALE ===== */
-const LOCALES = { anglais:'en-US', espagnol:'es-ES', allemand:'de-DE', italien:'it-IT', arabe:'ar-SA', portugais:'pt-PT' };
+const LOCALES = { anglais:'en-US', espagnol:'es-ES', allemand:'de-DE', italien:'it-IT', arabe:'ar-SA', portugais:'pt-PT', francais:'fr-FR' };
 let settings = { autoplay:true, rate:1, font:'m' };
 try{ settings = { ...settings, ...JSON.parse(localStorage.getItem('sunami-settings') || '{}') }; }catch(e){}
 
@@ -533,9 +533,14 @@ function useDailyEpisode(){
   const today = todayKey();
   const key = 'sunami-episodes-' + today;
   const used = parseInt(localStorage.getItem(key) || '0', 10);
-  if(used >= 2) return false;
+  return used < 2;
+}
+function consumeDailyEpisode(){
+  if(isPremium()) return;
+  const today = todayKey();
+  const key = 'sunami-episodes-' + today;
+  const used = parseInt(localStorage.getItem(key) || '0', 10);
   localStorage.setItem(key, String(used + 1));
-  return true;
 }
 
 window.cancelSubscription = async function(){
@@ -651,6 +656,7 @@ const LANGUAGES = [
   {code:'italien', label:'Italien', flag:'🇮🇹'},
   {code:'arabe', label:'Arabe', flag:'🇸🇦'},
   {code:'portugais', label:'Portugais', flag:'🇵🇹'},
+  {code:'francais', label:'Français', flag:'🇫🇷'},
 ];
 const LEVELS = [
   {code:'A1-A2 (débutant)', label:'Débutant', sub:'A1 · A2'},
@@ -668,6 +674,7 @@ const THEMES = [
 let pickedLang = null, pickedLevel = null;
 let pickedTheme = localStorage.getItem('sunami-theme-ctx') || null;
 let chapter = 0;
+let episodeConsumed = false;
 
 function renderPickers(){
   const langGrid = document.getElementById('langGrid');
@@ -1007,6 +1014,7 @@ async function callAI(userReply){
     chatHistory.push({ role:'assistant', content: fullText });
     chapter += 1; updateSceneMeta();
     registerChapter(fullText);
+    if(!episodeConsumed){ consumeDailyEpisode(); episodeConsumed = true; }
     if(settings.autoplay) speak(speech);
     else if(sceneCard) sceneCard.classList.remove('speaking');
 
@@ -1071,6 +1079,7 @@ function startScene(){
     return;
   }
   chapter = 0;
+  episodeConsumed = false;
   chatHistory = [];
   track('story_start', { language: pickedLang, level: pickedLevel, theme: pickedTheme || 'aucun' });
   document.getElementById('chatLog').innerHTML = '';
