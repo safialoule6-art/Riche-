@@ -121,6 +121,7 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
   .hero-mockup{display:block;}
   .hm-phone{width:250px;}
   .hm-screen{min-height:360px;}
+}
 
 .email-auth{display:flex; flex-direction:column; gap:10px; max-width:320px; margin:6px auto 0;}
 .email-auth input{margin-bottom:0;}
