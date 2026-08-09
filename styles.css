@@ -605,6 +605,9 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
   border-radius:99px; padding:5px 14px; align-self:center; font-size:12.5px;
   animation:praiseIn .45s var(--ease) both;
 }
+
+/* Message limite premium */
+.msg.feedback.wrong a{color:var(--wave); font-weight:800; text-decoration:underline;}
 @keyframes praiseIn{from{opacity:0; transform:translateY(6px) scale(.9);}to{opacity:1; transform:none;}}
 
 /* ---- Bloc "Ta progression" (réglages) ---- */
