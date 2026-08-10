@@ -89,6 +89,7 @@
       <span class="chip words-chip" id="wordsChip" style="display:none;" title="Mots-clés appris">📚 <span id="wordsCount">0</span></span>
       <span class="chip" id="streakChip" style="display:none;" title="Ta série de jours"><span class="flame">🔥</span> <span id="streakCount">0</span></span>
       <span id="userLabel" style="display:none;"></span>
+      <button class="icon-btn" id="notifBtn" onclick="openAdminPanel()" aria-label="Notifications" title="Admin" style="display:none;position:relative;">🔔<span id="notifBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:var(--accent);color:#fff;border-radius:99px;width:16px;height:16px;font-size:9px;font-weight:800;line-height:16px;text-align:center;">0</span></button>
       <button class="icon-btn" id="menuBtn" onclick="toggleSidebar()" aria-label="Menu" title="Menu">☰</button>
     </div>
   </header>
@@ -263,6 +264,26 @@
       <div class="cel-stat total"><div class="v" id="celLvl">1</div><div class="l">Niveau</div></div>
     </div>
     <button class="btn" onclick="closeCelebration()">Continuer l'histoire</button>
+  </div>
+</div>
+
+<!-- Admin Panel (dev only) -->
+<div id="adminModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Admin">
+  <div class="modal-backdrop" onclick="closeAdminPanel()"></div>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>🔔 Admin</h2>
+      <button class="icon-btn" onclick="closeAdminPanel()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="set-group">
+      <div class="set-title">📧 Demandes de remboursement</div>
+      <div id="adminRefunds">Chargement...</div>
+    </div>
+    <div class="set-group">
+      <div class="set-title">📊 Stats</div>
+      <div id="adminStats">Chargement...</div>
+    </div>
+    <button class="btn ghost" onclick="closeAdminPanel()">Fermer</button>
   </div>
 </div>
 
