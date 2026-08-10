@@ -329,5 +329,5 @@ function initTestimonialCarousel(){
   }
 
   slides[0].classList.add('active');
-  setInterval(() => goTo((current + 1) % slides.length), 4000);
+  setInterval(() => goTo((current + 1) % slides.length), 6000);
 }
