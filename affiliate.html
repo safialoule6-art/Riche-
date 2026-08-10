@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Espace affilié — Sunami</title>
+<meta name="description" content="Gagne des commissions récurrentes en partageant Sunami. Ton lien, tes stats, tes gains — en un coup d'œil.">
+<meta name="robots" content="noindex">
+
+<meta name="theme-color" content="#14b8a6">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='28' fill='%2314b8a6'/%3E%3Cpath d='M50 20 C50 20 76 54 76 72 a26 26 0 1 1 -52 0 C24 54 50 20 50 20Z' fill='white'/%3E%3C/svg%3E">
+
+<link rel="stylesheet" href="/styles.css">
+<script src="/theme.js"></script>
+</head>
+<body>
+
+<div class="bg-glow" aria-hidden="true"></div>
+<div class="bg-glow2" aria-hidden="true"></div>
+<button class="theme-toggle" onclick="toggleTheme()" aria-label="Changer de thème" title="Changer de thème">🌙</button>
+
+<header class="landing-header">
+  <a href="/" class="logo">🌊 sunami<span>.</span></a>
+  <nav><a href="/pricing">Tarifs</a><a href="/app">Mon histoire</a></nav>
+</header>
+
+<main class="aff-page">
+
+  <div class="aff-head">
+    <div class="eyebrow">🤝 Espace affilié</div>
+    <h1>Gagne de l'argent en partageant Sunami</h1>
+    <p class="aff-head-sub">Recommande Sunami à ta communauté et touche <b>30% récurrents</b> sur chaque abonnement — pendant 12 mois.</p>
+  </div>
+
+  <!-- Écran connexion -->
+  <div class="aff-gate" id="affGate" style="display:none">
+    <div class="aff-card">
+      <p>Connecte-toi pour débloquer ton lien d'affilié et suivre tes gains.</p>
+      <a href="/app" class="btn">Se connecter</a>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="affDash" style="display:none">
+
+    <!-- Lien personnel -->
+    <div class="aff-card aff-link-card">
+      <div class="aff-label">Ton lien personnel</div>
+      <div class="aff-link-row">
+        <code id="affLink">Chargement…</code>
+        <button class="btn small" id="affCopyBtn" onclick="affCopyLink()">📋 Copier</button>
+      </div>
+      <p class="aff-hint">Partage-le partout — bio Insta, TikTok, YouTube, Discord… Chaque abonnement pris dans les <b id="affCookie">60 jours</b> qui suivent un clic te rapporte <b id="affRatePct">30%</b>, <b>pendant 12 mois</b>.</p>
+      <div class="aff-share" id="affShare"></div>
+    </div>
+
+    <!-- Commission cumulée -->
+    <div class="aff-card aff-hero-metric">
+      <div class="aff-label">Commission cumulée</div>
+      <div class="aff-big" id="affTotal">0,00 €</div>
+      <div class="aff-sub"><b id="affPerSale">0,00 €</b> par vente · Revenu généré grâce à toi : <b id="affRevenue">0,00 €</b></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="aff-stats">
+      <div class="aff-stat"><div class="aff-stat-ic">👆</div><b id="affClicks">0</b><span>Clics</span></div>
+      <div class="aff-stat"><div class="aff-stat-ic">🛒</div><b id="affSales">0</b><span>Ventes</span></div>
+      <div class="aff-stat"><div class="aff-stat-ic">📈</div><b id="affConv">0,0%</b><span>Taux de conv.</span></div>
+      <div class="aff-stat"><div class="aff-stat-ic">💶</div><b id="affRpc">0,00 €</b><span>Gain / clic</span></div>
+    </div>
+
+    <!-- États de paiement -->
+    <div class="aff-payouts">
+      <div class="aff-pay pending">
+        <div class="aff-pay-ic">⏳</div>
+        <div class="aff-pay-label">En attente <span>· anti-remboursement</span></div>
+        <b id="affPending">0,00 €</b>
+        <span class="aff-pay-note">Débloqué 30 jours après chaque vente.</span>
+      </div>
+      <div class="aff-pay ready">
+        <div class="aff-pay-ic">✅</div>
+        <div class="aff-pay-label">Prêt à être payé</div>
+        <b id="affReady">0,00 €</b>
+        <span class="aff-pay-note">Seuil de retrait : <span id="affMin">25 €</span>.</span>
+      </div>
+      <div class="aff-pay paid">
+        <div class="aff-pay-ic">💸</div>
+        <div class="aff-pay-label">Déjà payé</div>
+        <b id="affPaid">0,00 €</b>
+        <span class="aff-pay-note">Versé sur ton compte.</span>
+      </div>
+    </div>
+
+    <button class="btn aff-withdraw" id="affWithdraw" onclick="affWithdraw()">Retirer mes gains</button>
+    <p class="aff-msg" id="affMsg"></p>
+
+    <!-- Règles du programme -->
+    <div class="aff-card aff-rules">
+      <div class="aff-label">Comment ça marche</div>
+      <ul>
+        <li>💰 <b>30% de commission récurrente</b> sur chaque abonnement, versée tant que ton filleul reste abonné (jusqu'à 12 mois).</li>
+        <li>🍪 <b>Fenêtre d'attribution de 60 jours</b> : même s'il s'abonne 2 mois après son clic, la vente te revient.</li>
+        <li>🛡️ <b>Période anti-remboursement de 30 jours</b> : la commission se débloque une fois le délai de remboursement passé.</li>
+        <li>🏦 <b>Retrait dès 25 €</b>, versé chaque mois (PayPal / virement / mobile money).</li>
+      </ul>
+    </div>
+
+  </div><!-- /affDash -->
+</main>
+
+<footer class="landing-footer">
+  <p>🌊 <strong>Sunami</strong> — vis une histoire, apprends une langue.</p>
+  <p><a href="/pricing">Tarifs</a> · <a href="/support">Support</a> · <a href="/terms">Conditions</a> · <a href="/privacy">Confidentialité</a></p>
+  <p class="footer-copy">Fait avec ❤️ pour les curieux · © 2026</p>
+</footer>
+
+<script type="module" src="/affiliate.js"></script>
+</body>
+</html>

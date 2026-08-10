@@ -15,7 +15,20 @@ let inRecovery = isRecoveryLink();
 (function(){
   const params = new URLSearchParams(window.location.search);
   const ref = params.get('ref');
-  if(ref){ localStorage.setItem('sunami_ref', ref); }
+  if(ref){
+    localStorage.setItem('sunami_ref', ref);
+    // Enregistre le clic (1 fois / jour / code pour éviter de gonfler les stats)
+    const key = 'sunami_ref_click_' + ref;
+    const today = new Date().toISOString().slice(0,10);
+    if(localStorage.getItem(key) !== today){
+      localStorage.setItem(key, today);
+      fetch('/api/referral', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ action:'click', referralCode: ref })
+      }).catch(()=>{});
+    }
+  }
 })();
 
 /* Déjà connecté ? -> on file directement vers l'app (sauf lien de récupération en cours) */

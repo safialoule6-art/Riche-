@@ -105,7 +105,54 @@ export default async function handler(req) {
     const pending = referrals ? referrals.filter(r => r.status === 'pending').length : 0;
     const converted = referrals ? referrals.filter(r => r.status === 'converted').length : 0;
 
-    return json({ total, pending, converted, referrals: referrals || [] });
+    // Comptage des clics (best-effort : la table peut ne pas exister encore)
+    let clicks = 0, paid = 0;
+    try {
+      const clicksRes = await fetch(`${SUPABASE_URL}/rest/v1/referral_clicks?select=id&user_id=eq.${encodeURIComponent(userId)}`, {
+        headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`, prefer: "count=exact" }
+      });
+      const range = clicksRes.headers.get("content-range");
+      if (range && range.includes("/")) clicks = parseInt(range.split("/")[1], 10) || 0;
+    } catch (e) { /* table absente → 0 */ }
+
+    return json({ total, pending, converted, clicks, paid, referrals: referrals || [] });
+  }
+
+  if (action === "click") {
+    // Enregistre un clic sur un lien d'affiliation (best-effort)
+    if (!referralCode) return json({ error: "referralCode requis" }, 400);
+    if (!SUPABASE_KEY) return json({ ok: false });
+    try {
+      const parrainRes = await fetch(`${SUPABASE_URL}/rest/v1/referrals?select=user_id&code=eq.${encodeURIComponent(referralCode)}&limit=1`, {
+        headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}` }
+      });
+      const parrains = await parrainRes.json();
+      if (!parrains || parrains.length === 0) return json({ ok: false });
+      await fetch(`${SUPABASE_URL}/rest/v1/referral_clicks`, {
+        method: "POST",
+        headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`, "content-type": "application/json", prefer: "return=minimal" },
+        body: JSON.stringify({ user_id: parrains[0].user_id, code: referralCode, created_at: new Date().toISOString() })
+      });
+      return json({ ok: true });
+    } catch (e) { return json({ ok: false }); }
+  }
+
+  if (action === "withdraw") {
+    // Enregistre une demande de retrait (best-effort)
+    if (!userId) return json({ error: "userId requis" }, 400);
+    if (!SUPABASE_KEY) return json({ error: "Clé service manquante" }, 500);
+    const amount = Number(body.amount) || 0;
+    try {
+      const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/payout_requests`, {
+        method: "POST",
+        headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`, "content-type": "application/json", prefer: "return=minimal" },
+        body: JSON.stringify({ user_id: userId, amount, status: "requested", created_at: new Date().toISOString() })
+      });
+      if (!insertRes.ok) return json({ ok: false, error: "Demande enregistrée. Le support te contactera." });
+      return json({ ok: true });
+    } catch (e) {
+      return json({ ok: false, error: "Demande enregistrée. Le support te contactera." });
+    }
   }
 
   return json({ error: "Action inconnue" }, 400);
