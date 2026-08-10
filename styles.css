@@ -875,3 +875,11 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
   .aff-stats{grid-template-columns:repeat(4,1fr);}
   .aff-payouts{grid-template-columns:repeat(3,1fr);}
 }
+
+/* ===== Offre fondateur & prix annuel ===== */
+.founder-badge{display:inline-block; margin:8px auto 0; padding:8px 16px; border-radius:99px;
+  font-size:13.5px; font-weight:800; color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent-dim));
+  box-shadow:0 10px 24px -12px var(--accent);}
+.founder-badge b{color:#fff;}
+.price-annual{font-size:12.5px; font-weight:800; color:var(--wave-dim); margin:-4px 0 8px;}
