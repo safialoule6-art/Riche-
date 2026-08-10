@@ -876,6 +876,32 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
   .aff-payouts{grid-template-columns:repeat(3,1fr);}
 }
 
+/* ===== Démo interactive jouable (sans compte) ===== */
+.demo-live{max-width:560px; margin:0 auto; background:var(--card); border:1px solid var(--card-border);
+  border-radius:var(--radius); padding:18px; box-shadow:var(--shadow-soft);}
+.dl-prompt{text-align:center; color:var(--muted); font-size:14.5px; margin-bottom:14px;}
+.dl-langs{display:grid; grid-template-columns:repeat(2,1fr); gap:10px;}
+@media(min-width:560px){ .dl-langs{grid-template-columns:repeat(3,1fr);} }
+.dl-lang{font-family:'Nunito',sans-serif; font-weight:800; font-size:14px; cursor:pointer;
+  background:var(--surf); color:var(--foam); border:1.5px solid var(--card-border);
+  border-radius:14px; padding:12px 10px; transition:.2s var(--ease);}
+.dl-lang:hover{border-color:var(--wave); transform:translateY(-2px); box-shadow:var(--shadow-soft);}
+.dl-chat{display:flex; flex-direction:column; gap:10px; max-height:340px; overflow-y:auto; padding:6px 2px 12px;}
+.dl-msg{display:flex; gap:8px; align-items:flex-end;}
+.dl-msg.user{flex-direction:row-reverse;}
+.dl-ava{flex:0 0 auto; width:26px; height:26px; border-radius:50%; background:var(--surf);
+  display:flex; align-items:center; justify-content:center;}
+.dl-bubble{max-width:80%; padding:10px 13px; border-radius:16px; font-size:14.5px; line-height:1.5;}
+.dl-msg.ai .dl-bubble{background:var(--surf); color:var(--foam); border-bottom-left-radius:5px;}
+.dl-msg.user .dl-bubble{background:linear-gradient(135deg,var(--wave-2),var(--wave)); color:#fff; border-bottom-right-radius:5px;}
+.dl-msg.dl-typing .dl-bubble{opacity:.6; letter-spacing:2px;}
+.dl-inputbar{display:flex; gap:8px; margin-top:12px;}
+.dl-inputbar input{flex:1;}
+.dl-inputbar .btn{width:auto; white-space:nowrap;}
+.dl-wall{text-align:center; margin-top:14px; padding-top:14px; border-top:1px dashed var(--card-border);}
+.dl-wall p{color:var(--foam); font-size:14.5px; margin-bottom:12px; line-height:1.55;}
+.dl-wall .btn{width:auto; display:inline-block;}
+
 /* ===== Accès anticipé (remplace les faux témoignages) ===== */
 .early-access{background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius);
   padding:26px 22px; text-align:center; max-width:560px; margin:0 auto; box-shadow:var(--shadow-soft);}
