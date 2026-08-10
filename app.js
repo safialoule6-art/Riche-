@@ -638,10 +638,11 @@ async function loadAdminData(){
   if(!refundsEl) return;
 
   try{
-    const res = await fetch('https://cdtabuyomtkfasvugtck.supabase.co/rest/v1/refund_requests?select=*&order=created_at.desc&limit=10', {
-      headers: { apikey: 'sb_publishable_ms6RPYdPVcO3c9A6X1ruQQ_uiYl1Dxo' }
-    });
-    const refunds = await res.json();
+    const { data: refunds } = await supabase
+      .from('refund_requests')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(10);
     if(refunds && refunds.length > 0){
       refundsEl.innerHTML = refunds.map(r =>
         '<div style="padding:8px;border-bottom:1px solid var(--card-border);font-size:12px;">' +
@@ -654,10 +655,9 @@ async function loadAdminData(){
     }
 
     // Stats
-    const countRes = await fetch('https://cdtabuyomtkfasvugtck.supabase.co/rest/v1/refund_requests?select=id', {
-      headers: { apikey: 'sb_publishable_ms6RPYdPVcO3c9A6X1ruQQ_uiYl1Dxo', prefer: 'count=exact' }
-    });
-    const count = parseInt(countRes.headers.get('content-range')?.split('/')[1] || '0');
+    const { count } = await supabase
+      .from('refund_requests')
+      .select('id', { count: 'exact', head: true });
     statsEl.innerHTML = '<div style="display:flex;gap:8px;">' +
       '<div class="ref-stat"><b>' + count + '</b><span>demandes</span></div>' +
       '<div class="ref-stat"><b>' + (stats.words.length || 0) + '</b><span>mots appris</span></div>' +
@@ -674,13 +674,11 @@ function showDevNotif(){
   if(!btn || !isDevAccount()) return;
   btn.style.display = 'inline-flex';
   // Check pending refunds
-  fetch('https://cdtabuyomtkfasvugtck.supabase.co/rest/v1/refund_requests?status=eq.pending&select=id', {
-    headers: { apikey: 'sb_publishable_ms6RPYdPVcO3c9A6X1ruQQ_uiYl1Dxo', prefer: 'count=exact' }
-  }).then(r => {
-    const count = parseInt(r.headers.get('content-range')?.split('/')[1] || '0');
-    const badge = document.getElementById('notifBadge');
-    if(badge && count > 0){ badge.style.display = 'block'; badge.textContent = count; }
-  }).catch(()=>{});
+  supabase.from('refund_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending')
+    .then(({ count }) => {
+      const badge = document.getElementById('notifBadge');
+      if(badge && count > 0){ badge.style.display = 'block'; badge.textContent = count; }
+    }).catch(()=>{});
 }
 
 /* ===== PARRAINAGE ===== */
