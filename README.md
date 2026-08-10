@@ -30,6 +30,21 @@ Au lieu d'exercices répétitifs, un **conteur IA** raconte une histoire immersi
 
 ⚠️ **Ne jamais** commit de clé API dans le code. Toujours passer par `process.env`.
 
+## Base de données (migrations SQL)
+
+À exécuter **une fois** dans l'éditeur SQL de Supabase :
+
+| Fichier | Rôle |
+|---|---|
+| `sql/affiliate.sql` | Programme d'affiliation |
+| `sql/saga.sql` | **Persistance de la saga** (historique + résumé glissant par langue) et **état joueur durable** (XP, vocabulaire, personnages, lieux, succès) — corrige l'histoire "au hasard" et la perte de progression à la déconnexion. |
+
+> Tant que `sql/saga.sql` n'est pas exécuté, l'app fonctionne quand même : elle retombe automatiquement sur le stockage local (aucune régression), mais la synchro multi-appareils et la reprise cloud sont désactivées.
+
+## Moteur narratif (continuité)
+
+`api/generate.js` renvoie un **JSON structuré** : `story`, `recap` (résumé cumulatif de la saga), `characters`, `setting`, `vocab` (avec traduction FR), `episodeComplete` + `episodeTitle`, et `choices` (suggestions de réponse). Le `recap` est renvoyé à chaque tour → la même intrigue et les mêmes personnages sont conservés d'un épisode à l'autre, même au-delà de la fenêtre de contexte.
+
 ## Notes IA (Groq)
 
 - **Streaming** activé (`stream: true`) : le texte s'affiche mot à mot.

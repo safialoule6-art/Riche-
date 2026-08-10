@@ -94,12 +94,17 @@ window.setAutoplay = function(el){ settings.autoplay = el.checked; saveSettings(
 window.setRate = function(el){ settings.rate = parseFloat(el.value); document.getElementById('setRateVal').textContent = settings.rate.toFixed(1) + '×'; saveSettings(); };
 window.setFont = function(f){ settings.font = f; saveSettings(); applySettings(); };
 window.resetProgress = async function(){
-  if(!confirm('Réinitialiser toute ta progression (streak, XP, langue) ? Cette action est irréversible.')) return;
+  if(!confirm('Réinitialiser toute ta progression (streak, XP, langue, histoire) ? Cette action est irréversible.')) return;
   progress = { season:1, episode:1, streak:0, last_active:null, language:null, level:null };
   xp = 0; localStorage.setItem('sunami-xp', '0');
   stats = { words: [], chapters: 0, dayKey: null, chaptersToday: 0, goalHitDay: null };
   localStorage.removeItem('sunami-stats');
+  characters = []; storyLocations = []; unlockedAchievements = [];
+  localStorage.removeItem('sunami-characters'); localStorage.removeItem('sunami-locations'); localStorage.removeItem('sunami-achievements');
+  sagaRecap = ''; sagaSetting = ''; chatHistory = [];
   try{ await saveProgress(); }catch(e){}
+  // Efface aussi la persistance cloud (sinon elle reviendrait au rechargement)
+  try{ if(userId){ await supabase.from('user_state').delete().eq('user_id', userId); await supabase.from('saga').delete().eq('user_id', userId); } }catch(e){}
   location.reload();
 };
 window.shareProgress = async function(){
@@ -136,7 +141,7 @@ window.openVocabLibrary = function(){
       const lastSeen = w.lastSeen ? ' · vu le ' + w.lastSeen.split('-').reverse().join('/') : '';
       const reviewInfo = ' · prochaine révision ' + w.nextReview.split('-').reverse().join('/');
       return `<div class="vocab-word${isDue ? ' due' : ''}">
-        <span class="vocab-word-text">${w.word}</span>
+        <span class="vocab-word-text">${w.word}${w.fr ? ' <small style="color:var(--muted);font-weight:600;">— ' + w.fr + '</small>' : ''}</span>
         <span class="vocab-word-meta">${isDue ? '🔁 À réviser' + lastSeen : '✅' + reviewInfo}</span>
       </div>`;
     }).join('');
@@ -212,6 +217,7 @@ function floatXp(n){
 function addXp(n){
   const before = levelOf(xp);
   xp += n; localStorage.setItem('sunami-xp', String(xp)); updateXpChip();
+  if(typeof syncCloud === 'function') syncCloud();
   const chip = document.getElementById('xpChip');
   if(chip){ chip.classList.remove('pop'); void chip.offsetWidth; chip.classList.add('pop'); }
   floatXp(n);
@@ -243,7 +249,7 @@ try{
 if(!Array.isArray(stats.words)) stats.words = [];
 
 function todayKey(){ const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function saveStats(){ localStorage.setItem('sunami-stats', JSON.stringify(stats)); }
+function saveStats(){ localStorage.setItem('sunami-stats', JSON.stringify(stats)); if(typeof syncCloud === 'function') syncCloud(); }
 function rollDay(){
   const t = todayKey();
   if(stats.dayKey !== t){ stats.dayKey = t; stats.chaptersToday = 0; saveStats(); }
@@ -418,6 +424,7 @@ function unlockAchievement(id){
   if(!ach) return;
   unlockedAchievements.push(id);
   localStorage.setItem('sunami-achievements', JSON.stringify(unlockedAchievements));
+  if(typeof syncCloud === 'function') syncCloud();
   // Petite célébration légère
   const m = document.getElementById('celModal');
   if(!m || m.classList.contains('open')) return; // pas de popup si déjà une célébration
@@ -832,7 +839,7 @@ window.confirmPick = function(){
   progress.level = pickedLevel;
   saveProgress();
   updateSceneMeta();
-  startScene();
+  resumeOrStart();
 };
 
 function updateSceneMeta(){
@@ -893,6 +900,177 @@ async function saveProgress(){
   });
 }
 
+/* ===================================================================
+   PERSISTANCE CLOUD — saga (histoire + récap) & état joueur durable.
+   Corrige : histoire "au hasard" (récap glissant persistant) + tout
+   ce qui s'effaçait à la déconnexion (XP, vocab, perso, succès).
+   Tout est GUARDÉ : si les tables ne sont pas encore créées, on
+   retombe silencieusement sur localStorage (aucune régression).
+   =================================================================== */
+let sagaRecap = '';
+let sagaSetting = '';
+let sagaProtagonist = '';
+let _syncTimer = null;
+
+async function pullCloud(){
+  if(!userId) return;
+  try{
+    const { data, error } = await supabase.from('user_state').select('*').eq('user_id', userId).maybeSingle();
+    if(error || !data) return; // table absente / RLS / vide : on garde le cache local
+    if(typeof data.xp === 'number' && data.xp >= xp){ xp = data.xp; localStorage.setItem('sunami-xp', String(xp)); }
+    if(Array.isArray(data.words) && data.words.length >= (stats.words||[]).length){ stats.words = data.words; }
+    if(Array.isArray(data.characters) && data.characters.length){ characters = data.characters; localStorage.setItem('sunami-characters', JSON.stringify(characters)); }
+    if(Array.isArray(data.locations) && data.locations.length){ storyLocations = data.locations; localStorage.setItem('sunami-locations', JSON.stringify(storyLocations)); }
+    if(Array.isArray(data.achievements) && data.achievements.length >= unlockedAchievements.length){ unlockedAchievements = data.achievements; localStorage.setItem('sunami-achievements', JSON.stringify(unlockedAchievements)); }
+    if(data.stats && typeof data.stats === 'object'){ stats = { ...stats, ...data.stats, words: stats.words }; }
+    localStorage.setItem('sunami-stats', JSON.stringify(stats));
+    updateXpChip(); updateProgressChips();
+  }catch(e){}
+}
+
+function syncCloud(){
+  if(!userId) return;
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(async ()=>{
+    try{
+      await supabase.from('user_state').upsert({
+        user_id: userId, xp,
+        words: stats.words || [],
+        characters: characters || [],
+        locations: storyLocations || [],
+        achievements: unlockedAchievements || [],
+        stats: { chapters: stats.chapters||0, perfectCount: stats.perfectCount||0, languagesUsed: stats.languagesUsed||[], themesUsed: stats.themesUsed||[], dayKey: stats.dayKey, chaptersToday: stats.chaptersToday||0, goalHitDay: stats.goalHitDay },
+        updated_at: new Date().toISOString(),
+      });
+    }catch(e){}
+  }, 800);
+}
+window.syncCloud = syncCloud;
+
+async function loadSaga(lang){
+  if(!userId || !lang) return null;
+  try{
+    const { data, error } = await supabase.from('saga').select('*').eq('user_id', userId).eq('language', lang).maybeSingle();
+    if(error) return null;
+    return data || null;
+  }catch(e){ return null; }
+}
+
+function saveSaga(){
+  if(!userId || !pickedLang) return;
+  clearTimeout(saveSaga._t);
+  saveSaga._t = setTimeout(async ()=>{
+    try{
+      await supabase.from('saga').upsert({
+        user_id: userId,
+        language: pickedLang,
+        level: pickedLevel,
+        protagonist: sagaProtagonist || null,
+        setting: sagaSetting || null,
+        recap: sagaRecap || '',
+        characters: characters || [],
+        episode: progress.episode || 1,
+        chapter: chapter || 0,
+        history: (chatHistory || []).slice(-24),
+        updated_at: new Date().toISOString(),
+      });
+    }catch(e){}
+  }, 600);
+}
+
+/* Fusion des données structurées renvoyées par le moteur IA */
+function mergeStructuredVocab(vocab){
+  if(!Array.isArray(vocab)) return;
+  const today = todayKey();
+  vocab.forEach(v=>{
+    if(!v || !v.word) return;
+    const w = String(v.word).replace(/\*/g,'').trim().toLowerCase();
+    if(!w || w.length > 40) return;
+    const existing = stats.words.find(x=>x.word === w);
+    if(!existing){ stats.words.push({ word:w, fr: v.fr||'', firstSeen:today, lastSeen:today, reviewCount:0, nextReview:today }); }
+    else if(v.fr && !existing.fr){ existing.fr = v.fr; }
+  });
+  saveStats(); updateProgressChips();
+}
+function mergeStructuredCharacters(chars){
+  if(!Array.isArray(chars)) return;
+  chars.forEach(c=>{
+    if(!c || !c.name) return;
+    const name = String(c.name).trim();
+    if(name.length < 2) return;
+    const found = characters.find(x=>x.name === name);
+    if(!found){ characters.push({ name, role: c.role || 'Personnage', chapter: stats.chapters, firstSeen: todayKey() }); }
+    else if(c.role){ found.role = c.role; }
+  });
+  if(characters.length > 14) characters = characters.slice(-14);
+  localStorage.setItem('sunami-characters', JSON.stringify(characters));
+}
+
+/* Suggestions de réponse cliquables (réduit la page blanche) */
+function renderChoices(choices){
+  document.querySelectorAll('.quick-chips').forEach(e=>e.remove());
+  if(!Array.isArray(choices) || !choices.length) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'chips quick-chips';
+  choices.forEach(txt=>{
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = txt;
+    b.onclick = ()=>{ const input = document.getElementById('userInput'); if(input) input.value = txt; document.querySelectorAll('.quick-chips').forEach(e=>e.remove()); sendReply(); };
+    wrap.appendChild(b);
+  });
+  document.getElementById('chatLog').appendChild(wrap);
+  scrollChat();
+}
+
+/* Fin d'épisode : on passe à l'épisode suivant, on célèbre, on sauvegarde */
+function onEpisodeComplete(title){
+  progress.episode = (progress.episode || 1) + 1;
+  chapter = 0;
+  saveProgress(); saveSaga();
+  track('episode_complete', { episode: progress.episode - 1, language: pickedLang });
+  celebrate({
+    emoji: '🎬',
+    title: title ? ('Épisode terminé — ' + title) : 'Épisode terminé !',
+    sub: 'La suite t\'attend. Réponds pour lancer le prochain épisode, ou reviens demain pour garder ta série.'
+  });
+}
+
+/* Reprise exacte d'une saga sauvegardée */
+function resumeScene(s){
+  chatHistory = Array.isArray(s.history) ? s.history.slice() : [];
+  sagaRecap = s.recap || '';
+  sagaSetting = s.setting || '';
+  sagaProtagonist = s.protagonist || '';
+  if(Array.isArray(s.characters) && s.characters.length) characters = s.characters;
+  chapter = s.chapter || 0;
+  progress.episode = s.episode || progress.episode || 1;
+  episodeConsumed = true; // reprendre ne reconsomme pas un épisode
+  const log = document.getElementById('chatLog');
+  if(log) log.innerHTML = '';
+  updateSceneMeta();
+  if(sagaRecap){
+    const banner = document.createElement('div');
+    banner.className = 'prev-banner';
+    banner.innerHTML = '<div class="prev-label">📺 Previously on Sunami…</div>' + escapeHtml(sagaRecap);
+    if(log) log.appendChild(banner);
+  }
+  const lastAI = [...chatHistory].reverse().find(m => m.role === 'assistant');
+  if(lastAI){
+    const bubble = addMsg('character', formatStory(lastAI.content), true);
+    addSpeaker(bubble, cleanForSpeech(lastAI.content));
+  }
+  const input = document.getElementById('userInput');
+  if(input){ input.disabled = false; input.focus(); }
+  scrollChat();
+}
+
+/* Reprend la saga de la langue courante si elle existe, sinon en démarre une */
+async function resumeOrStart(){
+  const s = pickedLang ? await loadSaga(pickedLang) : null;
+  if(s && Array.isArray(s.history) && s.history.length){ resumeScene(s); }
+  else { startScene(); }
+}
+
 window.backToPicker = function(){
   if('speechSynthesis' in window) window.speechSynthesis.cancel();
   document.getElementById('chatScreen').style.display = 'none';
@@ -912,6 +1090,7 @@ async function enterApp(email, uid){
   userId = uid;
   userEmail = email;
   await loadProgress(uid);
+  await pullCloud();
   showDevNotif();
   await touchStreak();
   updateXpChip();
@@ -924,7 +1103,7 @@ async function enterApp(email, uid){
     document.getElementById('pickScreen').style.display = 'none';
     document.getElementById('chatScreen').style.display = 'flex';
     updateSceneMeta();
-    startScene();
+    resumeOrStart();
   } else {
     renderPickers();
   }
@@ -1047,7 +1226,13 @@ async function callAI(userReply){
     const res = await fetch('/api/generate', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ history: chatHistory, userReply, language: pickedLang, level: pickedLevel, theme: pickedTheme, vocabulary: getWordsForReview(5) }),
+      body: JSON.stringify({
+        history: chatHistory, userReply,
+        language: pickedLang, level: pickedLevel, theme: pickedTheme,
+        vocabulary: getWordsForReview(5),
+        recap: sagaRecap, characters, setting: sagaSetting,
+        protagonist: sagaProtagonist, episode: progress.episode || 1, chapter,
+      }),
       signal: clientCtrl.signal,
     });
     clearTimeout(clientTimeoutId);
@@ -1132,6 +1317,17 @@ async function callAI(userReply){
       setMascotColor('green');
     }
 
+    /* ---- Continuité & persistance (moteur JSON structuré) ---- */
+    if(data.recap) sagaRecap = data.recap;
+    if(data.setting) sagaSetting = data.setting;
+    if(!sagaProtagonist && userEmail){ sagaProtagonist = userEmail.split('@')[0] || ''; }
+    mergeStructuredVocab(data.vocab);
+    mergeStructuredCharacters(data.characters);
+    renderChoices(data.choices);
+    saveSaga();
+    syncCloud();
+    if(data.episodeComplete){ onEpisodeComplete(data.episodeTitle); }
+
     sendBtn.disabled = false; input.disabled = false; input.focus();
     scrollChat();
   }catch(err){
@@ -1180,6 +1376,10 @@ function startScene(){
   chapter = 0;
   episodeConsumed = false;
   chatHistory = [];
+  sagaRecap = '';
+  sagaSetting = '';
+  sagaProtagonist = (userEmail && userEmail.split('@')[0]) || '';
+  if(!progress.episode) progress.episode = 1;
   track('story_start', { language: pickedLang, level: pickedLevel, theme: pickedTheme || 'aucun' });
   document.getElementById('chatLog').innerHTML = '';
   const input = document.getElementById('userInput');
@@ -1192,6 +1392,7 @@ function sendReply(){
   const input = document.getElementById('userInput');
   const val = input.value.trim();
   if(!val) return;
+  document.querySelectorAll('.quick-chips').forEach(e=>e.remove());
   if(!useDailyEpisode()){
     addMsg('feedback wrong', '🎬 Tes 2 épisodes gratuits du jour sont terminés. Reviens demain, ou <a href="/pricing" style="color:var(--wave);font-weight:800;">passe Premium</a> pour l\'illimité !', true);
     return;
