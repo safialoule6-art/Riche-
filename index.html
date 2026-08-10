@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sunami — Apprends une langue en vivant une histoire</title>
-<meta name="description" content="Sunami transforme chaque leçon de langue en épisode d'une histoire continue. Un tuteur IA, 7 langues, niveaux CECR, streak quotidien.">
+<title>Sunami — Apprends une langue en vivant une histoire, pas des exercices</title>
+<meta name="description" content="Marre des flashcards qui t'endorment ? Sunami t'apprend une langue en te faisant vivre une histoire dont tu es le héros. Tuteur IA, 7 langues, niveaux A1→C2. 100% gratuit.">
 
 <!-- Open Graph (Facebook, LinkedIn, iMessage, Discord, WhatsApp…) -->
 <meta property="og:title" content="Sunami — Apprends une langue en vivant une histoire">
-<meta property="og:description" content="Un tuteur IA qui te fait parler dans un épisode qui continue chaque jour — pas des exercices.">
+<meta property="og:description" content="Fini les exercices. Un tuteur IA te fait parler dans une histoire dont tu veux connaître la suite. 7 langues, A1→C2, 100% gratuit.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://sunami-rho.vercel.app">
 <meta property="og:locale" content="fr_FR">
@@ -21,7 +21,7 @@
 <!-- Twitter / X -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Sunami — Apprends une langue en vivant une histoire">
-<meta name="twitter:description" content="Un tuteur IA qui te fait parler dans un épisode qui continue chaque jour — pas des exercices.">
+<meta name="twitter:description" content="Fini les exercices. Un tuteur IA te fait parler dans une histoire dont tu veux connaître la suite. 7 langues, A1→C2, 100% gratuit.">
 <meta name="twitter:image" content="https://sunami-rho.vercel.app/og-preview.png">
 <meta name="twitter:image:alt" content="Sunami — apprends une langue en vivant une histoire">
 
@@ -88,7 +88,7 @@
       <svg class="hero-mascot mascot idle" aria-hidden="true"><use href="#mascot"/></svg>
       <div class="hero-text">
         <h1 class="hero-title"><span data-i18n="hero_title_1">Vis une histoire.</span><br><span class="hl" data-i18n="hero_title_2">Apprends une langue.</span></h1>
-        <p class="hero-sub" data-i18n="hero_sub">Un tuteur IA te fait parler dans une histoire qui continue chaque jour. Pas d'exercices barbants — juste l'envie de connaître la suite.</p>
+        <p class="hero-sub" data-i18n="hero_sub">Les autres apps te font traduire « le chat mange ». Sunami te plonge dans une histoire dont tu veux connaître la suite — et tu apprends une langue sans t'en rendre compte.</p>
         <button class="btn" id="googleBtn" onclick="loginWithGoogle()" data-i18n="hero_cta">Commencer mon histoire — gratuit</button>
         <div class="error-msg" id="authError"></div>
         <div class="auth-divider"><span data-i18n="hero_ou">ou</span></div>
@@ -199,14 +199,14 @@
         </div>
         <div class="feature-card">
           <div class="feature-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></svg></div>
-          <div><b data-i18n="why3t">Calibré à ton niveau</b><span data-i18n="why3s">Niveau CECR A1 → C2, ajusté à chaque réponse.</span></div>
+          <div><b data-i18n="why3t">Calibré à ton niveau</b><span data-i18n="why3s">Niveau CECR A1 → C2, ajusté à chaque réponse — jamais largué, jamais frustré.</span></div>
         </div>
       </div>
     </div>
 
     <!-- Avant / Après -->
     <div class="section reveal">
-      <div class="eyebrow" data-i18n="vs_title">Avant / Après</div>
+      <div class="eyebrow" data-i18n="vs_title">Exercices barbants vs histoire dont tu es le héros</div>
       <div class="ba-wrap">
         <!-- Avant -->
         <div class="ba-phone ba-bad">
@@ -247,7 +247,7 @@
 
     <!-- Témoignages -->
     <div class="section reveal">
-      <div class="eyebrow" data-i18n="t_title">Ils ont essayé</div>
+      <div class="eyebrow" data-i18n="t_title">Ils ont lâché les flashcards</div>
       <div class="testimonials-grid">
         <div class="t-card">
           <div class="t-stars">★★★★★</div>
@@ -343,6 +343,7 @@
     <div class="section reveal">
       <div class="eyebrow" data-i18n="faq_title">Questions fréquentes</div>
       <div class="faq">
+        <details class="faq-item"><summary><span data-i18n="faq5_q">En quoi c'est mieux que Duolingo &amp; co ?</span><i>+</i></summary><p data-i18n="faq5_a">Les apps classiques t'apprennent des mots isolés avec des exercices répétitifs. Sunami te fait vivre une histoire continue où tu parles pour de vrai, corrigé par un tuteur IA calibré à ton niveau. Résultat : tu reviens pour connaître la suite, pas par culpabilité.</p></details>
         <details class="faq-item"><summary><span data-i18n="faq1_q">C'est vraiment gratuit ?</span><i>+</i></summary><p><span data-i18n="faq1_a">Oui, l'offre gratuite donne 2 épisodes par jour avec 3 langues. Les offres Premium et Pro débloquent les épisodes illimités, 7 langues, la correction de grammaire et plus.</span> <a href="/pricing" data-i18n="faq1_link">Voir les offres →</a></p></details>
         <details class="faq-item"><summary><span data-i18n="faq2_q">Ça marche pour mon niveau ?</span><i>+</i></summary><p data-i18n="faq2_a">Débutant à avancé (A1 à C2) — l'IA calibre chaque réplique à ton niveau.</p></details>
         <details class="faq-item"><summary><span data-i18n="faq3_q">Je peux changer de langue en cours de route ?</span><i>+</i></summary><p data-i18n="faq3_a">Oui, à tout moment depuis l'écran de conversation.</p></details>
