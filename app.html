@@ -103,6 +103,7 @@
     </div>
     <div class="sidebar-body">
       <a class="sidebar-item" onclick="toggleSidebar();scrollToChat()"><span class="si-icon">💬</span> Mon histoire</a>
+      <a class="sidebar-item" onclick="toggleSidebar();openSagas()"><span class="si-icon">📚</span> Mes sagas</a>
       <a class="sidebar-item" onclick="toggleSidebar();openVocabLibrary()"><span class="si-icon">📚</span> Mon vocabulaire</a>
       <div class="sidebar-divider"></div>
       <a class="sidebar-item" onclick="toggleSidebar();openSettings()"><span class="si-icon">🏆</span> Succès & Stats</a>
@@ -141,13 +142,26 @@
       <div class="scene-avatar" id="sceneAvatar"><svg class="mascot idle"><use href="#mascot"/></svg></div>
       <div class="scene-meta"><b id="sceneCharName">Ton conteur</b><span>l'histoire s'écrit en direct · réponds dans la langue cible pour la faire continuer</span></div>
     </div>
-    <div class="repick"><button onclick="backToPicker()">changer de langue / niveau</button></div>
+    <div class="scene-actions">
+      <button class="chip-btn" onclick="newEpisode()" title="Commencer un nouvel épisode de cette saga">✨ Nouvel épisode</button>
+      <button class="chip-btn" onclick="openSagas()" title="Voir toutes tes histoires">📚 Mes sagas</button>
+      <button class="chip-btn ghost" onclick="backToPicker()" title="Changer de langue ou de niveau">🔄 Changer d'histoire</button>
+    </div>
     <div id="chatLog"></div>
     <div class="input-row">
       <button class="mic-btn" id="micBtn" onclick="toggleVoiceInput()" title="Répondre à l'oral" aria-label="Répondre à l'oral">🎤</button>
       <input id="userInput" placeholder="Réponds dans la langue cible..." onkeydown="if(event.key==='Enter')sendReply()">
       <button class="btn" id="sendBtn" onclick="sendReply()">Envoyer</button>
     </div>
+  </div>
+
+  <div class="chat-wrap" id="sagasScreen" style="display:none;">
+    <div class="pick-hero">
+      <h2>📚 Mes sagas</h2>
+      <p>Chaque langue a sa propre histoire qui continue. Reprends là où tu t'es arrêté.</p>
+    </div>
+    <div id="sagasList"><div class="sagas-loading">Chargement de tes histoires…</div></div>
+    <button class="btn" style="margin-top:24px;" onclick="backToPicker()">＋ Commencer une nouvelle histoire</button>
   </div>
 </div>
 
@@ -164,6 +178,13 @@
       <div class="set-row">
         <div class="set-label"><b>Thème</b><small>clair ou sombre</small></div>
         <button class="btn ghost set-btn" onclick="toggleTheme()">Basculer 🌗</button>
+      </div>
+    </div>
+    <div class="set-group">
+      <div class="set-title">Notifications</div>
+      <div class="set-row">
+        <div class="set-label"><b>Rappel quotidien</b><small>« ton prochain épisode t'attend »</small></div>
+        <button class="btn ghost set-btn notif-cta" onclick="enableNotifications()">🔔 Me rappeler mon épisode</button>
       </div>
     </div>
     <div class="set-group">
@@ -258,6 +279,11 @@
     <span class="cel-emoji" id="celEmoji">🎉</span>
     <h2 id="celTitle">Bravo !</h2>
     <div class="cel-sub" id="celSub"></div>
+    <img id="celCover" class="cel-cover" alt="Couverture de l'épisode" style="display:none;">
+    <div id="celCoverTools" class="cover-tools" style="display:none;">
+      <div class="cover-styles" id="celCoverStyles"></div>
+      <button type="button" class="chip-btn" onclick="regenerateCover()">🔄 Autre image</button>
+    </div>
     <div class="cel-stats">
       <div class="cel-stat xp"><div class="v" id="celXp">0</div><div class="l">XP</div></div>
       <div class="cel-stat words"><div class="v" id="celWords">0</div><div class="l">Mots</div></div>
@@ -265,6 +291,7 @@
       <div class="cel-stat total"><div class="v" id="celLvl">1</div><div class="l">Niveau</div></div>
     </div>
     <button class="btn" onclick="closeCelebration()">Continuer l'histoire</button>
+    <button id="celNotifBtn" class="chip-btn notif-cta" onclick="enableNotifications()" style="display:none;margin-top:10px;">🔔 Me rappeler mon épisode</button>
   </div>
 </div>
 
