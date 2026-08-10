@@ -116,7 +116,6 @@
       <div class="cta-note"><span data-i18n="hero_note">via Google ou email</span> · <b data-i18n="hero_free">100% gratuit</b> · <span data-i18n="hero_devices">sur tous tes appareils</span></div>
 
       <div class="lang-pills">
-        <span class="lang-pill">🇫🇷 Français</span>
         <span class="lang-pill">🇬🇧 Anglais</span>
         <span class="lang-pill">🇪🇸 Espagnol</span>
         <span class="lang-pill">🇩🇪 Allemand</span>
@@ -124,7 +123,7 @@
         <span class="lang-pill">🇸🇦 Arabe</span>
         <span class="lang-pill">🇵🇹 Portugais</span>
       </div>
-      <div class="proof"><span data-i18n="hero_langs">7 langues</span> <span class="dot"></span> <span data-i18n="hero_dot">tuteur IA</span> <span class="dot"></span> <span data-i18n="hero_dot2">nouvel épisode chaque jour</span></div>
+      <div class="proof"><span data-i18n="hero_langs">6 langues</span> <span class="dot"></span> <span data-i18n="hero_dot">tuteur IA</span> <span class="dot"></span> <span data-i18n="hero_dot2">nouvel épisode chaque jour</span></div>
       </div><!-- /hero-text -->
       <!-- Phone mockup -->
       <div class="hero-mockup">
@@ -245,34 +244,14 @@
       </div>
     </div>
 
-    <!-- Témoignages -->
+    <!-- Accès anticipé (honnête, sans faux avis) -->
     <div class="section reveal">
-      <div class="eyebrow" data-i18n="t_title">Ils ont lâché les flashcards</div>
-      <div class="testimonials-grid">
-        <div class="t-card">
-          <div class="t-stars">★★★★★</div>
-          <p class="t-quote">"J'ai testé Duolingo et Babbel pendant des mois. Sunami est le seul qui m'a fait revenir 7 jours de suite. L'histoire te donne envie de savoir la suite, c'est addictif."</p>
-          <div class="t-author">
-            <div class="t-avatar" style="background:#14b8a6;">S</div>
-            <div><div class="t-name">Sarah M.</div><div class="t-role">Étudiante · Anglais A2</div></div>
-          </div>
-        </div>
-        <div class="t-card">
-          <div class="t-stars">★★★★★</div>
-          <p class="t-quote">"Je vis une histoire à Marseille, je parle avec des personnages, et j'apprends sans m'en rendre compte. En 2 semaines, mon espagnol s'est amélioré plus qu'en 3 mois de cours."</p>
-          <div class="t-author">
-            <div class="t-avatar" style="background:#0d9488;">T</div>
-            <div><div class="t-name">Thomas L.</div><div class="t-role">Voyageur · Espagnol B1</div></div>
-          </div>
-        </div>
-        <div class="t-card">
-          <div class="t-stars">★★★★★</div>
-          <p class="t-quote">"Le tuteur IA corrige ma grammaire sans me juger. J'ai enfin osé parler allemand après 2 ans de blocage. L'histoire continue chaque jour, je suis accro."</p>
-          <div class="t-author">
-            <div class="t-avatar" style="background:#0f766e;">A</div>
-            <div><div class="t-name">Aïcha K.</div><div class="t-role">Professeure · Allemand A1</div></div>
-          </div>
-        </div>
+      <div class="eyebrow" data-i18n="t_title">Accès anticipé</div>
+      <div class="early-access">
+        <svg class="ea-mascot mascot idle" aria-hidden="true"><use href="#mascot"/></svg>
+        <h3 data-i18n="ea_head">Tu fais partie des tout premiers</h3>
+        <p data-i18n="ea_text">Sunami vient de sortir — pas de faux avis 5 étoiles ici. Rejoins les premiers apprenants, teste gratuitement, et aide à façonner l'app. Ton retour compte vraiment.</p>
+        <button class="btn" onclick="loginWithGoogle()" data-i18n="hero_cta">Commencer mon histoire — gratuit</button>
       </div>
     </div>
     <!-- Pricing -->
@@ -356,6 +335,12 @@
 <span data-i18n="footer_copy">Fait avec ❤️ pour les curieux · © 2026</span> · 
 <button class="text-link" id="langSwitch" onclick="switchLang()" data-i18n="lang_switch" style="font-size:11px;">🇫🇷 FR</button></footer>
   </div>
+</div>
+
+<!-- Barre CTA collante (mobile uniquement) -->
+<div class="sticky-cta" id="stickyCta">
+  <span class="sticky-cta-txt" data-i18n="sticky_txt">Prêt à vivre ta première histoire ?</span>
+  <button class="btn small" onclick="loginWithGoogle()" data-i18n="sticky_cta">Commencer — gratuit</button>
 </div>
 
 <script type="module" src="/landing.js"></script>
