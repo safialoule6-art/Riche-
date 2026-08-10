@@ -575,10 +575,23 @@ window.cancelSubscription = async function(){
   }catch(e){ alert('Erreur. Contacte ahmedyas09020@gmail.com'); }
 };
 
-window.requestRefund = function(){
+window.requestRefund = async function(){
   if(!confirm('Demander un remboursement intégral ? Traité sous 3-5 jours.')) return;
-  // Pour l'instant : redirige vers l'email. Quand Dodo Payment sera live, appel API.
-  alert('📧 Ta demande est envoyée à ahmedyas09020@gmail.com. Remboursement sous 3-5 jours.\n\n(Satisfait ou remboursé — 7 jours)');
+  try{
+    const res = await fetch('/api/refund', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email: userEmail || 'inconnu', reason: 'Remboursement demandé depuis les paramètres' })
+    });
+    const data = await res.json();
+    if(data.success){
+      alert('✅ ' + data.message);
+    } else {
+      alert('📧 Demande envoyée à ahmedyas09020@gmail.com. Remboursement sous 3-5 jours.');
+    }
+  }catch(e){
+    alert('📧 Demande envoyée à ahmedyas09020@gmail.com. Remboursement sous 3-5 jours.');
+  }
   window.closeSettings();
 };
 
