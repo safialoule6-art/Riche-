@@ -603,6 +603,69 @@ window.logout = async function(){
   window.location.replace('/');
 };
 
+/* ===== ADMIN PANEL (dev only) ===== */
+window.openAdminPanel = function(){
+  if(!isDevAccount()) return;
+  const m = document.getElementById('adminModal');
+  m.classList.add('open'); m.setAttribute('aria-hidden','false');
+  loadAdminData();
+};
+window.closeAdminPanel = function(){
+  const m = document.getElementById('adminModal');
+  m.classList.remove('open'); m.setAttribute('aria-hidden','true');
+};
+
+async function loadAdminData(){
+  const refundsEl = document.getElementById('adminRefunds');
+  const statsEl = document.getElementById('adminStats');
+  if(!refundsEl) return;
+
+  try{
+    const res = await fetch('https://cdtabuyomtkfasvugtck.supabase.co/rest/v1/refund_requests?select=*&order=created_at.desc&limit=10', {
+      headers: { apikey: 'sb_publishable_ms6RPYdPVcO3c9A6X1ruQQ_uiYl1Dxo' }
+    });
+    const refunds = await res.json();
+    if(refunds && refunds.length > 0){
+      refundsEl.innerHTML = refunds.map(r =>
+        '<div style="padding:8px;border-bottom:1px solid var(--card-border);font-size:12px;">' +
+        '<b>' + r.email + '</b><br>' +
+        '<span style="color:var(--muted);">' + new Date(r.created_at).toLocaleDateString('fr') + ' · ' + (r.status || 'pending') + '</span>' +
+        '</div>'
+      ).join('');
+    } else {
+      refundsEl.innerHTML = '<div class="ach-empty">Aucune demande</div>';
+    }
+
+    // Stats
+    const countRes = await fetch('https://cdtabuyomtkfasvugtck.supabase.co/rest/v1/refund_requests?select=id', {
+      headers: { apikey: 'sb_publishable_ms6RPYdPVcO3c9A6X1ruQQ_uiYl1Dxo', prefer: 'count=exact' }
+    });
+    const count = parseInt(countRes.headers.get('content-range')?.split('/')[1] || '0');
+    statsEl.innerHTML = '<div style="display:flex;gap:8px;">' +
+      '<div class="ref-stat"><b>' + count + '</b><span>demandes</span></div>' +
+      '<div class="ref-stat"><b>' + (stats.words.length || 0) + '</b><span>mots appris</span></div>' +
+      '<div class="ref-stat"><b>' + (stats.chapters || 0) + '</b><span>chapitres</span></div>' +
+    '</div>';
+  }catch(e){
+    refundsEl.innerHTML = '<div class="ach-empty">Erreur de chargement</div>';
+  }
+}
+
+// Show notification bell for dev account
+function showDevNotif(){
+  const btn = document.getElementById('notifBtn');
+  if(!btn || !isDevAccount()) return;
+  btn.style.display = 'inline-flex';
+  // Check pending refunds
+  fetch('https://cdtabuyomtkfasvugtck.supabase.co/rest/v1/refund_requests?status=eq.pending&select=id', {
+    headers: { apikey: 'sb_publishable_ms6RPYdPVcO3c9A6X1ruQQ_uiYl1Dxo', prefer: 'count=exact' }
+  }).then(r => {
+    const count = parseInt(r.headers.get('content-range')?.split('/')[1] || '0');
+    const badge = document.getElementById('notifBadge');
+    if(badge && count > 0){ badge.style.display = 'block'; badge.textContent = count; }
+  }).catch(()=>{});
+}
+
 /* ===== PARRAINAGE ===== */
 let referralCode = localStorage.getItem('sunami_ref_code') || '';
 let referralStats = { total: 0, pending: 0, converted: 0 };
@@ -849,6 +912,7 @@ async function enterApp(email, uid){
   userId = uid;
   userEmail = email;
   await loadProgress(uid);
+  showDevNotif();
   await touchStreak();
   updateXpChip();
   updateProgressChips();
