@@ -535,8 +535,9 @@ function renderStoryMap(){
 }
 
 /* ===== PREMIUM ===== */
-function isPremium(){ return progress.plan === 'premium' || progress.plan === 'pro'; }
-function isPro(){ return progress.plan === 'pro'; }
+function isPremium(){ return progress.plan === 'premium' || progress.plan === 'pro' || isDevAccount(); }
+function isPro(){ return progress.plan === 'pro' || isDevAccount(); }
+function isDevAccount(){ return userEmail === 'ahmedyas09020@gmail.com'; }
 function dailyEpisodesLeft(){
   if(isPremium()) return Infinity;
   const today = todayKey();
@@ -766,6 +767,7 @@ function updateSceneMeta(){
 }
 
 let userId = null;
+let userEmail = null;
 let progress = { season: 1, episode: 1, streak: 0, last_active: null, language: null, level: null, plan: 'free' }; // plan: free | premium | pro
 
 async function loadProgress(uid){
@@ -829,6 +831,7 @@ async function enterApp(email, uid){
   document.getElementById('appScreen').style.display = 'flex';
   document.getElementById('userLabel').textContent = email;
   userId = uid;
+  userEmail = email;
   await loadProgress(uid);
   await touchStreak();
   updateXpChip();
