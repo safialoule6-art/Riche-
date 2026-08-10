@@ -540,21 +540,21 @@ function isPro(){ return progress.plan === 'pro'; }
 function dailyEpisodesLeft(){
   if(isPremium()) return Infinity;
   const today = todayKey();
-  const key = 'sunami-episodes-' + today;
+  const key = 'sunami-episodes-' + (userId||'anon') + '-' + today;
   const used = parseInt(localStorage.getItem(key) || '0', 10);
   return Math.max(0, 2 - used);
 }
 function useDailyEpisode(){
   if(isPremium()) return true;
   const today = todayKey();
-  const key = 'sunami-episodes-' + today;
+  const key = 'sunami-episodes-' + (userId||'anon') + '-' + today;
   const used = parseInt(localStorage.getItem(key) || '0', 10);
   return used < 2;
 }
 function consumeDailyEpisode(){
   if(isPremium()) return;
   const today = todayKey();
-  const key = 'sunami-episodes-' + today;
+  const key = 'sunami-episodes-' + (userId||'anon') + '-' + today;
   const used = parseInt(localStorage.getItem(key) || '0', 10);
   localStorage.setItem(key, String(used + 1));
 }
