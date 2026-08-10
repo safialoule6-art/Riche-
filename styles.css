@@ -97,7 +97,7 @@ input:focus{outline:none; border-color:var(--wave); box-shadow:0 0 0 4px rgba(20
 .brand{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:24px; display:flex; align-items:center; justify-content:center; gap:9px; margin-bottom:26px;}
 .brand .badge{width:36px; height:36px;}
 .brand em{color:var(--wave); font-style:normal;}
-.brand-install-btn{font-family:'Nunito',sans-serif; font-size:10px; font-weight:800; background:linear-gradient(135deg,var(--wave-2),var(--wave)); color:#fff; border:none; padding:3px 10px; border-radius:99px; cursor:pointer; margin-left:6px; letter-spacing:.02em; vertical-align:middle;}
+.brand-install-btn{font-family:'Nunito',sans-serif; font-size:13px; font-weight:800; background:linear-gradient(135deg,var(--wave-2),var(--wave)); color:#fff; border:none; padding:6px 14px; border-radius:99px; cursor:pointer; margin-left:8px; letter-spacing:.02em; vertical-align:middle;}
 
 .hero{text-align:center;}
 .hero-mascot{width:132px; height:150px; margin:0 auto 6px;}
