@@ -149,6 +149,35 @@
       </div>
     </div>
 
+    <!-- Démo interactive JOUABLE sans compte -->
+    <div class="section reveal" id="tryDemo">
+      <div class="eyebrow" data-i18n="try_title">Essaie maintenant — sans compte</div>
+      <div class="demo-live">
+        <div class="dl-choose" id="dlChoose">
+          <p class="dl-prompt" data-i18n="try_prompt">Choisis une langue et vis le début de ton histoire, tout de suite :</p>
+          <div class="dl-langs">
+            <button class="dl-lang" data-lang="anglais">🇬🇧 Anglais</button>
+            <button class="dl-lang" data-lang="espagnol">🇪🇸 Espagnol</button>
+            <button class="dl-lang" data-lang="allemand">🇩🇪 Allemand</button>
+            <button class="dl-lang" data-lang="italien">🇮🇹 Italien</button>
+            <button class="dl-lang" data-lang="arabe">🇸🇦 Arabe</button>
+            <button class="dl-lang" data-lang="portugais">🇵🇹 Portugais</button>
+          </div>
+        </div>
+        <div class="dl-chat-wrap" id="dlChatWrap" style="display:none">
+          <div class="dl-chat" id="dlChat"></div>
+          <div class="dl-inputbar" id="dlInputBar">
+            <input id="dlInput" type="text" autocomplete="off" placeholder="Écris ta réponse dans la langue…">
+            <button class="btn small" id="dlSend">Envoyer</button>
+          </div>
+          <div class="dl-wall" id="dlWall" style="display:none">
+            <p data-i18n="try_wall">👏 Tu viens de vivre le début de ton histoire. Crée ton compte gratuit pour connaître la suite — l'épisode continue demain.</p>
+            <button class="btn" onclick="loginWithGoogle()" data-i18n="hero_cta">Commencer mon histoire — gratuit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Démo animée -->
     <div class="section reveal">
       <div class="eyebrow" data-i18n="demo_title">Vois Sunami en action</div>
@@ -359,5 +388,6 @@
 </div>
 
 <script type="module" src="/landing.js"></script>
+<script src="/demo.js" defer></script>
 </body>
 </html>
