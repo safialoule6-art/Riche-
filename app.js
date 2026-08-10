@@ -55,7 +55,10 @@ window.openSettings = function(){
   const badge = document.getElementById('planBadge');
   const billing = document.getElementById('billingSection');
   if(badge){
-    if(isPremium()){
+    if(isDevAccount()){
+      badge.style.display = 'block';
+      badge.innerHTML = '<span style="background:linear-gradient(135deg,#2dd4bf,#14b8a6);color:#fff;padding:4px 12px;border-radius:99px;font-weight:800;font-size:13px;">💎 DEV</span><br><small style="color:var(--muted);">Accès complet — compte développeur</small>';
+    } else if(isPremium()){
       badge.style.display = 'block';
       badge.innerHTML = '<span style="background:var(--wave);color:#fff;padding:4px 12px;border-radius:99px;font-weight:800;font-size:13px;">💎 ' + progress.plan.toUpperCase() + '</span><br><small style="color:var(--muted);">Merci de soutenir Sunami !</small>';
     } else {
