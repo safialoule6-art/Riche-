@@ -239,7 +239,7 @@ try{
 }catch(e){}
 if(!Array.isArray(stats.words)) stats.words = [];
 
-function todayKey(){ return new Date().toISOString().slice(0,10); }
+function todayKey(){ const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function saveStats(){ localStorage.setItem('sunami-stats', JSON.stringify(stats)); }
 function rollDay(){
   const t = todayKey();
@@ -540,21 +540,21 @@ function isPro(){ return progress.plan === 'pro'; }
 function dailyEpisodesLeft(){
   if(isPremium()) return Infinity;
   const today = todayKey();
-  const key = 'sunami-episodes-' + today;
+  const key = 'sunami-episodes-' + (userId||'anon') + '-' + today;
   const used = parseInt(localStorage.getItem(key) || '0', 10);
   return Math.max(0, 2 - used);
 }
 function useDailyEpisode(){
   if(isPremium()) return true;
   const today = todayKey();
-  const key = 'sunami-episodes-' + today;
+  const key = 'sunami-episodes-' + (userId||'anon') + '-' + today;
   const used = parseInt(localStorage.getItem(key) || '0', 10);
   return used < 2;
 }
 function consumeDailyEpisode(){
   if(isPremium()) return;
   const today = todayKey();
-  const key = 'sunami-episodes-' + today;
+  const key = 'sunami-episodes-' + (userId||'anon') + '-' + today;
   const used = parseInt(localStorage.getItem(key) || '0', 10);
   localStorage.setItem(key, String(used + 1));
 }
