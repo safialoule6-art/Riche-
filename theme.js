@@ -1,8 +1,7 @@
 /* Sunami — thème clair/sombre (partagé landing + app) */
 (function(){
   var saved = localStorage.getItem('sunami-theme');
-  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  var theme = saved || (prefersDark ? 'dark' : 'light');
+  var theme = saved || 'dark';
   document.documentElement.setAttribute('data-theme', theme);
   document.addEventListener('DOMContentLoaded', function(){
     var t = document.getElementById('themeToggle');
