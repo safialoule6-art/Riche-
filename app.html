@@ -181,6 +181,13 @@
       </div>
     </div>
     <div class="set-group">
+      <div class="set-title">Notifications</div>
+      <div class="set-row">
+        <div class="set-label"><b>Rappel quotidien</b><small>« ton prochain épisode t'attend »</small></div>
+        <button class="btn ghost set-btn notif-cta" onclick="enableNotifications()">🔔 Me rappeler mon épisode</button>
+      </div>
+    </div>
+    <div class="set-group">
       <div class="set-title">Audio · synthèse vocale</div>
       <div class="set-row">
         <div class="set-label"><b>Lecture auto</b><small>lire chaque chapitre à voix haute</small></div>
@@ -273,6 +280,10 @@
     <h2 id="celTitle">Bravo !</h2>
     <div class="cel-sub" id="celSub"></div>
     <img id="celCover" class="cel-cover" alt="Couverture de l'épisode" style="display:none;">
+    <div id="celCoverTools" class="cover-tools" style="display:none;">
+      <div class="cover-styles" id="celCoverStyles"></div>
+      <button type="button" class="chip-btn" onclick="regenerateCover()">🔄 Autre image</button>
+    </div>
     <div class="cel-stats">
       <div class="cel-stat xp"><div class="v" id="celXp">0</div><div class="l">XP</div></div>
       <div class="cel-stat words"><div class="v" id="celWords">0</div><div class="l">Mots</div></div>
@@ -280,6 +291,7 @@
       <div class="cel-stat total"><div class="v" id="celLvl">1</div><div class="l">Niveau</div></div>
     </div>
     <button class="btn" onclick="closeCelebration()">Continuer l'histoire</button>
+    <button id="celNotifBtn" class="chip-btn notif-cta" onclick="enableNotifications()" style="display:none;margin-top:10px;">🔔 Me rappeler mon épisode</button>
   </div>
 </div>
 

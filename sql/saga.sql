@@ -64,3 +64,24 @@ create policy "user_state_insert_own" on public.user_state
   for insert with check (auth.uid() = user_id);
 create policy "user_state_update_own" on public.user_state
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ============================================================================
+-- Ajouts : jaquette/titre de saga + abonnements push (rappels d'épisode)
+-- Idempotent — ré-exécutable sans risque.
+-- ============================================================================
+
+-- Colonnes affiche de série sur la saga
+alter table public.saga add column if not exists title       text;
+alter table public.saga add column if not exists cover       text;
+alter table public.saga add column if not exists cover_style text;
+
+-- Abonnements push (écrits par le serveur via service_role ; RLS verrouillé)
+create table if not exists public.push_subscriptions (
+  id           bigint generated always as identity primary key,
+  user_id      uuid references auth.users(id) on delete cascade,
+  endpoint     text unique not null,
+  subscription jsonb not null,
+  created_at   timestamptz default now()
+);
+alter table public.push_subscriptions enable row level security;
+-- Aucune policy publique : seul le service_role (côté serveur) peut lire/écrire.

@@ -92,6 +92,7 @@ PEDAGOGY
 
 OUTPUT — return ONLY a valid minified JSON object, no markdown, with EXACTLY these keys:
 {
+ "sagaTitle": "<short catchy FRENCH title for the WHOLE saga, like a TV series name (2-4 words); keep it identical across episodes>",
  "story": "<text in ${language}, bold key words + (FR translation), ends with one question>",
  "grammar": "<short FR note or empty>",
  "vocab": [{"word":"<word in ${language}>","fr":"<French translation>"}],
@@ -211,6 +212,7 @@ export default async function handler(req) {
   const out = {
     text: parsed.story.trim(),           // alias rétrocompatible
     story: parsed.story.trim(),
+    sagaTitle: (parsed.sagaTitle && String(parsed.sagaTitle).trim()) || "",
     grammar: (parsed.grammar && String(parsed.grammar).trim()) || null,
     vocab: Array.isArray(parsed.vocab) ? parsed.vocab.filter(v => v && v.word).slice(0, 6) : [],
     characters: Array.isArray(parsed.characters) ? parsed.characters.filter(c => c && c.name).slice(0, 12) : [],

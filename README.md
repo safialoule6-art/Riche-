@@ -43,7 +43,24 @@ Au lieu d'exercices répétitifs, un **conteur IA** raconte une histoire immersi
 
 ## Moteur narratif (continuité)
 
-`api/generate.js` renvoie un **JSON structuré** : `story`, `recap` (résumé cumulatif de la saga), `characters`, `setting`, `vocab` (avec traduction FR), `episodeComplete` + `episodeTitle`, et `choices` (suggestions de réponse). Le `recap` est renvoyé à chaque tour → la même intrigue et les mêmes personnages sont conservés d'un épisode à l'autre, même au-delà de la fenêtre de contexte.
+`api/generate.js` renvoie un **JSON structuré** : `sagaTitle`, `story`, `recap` (résumé cumulatif de la saga), `characters`, `setting`, `vocab` (avec traduction FR), `episodeComplete` + `episodeTitle`, et `choices` (suggestions de réponse). Le `recap` est renvoyé à chaque tour → la même intrigue et les mêmes personnages sont conservés d'un épisode à l'autre, même au-delà de la fenêtre de contexte.
+
+## Covers & affiches de série
+
+- Chaque cliffhanger génère une **couverture d'épisode** via [Pollinations.ai](https://pollinations.ai) (gratuit, sans clé, déterministe par *seed*). L'utilisateur peut **changer de style** (Ciné, Anime, Aquarelle, BD, Conte, Pixel) ou **régénérer** l'image ; le choix est mis en cache dans `saga.cover` / `saga.cover_style`.
+- L'écran **Mes sagas** affiche une **affiche de série** par langue (jaquette portrait + titre auto-généré).
+
+## Notifications push (rappels d'épisode)
+
+Rappel quotidien « ton prochain épisode t'attend » via Web Push.
+
+**Activation :**
+1. Générer les clés : `npx web-push generate-vapid-keys`
+2. Configurer sur Vercel : `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (ex : `mailto:hello@sunami.app`), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, et éventuellement `CRON_SECRET`.
+3. Exécuter `sql/saga.sql` (crée la table `push_subscriptions`).
+4. Le **Vercel Cron** (`vercel.json`) appelle `/api/send-reminders` chaque jour à 17:00 UTC et notifie les inactifs du jour.
+
+> Sans ces variables, la fonctionnalité se désactive proprement (aucune erreur, l'app fonctionne normalement). `api/send-reminders.js` dépend de `web-push` (voir `package.json`).
 
 ## Notes IA (Groq)
 

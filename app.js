@@ -383,7 +383,7 @@ function fireConfetti(){
   }
   setTimeout(() => { box.innerHTML = ''; }, 3400);
 }
-function celebrate({ emoji = '🎉', title = 'Bravo !', sub = '', cover = '' }){
+function celebrate({ emoji = '🎉', title = 'Bravo !', sub = '', cover = '', coverTools = false }){
   const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
   set('celEmoji', emoji); set('celTitle', title); set('celSub', sub);
   set('celXp', xp); set('celWords', stats.words.length); set('celStreak', progress.streak || 0); set('celLvl', levelOf(xp));
@@ -391,6 +391,11 @@ function celebrate({ emoji = '🎉', title = 'Bravo !', sub = '', cover = '' }){
   if(cov){
     if(cover){ cov.src = cover; cov.style.display = 'block'; }
     else { cov.style.display = 'none'; cov.removeAttribute('src'); }
+  }
+  const tools = document.getElementById('celCoverTools');
+  if(tools){
+    tools.style.display = (cover && coverTools) ? 'block' : 'none';
+    if(cover && coverTools) renderCoverStyleChips();
   }
   const m = document.getElementById('celModal');
   if(m){ m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); }
@@ -913,6 +918,10 @@ async function saveProgress(){
    retombe silencieusement sur localStorage (aucune régression).
    =================================================================== */
 let sagaRecap = '';
+let sagaTitle = '';
+let sagaCover = '';
+let sagaCoverStyle = 'cinematic';
+let coverSalt = 0;
 let sagaSetting = '';
 let sagaProtagonist = '';
 let _syncTimer = null;
@@ -965,21 +974,24 @@ function saveSaga(){
   if(!userId || !pickedLang) return;
   clearTimeout(saveSaga._t);
   saveSaga._t = setTimeout(async ()=>{
+    const base = {
+      user_id: userId,
+      language: pickedLang,
+      level: pickedLevel,
+      protagonist: sagaProtagonist || null,
+      setting: sagaSetting || null,
+      recap: sagaRecap || '',
+      characters: characters || [],
+      episode: progress.episode || 1,
+      chapter: chapter || 0,
+      history: (chatHistory || []).slice(-24),
+      updated_at: new Date().toISOString(),
+    };
+    const full = { ...base, title: sagaTitle || null, cover: sagaCover || null, cover_style: sagaCoverStyle || null };
     try{
-      await supabase.from('saga').upsert({
-        user_id: userId,
-        language: pickedLang,
-        level: pickedLevel,
-        protagonist: sagaProtagonist || null,
-        setting: sagaSetting || null,
-        recap: sagaRecap || '',
-        characters: characters || [],
-        episode: progress.episode || 1,
-        chapter: chapter || 0,
-        history: (chatHistory || []).slice(-24),
-        updated_at: new Date().toISOString(),
-      });
-    }catch(e){}
+      const { error } = await supabase.from('saga').upsert(full);
+      if(error){ await supabase.from('saga').upsert(base); } // colonnes title/cover pas encore migrées
+    }catch(e){ try{ await supabase.from('saga').upsert(base); }catch(_){} }
   }, 600);
 }
 
@@ -1030,6 +1042,7 @@ function renderChoices(choices){
 /* Fin d'épisode : on passe à l'épisode suivant, on célèbre, on sauvegarde */
 function onEpisodeComplete(title){
   const finishedEp = progress.episode || 1;
+  sagaCover = buildCover(finishedEp, sagaCoverStyle, coverSalt, false);
   appendEpisodeCover(title, finishedEp);
   progress.episode = finishedEp + 1;
   chapter = 0;
@@ -1039,8 +1052,10 @@ function onEpisodeComplete(title){
     emoji: '🎬',
     title: title ? ('Épisode terminé — ' + title) : 'Épisode terminé !',
     sub: 'La suite t\'attend. Clique « Nouvel épisode » pour lancer la suite, ou reviens demain pour garder ta série.',
-    cover: currentCoverUrl(finishedEp)
+    cover: sagaCover,
+    coverTools: true
   });
+  maybeOfferNotifications();
 }
 
 /* Reprise exacte d'une saga sauvegardée */
@@ -1049,6 +1064,10 @@ function resumeScene(s){
   sagaRecap = s.recap || '';
   sagaSetting = s.setting || '';
   sagaProtagonist = s.protagonist || '';
+  sagaTitle = s.title || '';
+  sagaCover = s.cover || '';
+  sagaCoverStyle = s.cover_style || 'cinematic';
+  coverSalt = 0;
   if(Array.isArray(s.characters) && s.characters.length) characters = s.characters;
   chapter = s.chapter || 0;
   progress.episode = s.episode || progress.episode || 1;
@@ -1086,7 +1105,7 @@ window.backToPicker = function(){
   document.getElementById('pickScreen').style.display = 'flex';
   document.getElementById('chatLog').innerHTML = '';
   chatHistory = [];
-  sagaRecap = ''; sagaSetting = '';
+  sagaRecap = ''; sagaSetting = ''; sagaTitle = ''; sagaCover = ''; coverSalt = 0;
   pickedLang = null; pickedLevel = null;
   renderPickers();
 };
@@ -1102,27 +1121,42 @@ function showScreen(which){
   });
 }
 
-/* --- Cover d'épisode (Pollinations.ai, gratuit, déterministe par seed) --- */
+/* --- Covers d'épisode (Pollinations.ai, gratuit, déterministe par seed) --- */
+const COVER_STYLES = [
+  { id:'cinematic',  label:'🎬 Ciné',      prompt:'cinematic film poster, dramatic lighting, photorealistic, depth of field' },
+  { id:'anime',      label:'🌸 Anime',     prompt:'anime key visual, studio ghibli inspired, vibrant colors, detailed background' },
+  { id:'watercolor', label:'🎨 Aquarelle', prompt:'delicate watercolor illustration, soft washes, artistic, elegant' },
+  { id:'comic',      label:'💥 BD',        prompt:'bold comic book cover art, ink lines, cel shading, dynamic' },
+  { id:'storybook',  label:'📖 Conte',     prompt:'whimsical storybook illustration, warm cozy, painterly' },
+  { id:'pixel',      label:'🕹️ Pixel',     prompt:'retro pixel art, 16-bit, richly detailed scene' },
+];
+function coverStylePrompt(id){ return (COVER_STYLES.find(s=>s.id===id) || COVER_STYLES[0]).prompt; }
 function _seedFrom(str){ let h = 0; const s = String(str||''); for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i))>>>0; } return h % 1000000; }
-function coverUrl(desc, seed){
+/* portrait = affiche de série (Mes sagas) ; paysage = cover d'épisode dans le fil */
+function coverUrl(desc, seed, styleId, portrait){
   const clean = String(desc||'').replace(/\*\*/g,'').replace(/\([^)]*\)/g,'').slice(0,180);
-  const prompt = `cinematic storybook cover illustration, ${clean}, dramatic warm lighting, rich vivid colors, highly detailed, painterly, no text, no words, no letters`;
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=432&nologo=true&seed=${seed}`;
+  const prompt = `${coverStylePrompt(styleId)}, ${clean}, rich vivid colors, highly detailed, no text, no words, no letters`;
+  const dim = portrait ? 'width=512&height=768' : 'width=768&height=432';
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?${dim}&nologo=true&seed=${seed}`;
 }
-function currentCoverUrl(episodeNum){
+function coverDesc(){ return sagaSetting || sagaTitle || ((LANGUAGES.find(l=>l.code===pickedLang)?.label || '') + ' adventure'); }
+function buildCover(episodeNum, styleId, salt, portrait){
   const ep = episodeNum || progress.episode || 1;
-  const desc = sagaSetting || (LANGUAGES.find(l=>l.code===pickedLang)?.label || '') + ' adventure';
-  return coverUrl(desc, _seedFrom((pickedLang||'') + ':' + ep));
+  return coverUrl(coverDesc(), _seedFrom((pickedLang||'') + ':' + ep + ':' + (salt||0)), styleId || sagaCoverStyle, portrait);
 }
+function currentCoverUrl(episodeNum){ return buildCover(episodeNum, sagaCoverStyle, coverSalt, false); }
+
 function appendEpisodeCover(title, episodeNum){
   const log = document.getElementById('chatLog');
   if(!log) return;
+  document.querySelectorAll('.episode-cover').forEach(e=>e.remove());
   const card = document.createElement('div');
   card.className = 'episode-cover';
+  card.id = 'lastEpisodeCover';
   const img = new Image();
   img.loading = 'lazy';
   img.alt = title || 'Couverture de l\'épisode';
-  img.src = currentCoverUrl(episodeNum);
+  img.src = sagaCover || currentCoverUrl(episodeNum);
   card.appendChild(img);
   const cap = document.createElement('div');
   cap.className = 'episode-cover-cap';
@@ -1131,6 +1165,30 @@ function appendEpisodeCover(title, episodeNum){
   log.appendChild(card);
   scrollChat();
 }
+
+/* Choix de style / régénération depuis la modale de célébration */
+function renderCoverStyleChips(){
+  const box = document.getElementById('celCoverStyles');
+  if(!box) return;
+  box.innerHTML = COVER_STYLES.map(s =>
+    '<button type="button" class="cover-style-chip' + (s.id===sagaCoverStyle?' active':'') + '" onclick="setCoverStyle(\'' + s.id + '\')">' + s.label + '</button>'
+  ).join('');
+}
+function refreshCoverImages(){
+  const url = sagaCover;
+  const cov = document.getElementById('celCover'); if(cov && url){ cov.src = url; }
+  const last = document.querySelector('#lastEpisodeCover img'); if(last && url){ last.src = url; }
+}
+window.setCoverStyle = function(id){
+  sagaCoverStyle = id; coverSalt = 0;
+  sagaCover = buildCover(progress.episode || 1, sagaCoverStyle, coverSalt, false);
+  renderCoverStyleChips(); refreshCoverImages(); saveSaga();
+};
+window.regenerateCover = function(){
+  coverSalt = (coverSalt || 0) + 1;
+  sagaCover = buildCover(progress.episode || 1, sagaCoverStyle, coverSalt, false);
+  refreshCoverImages(); saveSaga();
+};
 
 /* --- Nouvel épisode : continue la MÊME saga (même intrigue/perso) --- */
 window.newEpisode = function(){
@@ -1188,18 +1246,23 @@ function renderSagas(rows){
     const label = lang ? lang.label : (s.language||'Histoire');
     const lvl = (LEVELS.find(l=>l.code===s.level)?.label) || s.level || '';
     const ep = s.episode || 1;
-    const recap = (s.recap && s.recap.trim()) ? escapeHtml(s.recap) : 'Ton histoire commence…';
-    const cover = coverUrl(s.setting || (label + ' adventure'), _seedFrom((s.language||'') + ':' + ep));
+    const title = (s.title && s.title.trim()) ? s.title : (label + ' · Saga');
+    const desc = s.setting || s.title || (label + ' adventure');
+    const cover = (s.cover && s.cover.trim()) ? s.cover : coverUrl(desc, _seedFrom((s.language||'') + ':' + ep), s.cover_style || 'cinematic', true);
     return '<div class="saga-card">' +
-      '<img class="saga-cover" loading="lazy" alt="Couverture ' + escapeHtml(label) + '" src="' + cover + '" onerror="this.classList.add(\'placeholder\');this.removeAttribute(\'src\');this.textContent=\'' + flag + '\';">' +
-      '<div class="saga-body">' +
-        '<div class="saga-head"><span class="saga-lang">' + flag + ' ' + escapeHtml(label) + '</span><span class="saga-ep">Épisode ' + ep + '</span></div>' +
-        (lvl ? '<div class="saga-meta">' + escapeHtml(lvl) + '</div>' : '') +
-        '<div class="saga-recap">' + recap + '</div>' +
-        '<div class="saga-actions">' +
-          '<button class="btn small" onclick="resumeSagaByLang(\'' + s.language + '\')">▶ Reprendre</button>' +
-          '<button class="btn ghost small saga-del" title="Supprimer" onclick="deleteSaga(\'' + s.language + '\')">🗑️</button>' +
+      '<div class="saga-poster">' +
+        '<img class="saga-poster-img" loading="lazy" alt="Affiche ' + escapeHtml(label) + '" src="' + cover + '" onerror="this.style.visibility=\'hidden\';this.parentNode.classList.add(\'noimg\');this.parentNode.setAttribute(\'data-flag\',\'' + flag + '\');">' +
+        '<div class="saga-poster-grad"></div>' +
+        '<span class="saga-poster-badge">' + flag + '</span>' +
+        '<span class="saga-poster-ep">Ép. ' + ep + '</span>' +
+        '<div class="saga-poster-info">' +
+          '<div class="saga-poster-title">' + escapeHtml(title) + '</div>' +
+          (lvl ? '<div class="saga-poster-sub">' + escapeHtml(label) + ' · ' + escapeHtml(lvl) + '</div>' : '<div class="saga-poster-sub">' + escapeHtml(label) + '</div>') +
         '</div>' +
+      '</div>' +
+      '<div class="saga-actions">' +
+        '<button class="btn small" onclick="resumeSagaByLang(\'' + s.language + '\')">▶ Reprendre</button>' +
+        '<button class="btn ghost small saga-del" title="Supprimer" onclick="deleteSaga(\'' + s.language + '\')">🗑️</button>' +
       '</div>' +
     '</div>';
   }).join('') + '</div>';
@@ -1220,9 +1283,65 @@ window.resumeSagaByLang = async function(lang){
 window.deleteSaga = async function(lang){
   if(!confirm('Supprimer définitivement cette histoire ?')) return;
   try{ await supabase.from('saga').delete().eq('user_id', userId).eq('language', lang); }catch(e){}
-  if(lang === pickedLang){ chatHistory = []; sagaRecap = ''; sagaSetting = ''; }
+  if(lang === pickedLang){ chatHistory = []; sagaRecap = ''; sagaSetting = ''; sagaTitle = ''; sagaCover = ''; }
   openSagas();
 };
+
+/* ===================================================================
+   NOTIFICATIONS PWA — « ton prochain épisode t'attend »
+   Push serveur si VAPID configuré (api/vapid + api/subscribe + cron
+   api/send-reminders). Sinon, dégrade proprement (aucune erreur).
+   =================================================================== */
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g,'+').replace(/_/g,'/');
+  const raw = atob(base64);
+  const out = new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
+async function getVapidKey(){
+  try{ const r = await fetch('/api/vapid'); if(!r.ok) return null; const j = await r.json(); return (j && j.key) ? j.key : null; }catch(e){ return null; }
+}
+function notifEnabled(){ return ('Notification' in window) && Notification.permission === 'granted' && localStorage.getItem('sunami-notif') === '1'; }
+function updateNotifButtons(){
+  const on = notifEnabled();
+  document.querySelectorAll('.notif-cta').forEach(b=>{
+    b.textContent = on ? '🔔 Rappels activés ✓' : '🔔 Me rappeler mon épisode';
+    b.disabled = on;
+  });
+  const celBtn = document.getElementById('celNotifBtn');
+  if(celBtn && on) celBtn.style.display = 'none';
+}
+async function subscribePush(){
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  const key = await getVapidKey();
+  if(!key) return; // VAPID non configuré côté serveur -> pas de push (pas d'erreur)
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if(!sub){ sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey: urlBase64ToUint8Array(key) }); }
+  try{ await fetch('/api/subscribe', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ user_id:userId, subscription: sub }) }); }catch(e){}
+}
+window.enableNotifications = async function(){
+  if(!('Notification' in window)){ alert('Les notifications ne sont pas supportées sur ce navigateur.'); return; }
+  let perm = Notification.permission;
+  if(perm !== 'granted'){ perm = await Notification.requestPermission(); }
+  if(perm !== 'granted'){ return; }
+  localStorage.setItem('sunami-notif','1');
+  try{ await subscribePush(); }catch(e){}
+  try{ new Notification('🌊 Sunami', { body:'C\'est noté ! On te préviendra quand ton prochain épisode t\'attend.', icon:'/og-preview.png' }); }catch(e){}
+  track('notif_enabled');
+  updateNotifButtons();
+};
+function refreshPushSubscription(){
+  if(notifEnabled()){ subscribePush().catch(()=>{}); }
+}
+function maybeOfferNotifications(){
+  if(notifEnabled()) return;
+  if(!('Notification' in window) || Notification.permission === 'denied') return;
+  const b = document.getElementById('celNotifBtn'); if(b) b.style.display = 'inline-flex';
+}
+
 
 
 let appEntered = false;
@@ -1239,6 +1358,8 @@ async function enterApp(email, uid){
   await touchStreak();
   updateXpChip();
   updateProgressChips();
+  updateNotifButtons();
+  refreshPushSubscription();
   track('app_open');
 
   if (progress.language && progress.level){
@@ -1465,6 +1586,7 @@ async function callAI(userReply, opts){
 
     /* ---- Continuité & persistance (moteur JSON structuré) ---- */
     if(data.recap) sagaRecap = data.recap;
+    if(data.sagaTitle && !sagaTitle) sagaTitle = data.sagaTitle;
     if(data.setting) sagaSetting = data.setting;
     if(!sagaProtagonist && userEmail){ sagaProtagonist = userEmail.split('@')[0] || ''; }
     mergeStructuredVocab(data.vocab);
@@ -1524,6 +1646,9 @@ function startScene(){
   chatHistory = [];
   sagaRecap = '';
   sagaSetting = '';
+  sagaTitle = '';
+  sagaCover = '';
+  coverSalt = 0;
   sagaProtagonist = (userEmail && userEmail.split('@')[0]) || '';
   if(!progress.episode) progress.episode = 1;
   track('story_start', { language: pickedLang, level: pickedLevel, theme: pickedTheme || 'aucun' });
