@@ -301,33 +301,5 @@ document.addEventListener('DOMContentLoaded', ()=>{
   }
 
   // Carousel témoignages
-  initTestimonialCarousel();
 });
 
-function initTestimonialCarousel(){
-  const carousel = document.getElementById('testimonialCarousel');
-  const dots = document.getElementById('testimonialDots');
-  if(!carousel || !dots) return;
-  const slides = carousel.querySelectorAll('.t-slide');
-  if(slides.length === 0) return;
-  let current = 0;
-
-  // Créer les dots
-  slides.forEach((_, i) => {
-    const dot = document.createElement('span');
-    dot.className = 't-dot' + (i === 0 ? ' active' : '');
-    dot.onclick = () => goTo(i);
-    dots.appendChild(dot);
-  });
-
-  function goTo(i){
-    slides[current].classList.remove('active');
-    dots.children[current].classList.remove('active');
-    current = i;
-    slides[current].classList.add('active');
-    dots.children[current].classList.add('active');
-  }
-
-  slides[0].classList.add('active');
-  setInterval(() => goTo((current + 1) % slides.length), 6000);
-}
