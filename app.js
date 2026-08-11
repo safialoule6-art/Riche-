@@ -508,12 +508,14 @@ function renderCharacters(){
     container.innerHTML = '<div class="ach-empty">Aucun personnage rencontré. Continue l\'histoire !</div>';
     return;
   }
-  container.innerHTML = characters.map(c =>
-    '<div class="char-card">' +
-      '<div class="char-avatar">' + c.name.charAt(0).toUpperCase() + '</div>' +
+  container.innerHTML = characters.map(c => {
+    const portrait = charPortraitUrl(c.name, c.role);
+    const fb = c.name.charAt(0).toUpperCase();
+    return '<div class="char-card">' +
+      '<div class="char-avatar"><img src="' + portrait + '" loading="lazy" alt="" onerror="this.remove();this.parentNode.textContent=\'' + fb + '\';"></div>' +
       '<div><b>' + c.name + '</b><small>' + c.role + ' · Chapitre ' + c.chapter + '</small></div>' +
-    '</div>'
-  ).join('');
+    '</div>';
+  }).join('');
 }
 
 /* ===== CARTE DE L'HISTOIRE (Pro) ===== */
@@ -1051,14 +1053,16 @@ function onEpisodeComplete(title){
   chapter = 0;
   saveProgress(); saveSaga();
   track('episode_complete', { episode: finishedEp, language: pickedLang });
-  celebrate({
-    emoji: '🎬',
-    title: title ? ('Épisode terminé — ' + title) : 'Épisode terminé !',
-    sub: 'La suite t\'attend. Clique « Nouvel épisode » pour lancer la suite, ou reviens demain pour garder ta série.',
-    cover: sagaCover,
-    coverTools: true
+  playEpisodeTransition({ label: 'Fin de l\'épisode ' + finishedEp, title: title || 'À suivre…', cover: sagaCover }).then(() => {
+    celebrate({
+      emoji: '🎬',
+      title: title ? ('Épisode terminé — ' + title) : 'Épisode terminé !',
+      sub: 'La suite t\'attend. Clique « Nouvel épisode » pour lancer la suite, ou reviens demain pour garder ta série.',
+      cover: sagaCover,
+      coverTools: true
+    });
+    maybeOfferNotifications();
   });
-  maybeOfferNotifications();
 }
 
 /* Reprise exacte d'une saga sauvegardée */
@@ -1205,16 +1209,20 @@ window.newEpisode = function(){
   episodeConsumed = false;
   updateSceneMeta();
   const hasSaga = sagaRecap && chatHistory.length > 0;
-  if(hasSaga){
-    const log = document.getElementById('chatLog');
-    const sep = document.createElement('div');
-    sep.className = 'prev-banner';
-    sep.innerHTML = '<div class="prev-label">🎬 Nouvel épisode</div>' + escapeHtml(sagaRecap);
-    if(log) log.appendChild(sep);
-    callAI(null, { newEpisode:true });
-  } else {
-    startScene();
-  }
+  const ep = progress.episode || 1;
+  const cover = sagaCover || currentCoverUrl(ep);
+  playEpisodeTransition({ label: 'Épisode ' + ep, title: sagaTitle || (hasSaga ? 'La suite…' : 'Nouvelle histoire'), cover: cover }).then(() => {
+    if(hasSaga){
+      const log = document.getElementById('chatLog');
+      const sep = document.createElement('div');
+      sep.className = 'prev-banner';
+      sep.innerHTML = '<div class="prev-label">🎬 Nouvel épisode</div>' + escapeHtml(sagaRecap);
+      if(log) log.appendChild(sep);
+      callAI(null, { newEpisode:true });
+    } else {
+      startScene();
+    }
+  });
 };
 
 /* --- Mes sagas : une histoire par langue, reprise en 1 clic --- */
@@ -1477,6 +1485,68 @@ function charVisual(name){
   let h = 0; for(let i=0;i<key.length;i++) h = (h*31 + key.charCodeAt(i))>>>0;
   return { emoji: NAME_EMOJIS[h % NAME_EMOJIS.length], color: 'hsl(' + (h % 360) + ' 62% 52%)' };
 }
+/* Rôle d'un personnage (moteur + registre local) */
+function roleOf(name, chars){
+  if(!name) return '';
+  const find = arr => (arr||[]).find(c => c && c.name && c.name.toLowerCase() === name.toLowerCase());
+  const c = find(chars) || find(characters);
+  return (c && c.role) ? c.role : 'person';
+}
+/* Portrait IA d'un personnage (déterministe par nom) */
+function charPortraitUrl(name, role){
+  const desc = (role && role.trim() && role.toLowerCase() !== 'personnage') ? role : 'person';
+  const prompt = coverStylePrompt(sagaCoverStyle) + ', character portrait, close-up face of a ' + desc + ', expressive, centered, plain background, no text, no words';
+  return 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?width=256&height=256&nologo=true&seed=' + _seedFrom('portrait:' + (name||'?').toLowerCase());
+}
+
+/* Transition cinématique d'épisode (title card) */
+function playEpisodeTransition(opts){
+  opts = opts || {};
+  return new Promise(resolve => {
+    const o = document.getElementById('episodeTransition');
+    if(!o){ resolve(); return; }
+    const bg = o.querySelector('.et-bg');
+    if(bg) bg.style.backgroundImage = opts.cover ? ('url("' + opts.cover + '")') : 'none';
+    const l = o.querySelector('.et-label'); if(l) l.textContent = opts.label || '';
+    const t = o.querySelector('.et-title'); if(t) t.textContent = opts.title || '';
+    o.classList.add('show'); o.setAttribute('aria-hidden', 'false');
+    setTimeout(() => { o.classList.remove('show'); o.setAttribute('aria-hidden', 'true'); setTimeout(resolve, 550); }, 2000);
+  });
+}
+
+/* Carte de la saga : parcours des épisodes */
+window.openSagaMap = function(){
+  const modal = document.getElementById('sagaMapModal');
+  if(!modal) return;
+  renderSagaMap();
+  modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false');
+};
+window.closeSagaMap = function(){
+  const modal = document.getElementById('sagaMapModal');
+  if(modal){ modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); }
+};
+function renderSagaMap(){
+  const el = document.getElementById('sagaMapBody');
+  if(!el) return;
+  const cur = progress.episode || 1;
+  const total = Math.max(cur, 1);
+  let html = '<div class="smap-track">';
+  for(let ep=1; ep<=total; ep++){
+    const done = ep < cur, active = ep === cur;
+    const cover = buildCover(ep, sagaCoverStyle, 0, true);
+    html += '<div class="smap-node ' + (active ? 'active' : (done ? 'done' : '')) + '">' +
+      '<div class="smap-thumb" style="background-image:url(\'' + cover + '\')">' + (active ? '<span class="smap-pin">🌊</span>' : (done ? '<span class="smap-check">✓</span>' : '')) + '</div>' +
+      '<div class="smap-ep">Épisode ' + ep + '</div></div>';
+    if(ep < total) html += '<div class="smap-link"></div>';
+  }
+  html += '</div>';
+  const chaps = Math.min(chapter, 5);
+  html += '<div class="smap-chaps"><span>Chapitres de l\'épisode ' + cur + '</span><div class="smap-dots">';
+  for(let i=1;i<=5;i++){ html += '<span class="smap-dot ' + (i<=chaps ? 'on' : '') + '"></span>'; }
+  html += '</div></div>';
+  if(sagaSetting){ html += '<div class="smap-setting">📍 ' + escapeHtml(sagaSetting) + '</div>'; }
+  el.innerHTML = html;
+}
 function escapeReg(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 /* Liste des noms connus (moteur + registre local) */
 function knownNames(chars){
@@ -1588,7 +1658,11 @@ async function renderStoryMessage(fullText, chars){
       speaker = detectSpeaker(prev, seg.text, names, lastSpeaker);
       if(speaker) lastSpeaker = speaker;
       vis = speaker ? charVisual(speaker) : { emoji:'🗣️', color:'hsl(210 8% 45%)' };
-      row.innerHTML = '<div class="story-avatar npc-avatar" style="background:' + vis.color + '">' + vis.emoji + '</div>';
+      const role = roleOf(speaker, chars);
+      const portrait = speaker ? charPortraitUrl(speaker, role) : '';
+      row.innerHTML = portrait
+        ? '<div class="story-avatar npc-avatar" style="background:' + vis.color + '"><img src="' + portrait + '" loading="lazy" alt="" onerror="this.remove();this.parentNode.textContent=\'' + vis.emoji + '\';"></div>'
+        : '<div class="story-avatar npc-avatar" style="background:' + vis.color + '">' + vis.emoji + '</div>';
     } else {
       row.innerHTML = '<div class="story-avatar narrator-avatar"><svg viewBox="0 0 120 140"><use href="#mascot"/></svg></div>';
     }

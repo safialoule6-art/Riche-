@@ -1315,3 +1315,41 @@ body:has(.landing-header) .theme-toggle{
   transition:transform .15s var(--ease), background .2s; }
 .amb-btn:hover{ transform:scale(1.08); background:rgba(0,0,0,.6); }
 .amb-btn:active{ transform:scale(.92); }
+
+/* ===== UI++ : portraits IA, carte de saga, transitions cinématiques ===== */
+.story-avatar.npc-avatar{ overflow:hidden; padding:0; }
+.story-avatar img{ width:100%; height:100%; object-fit:cover; }
+.char-avatar{ overflow:hidden; }
+.char-avatar img{ width:100%; height:100%; object-fit:cover; }
+
+/* Transition d'épisode (title card cinématique + letterbox) */
+.episode-transition{ position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
+  opacity:0; visibility:hidden; pointer-events:none; background:#0f0d0b; }
+.episode-transition.show{ opacity:1; visibility:visible; animation:etIn .5s var(--ease); }
+.episode-transition .et-bg{ position:absolute; inset:0; background-size:cover; background-position:center;
+  filter:brightness(.4) saturate(1.1); transform:scale(1.08); }
+.episode-transition .et-bg::after{ content:''; position:absolute; inset:0;
+  background:linear-gradient(180deg, rgba(15,13,11,.45), rgba(15,13,11,.9)); }
+.episode-transition::before, .episode-transition::after{ content:''; position:absolute; left:0; right:0; height:11vh; background:#000; z-index:2; }
+.episode-transition::before{ top:0; } .episode-transition::after{ bottom:0; }
+.et-content{ position:relative; z-index:3; text-align:center; padding:0 24px; animation:etText .8s var(--ease) .1s both; }
+.et-label{ font-size:12px; font-weight:800; letter-spacing:.35em; text-transform:uppercase; color:var(--neon); margin-bottom:10px; }
+.et-title{ font-family:'Instrument Serif', serif; font-style:italic; font-size:clamp(30px,8vw,56px); color:#fff; line-height:1.05; text-shadow:0 4px 24px rgba(0,0,0,.6); }
+@keyframes etIn{ from{opacity:0;} to{opacity:1;} }
+@keyframes etText{ from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:none;} }
+
+/* Carte de la saga */
+.smap-track{ display:flex; align-items:center; gap:6px; overflow-x:auto; padding:8px 2px 14px; }
+.smap-node{ flex:0 0 auto; text-align:center; }
+.smap-thumb{ width:78px; height:106px; border-radius:12px; background-size:cover; background-position:center;
+  position:relative; border:2px solid var(--card-border); display:flex; align-items:center; justify-content:center; }
+.smap-node.active .smap-thumb{ border-color:var(--neon); box-shadow:0 0 0 3px color-mix(in srgb,var(--neon) 30%,transparent); }
+.smap-node.done .smap-thumb{ filter:saturate(.7) brightness(.8); }
+.smap-pin{ font-size:26px; filter:drop-shadow(0 2px 6px rgba(0,0,0,.5)); }
+.smap-check{ background:var(--neon); color:#0f0d0b; border-radius:999px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-weight:900; }
+.smap-ep{ font-size:11px; font-weight:700; color:var(--muted); margin-top:6px; }
+.smap-link{ flex:0 0 auto; width:22px; height:3px; border-radius:2px; background:color-mix(in srgb,var(--neon) 45%,var(--card-border)); }
+.smap-chaps{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:6px; font-size:13px; font-weight:700; color:var(--muted); }
+.smap-dots{ display:flex; gap:6px; } .smap-dot{ width:10px; height:10px; border-radius:999px; background:var(--card-border); }
+.smap-dot.on{ background:var(--neon); }
+.smap-setting{ margin-top:12px; font-size:13px; color:var(--muted); }

@@ -151,6 +151,7 @@
     <div class="scene-actions">
       <button class="chip-btn" onclick="newEpisode()" title="Commencer un nouvel épisode de cette saga">✨ Nouvel épisode</button>
       <button class="chip-btn" onclick="openSagas()" title="Voir toutes tes histoires">📚 Mes sagas</button>
+      <button class="chip-btn" onclick="openSagaMap()" title="Voir la carte de ta saga">🗺️ Carte</button>
       <button class="chip-btn ghost" onclick="backToPicker()" title="Changer de langue ou de niveau">🔄 Changer d'histoire</button>
     </div>
     <div id="chatLog"></div>
@@ -274,6 +275,27 @@
       <span id="vocabReview">0 à réviser aujourd'hui</span>
     </div>
     <div class="vocab-list" id="vocabList"></div>
+  </div>
+</div>
+
+<!-- Transition cinématique d'épisode -->
+<div id="episodeTransition" class="episode-transition" aria-hidden="true">
+  <div class="et-bg"></div>
+  <div class="et-content">
+    <div class="et-label"></div>
+    <div class="et-title"></div>
+  </div>
+</div>
+
+<!-- Carte de la saga -->
+<div id="sagaMapModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Carte de la saga">
+  <div class="modal-backdrop" onclick="closeSagaMap()"></div>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>🗺️ Carte de ta saga</h2>
+      <button class="icon-btn" onclick="closeSagaMap()" aria-label="Fermer">✕</button>
+    </div>
+    <div id="sagaMapBody"></div>
   </div>
 </div>
 
