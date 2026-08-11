@@ -858,6 +858,11 @@ function updateSceneMeta(){
     const chap = chapter > 0 ? ` · CHAPITRE ${chapter}` : '';
     tag.textContent = `${langLabel.toUpperCase()} · NIVEAU ${levelLabel.toUpperCase()}${chap}`;
   }
+  const nameEl = document.getElementById('sceneCharName');
+  if(nameEl) nameEl.textContent = sagaTitle ? sagaTitle : 'Ton conteur';
+  const setEl = document.getElementById('sceneSetting');
+  if(setEl) setEl.textContent = sagaSetting ? sagaSetting : "l'histoire s'écrit en direct…";
+  updateSceneBanner();
 }
 
 let userId = null;
@@ -1073,6 +1078,8 @@ function resumeScene(s){
   const log = document.getElementById('chatLog');
   if(log) log.innerHTML = '';
   updateSceneMeta();
+  const pb = document.getElementById('scenePrevBadge');
+  if(pb) pb.style.display = sagaRecap ? 'inline-flex' : 'none';
   if(sagaRecap){
     const banner = document.createElement('div');
     banner.className = 'prev-banner';
@@ -1080,10 +1087,7 @@ function resumeScene(s){
     if(log) log.appendChild(banner);
   }
   const lastAI = [...chatHistory].reverse().find(m => m.role === 'assistant');
-  if(lastAI){
-    const bubble = addMsg('character', formatStory(lastAI.content), true);
-    addSpeaker(bubble, cleanForSpeech(lastAI.content));
-  }
+  if(lastAI){ renderStoryMessage(lastAI.content); }
   const input = document.getElementById('userInput');
   if(input){ input.disabled = false; input.focus(); }
   scrollChat();
@@ -1438,7 +1442,102 @@ function setMascotExpression(emo){
   if(emo === 'surprised') av.classList.add('emo-surprised');
   if(emo === 'think') av.classList.add('emo-think');
 }
-function formatStory(s){ return escapeHtml(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>'); }
+function formatStory(s){ return escapeHtml(s).replace(/\*\*(.+?)\*\*/g, '<b class="vocab-hl">$1</b>').replace(/\n/g, '<br>'); }
+
+/* ===== RPG / Webtoon : rendu immersif des messages ===== */
+function emotionToExpr(e){ return (e === 'surprised' || e === 'think' || e === 'happy') ? e : 'happy'; }
+
+function wireVocab(container){
+  if(!container) return;
+  container.querySelectorAll('.vocab-hl').forEach(el => {
+    el.addEventListener('click', () => { try{ speak(el.textContent, el); }catch(_){} });
+  });
+}
+
+/* Sépare narration (hors guillemets) et répliques de PNJ (entre guillemets) */
+function parseStorySegments(text){
+  const parts = [];
+  const re = /([«"“][^»"”]+[»"”])/g;
+  let last = 0, m;
+  while((m = re.exec(text))){
+    if(m.index > last){ const nar = text.slice(last, m.index).trim(); if(nar) parts.push({ type:'narration', text:nar }); }
+    parts.push({ type:'dialogue', text:m[1].trim() });
+    last = m.index + m[1].length;
+  }
+  if(last < text.length){ const nar = text.slice(last).trim(); if(nar) parts.push({ type:'narration', text:nar }); }
+  if(parts.length === 0) parts.push({ type:'narration', text:text.trim() });
+  return parts;
+}
+
+const NPC_EMOJIS = ['🧑','👩','👨','🧙','🧕','👴','🧒','🕵️','👳','👸','🧑‍🌾','🧑‍🍳'];
+function npcVisual(text){
+  let h = 0; for(let i=0;i<text.length;i++) h = (h*31 + text.charCodeAt(i))>>>0;
+  return { emoji: NPC_EMOJIS[h % NPC_EMOJIS.length], color: 'hsl(' + (h % 360) + ' 65% 52%)' };
+}
+
+async function renderStoryMessage(fullText){
+  const log = document.getElementById('chatLog');
+  if(!log) return;
+  const segs = parseStorySegments(fullText);
+  let lastBubble = null;
+  for(let i=0;i<segs.length;i++){
+    const seg = segs[i];
+    const row = document.createElement('div');
+    row.className = 'story-row ' + (seg.type === 'dialogue' ? 'npc' : 'narration');
+    let avatarHtml;
+    if(seg.type === 'dialogue'){
+      const v = npcVisual(seg.text);
+      avatarHtml = '<div class="story-avatar npc-avatar" style="background:' + v.color + '">' + v.emoji + '</div>';
+    } else {
+      avatarHtml = '<div class="story-avatar narrator-avatar"><svg viewBox="0 0 120 140"><use href="#mascot"/></svg></div>';
+    }
+    row.innerHTML = avatarHtml;
+    const bubble = document.createElement('div');
+    bubble.className = 'story-bubble ' + (seg.type === 'dialogue' ? 'npc-bubble' : 'narration-bubble');
+    bubble.innerHTML = formatStory(seg.text);
+    wireVocab(bubble);
+    row.appendChild(bubble);
+    log.appendChild(row);
+    lastBubble = bubble;
+    scrollChat();
+    await new Promise(r => setTimeout(r, 240));
+  }
+  if(lastBubble){ addSpeaker(lastBubble, cleanForSpeech(fullText)); }
+}
+
+/* Réaction de la mascotte (petit saut) */
+function mascotReact(){
+  const av = document.getElementById('sceneAvatar');
+  if(!av) return;
+  setMascotExpression('happy');
+  av.classList.remove('pop'); void av.offsetWidth; av.classList.add('pop');
+  setTimeout(() => av.classList.remove('pop'), 700);
+}
+
+/* Animation "+X XP" qui s'envole */
+function popXp(n){
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const el = document.createElement('div');
+  el.className = 'xp-pop';
+  el.textContent = '+' + n + ' XP';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1300);
+}
+
+/* Bannière d'ambiance : illustration de décor générée depuis le lieu courant */
+function bannerUrl(desc, seed, styleId){
+  const clean = String(desc || '').replace(/\*\*/g,'').replace(/\([^)]*\)/g,'').slice(0,160);
+  const prompt = coverStylePrompt(styleId) + ', wide scenic landscape background of ' + clean + ', atmospheric, empty scenery, no people, no characters, no text, no words';
+  return 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?width=768&height=384&nologo=true&seed=' + seed;
+}
+function updateSceneBanner(){
+  const bg = document.getElementById('sceneBannerBg');
+  if(!bg) return;
+  const label = (LANGUAGES.find(l => l.code === pickedLang)?.label) || '';
+  const desc = sagaSetting || (label + ' city street');
+  const url = bannerUrl(desc, _seedFrom((pickedLang||'') + ':scene:' + (sagaSetting||'')), sagaCoverStyle);
+  if(bg.getAttribute('data-src') !== url){ bg.setAttribute('data-src', url); bg.src = url; }
+}
 function cleanForSpeech(s){ return s.replace(/\*\*/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim(); }
 
 function addSpeaker(bubble, text){
@@ -1456,7 +1555,7 @@ async function callAI(userReply, opts){
   const sendBtn = document.getElementById('sendBtn');
   const input = document.getElementById('userInput');
   sendBtn.disabled = true; input.disabled = true;
-  const sceneCard = document.querySelector('.scene-card');
+  const sceneCard = document.getElementById('sceneBanner');
 
   // "Previously on Sunami" — affiche un résumé de l'épisode précédent
   if(userReply && chatHistory.length > 0){
@@ -1536,30 +1635,18 @@ async function callAI(userReply, opts){
 
     if(userReply){
       chatHistory.push({ role:'user', content:userReply });
-      addXp(8 + Math.floor(Math.random()*7));
+      const gained = 8 + Math.floor(Math.random()*7);
+      addXp(gained);
+      popXp(gained);
+      mascotReact();
       addFeedback();
       track('reply_sent', { language: pickedLang, level: pickedLevel });
     }
 
-    // Bulle du conteur avec animation machine à écrire simulée
-    const bubble = document.createElement('div');
-    bubble.className = 'msg character streaming';
-    const span = document.createElement('span');
-    const cursor = document.createElement('span');
-    cursor.className = 'stream-cursor';
-    bubble.appendChild(span);
-    bubble.appendChild(cursor);
-    document.getElementById('chatLog').appendChild(bubble);
     if(sceneCard){ sceneCard.classList.remove('thinking'); sceneCard.classList.add('speaking'); }
-    setMascotExpression('happy');
-
-    // Animation machine à écrire : affiche le texte progressivement
-    await typewriter(span, fullText);
-
-    bubble.classList.remove('streaming');
-    bubble.innerHTML = formatStory(fullText);
+    setMascotExpression(emotionToExpr(data.emotion));
     const speech = cleanForSpeech(fullText);
-    addSpeaker(bubble, speech);
+    await renderStoryMessage(fullText);
     chatHistory.push({ role:'assistant', content: fullText });
     chapter += 1; updateSceneMeta();
     registerChapter(fullText);
@@ -1654,6 +1741,9 @@ function startScene(){
   const input = document.getElementById('userInput');
   if(input) input.disabled = false;
   updateSceneMeta();
+  const pb = document.getElementById('scenePrevBadge');
+  if(pb) pb.style.display = 'none';
+  updateSceneBanner();
   callAI(null);
 }
 

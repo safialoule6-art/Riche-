@@ -1232,3 +1232,75 @@ body:has(.landing-header) .theme-toggle{
   right:16px !important;
   z-index:60;
 }
+
+/* =======================================================================
+   ==================  RPG / WEBTOON — écran d'épisode  ==================
+   ======================================================================= */
+
+/* Bannière d'ambiance (en-tête de scène immersif) */
+.scene-banner{
+  position:relative; height:154px; border-radius:20px; overflow:hidden;
+  border:1px solid var(--card-border); background:var(--surf);
+  box-shadow:var(--shadow-soft); margin-bottom:12px;
+  transition:filter .3s var(--ease);
+}
+.scene-banner-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.scene-banner-grad{ position:absolute; inset:0;
+  background:linear-gradient(180deg, rgba(0,0,0,.12) 0%, rgba(0,0,0,.15) 40%, rgba(0,0,0,.88) 100%); }
+.scene-banner .scene-tag{ position:absolute; top:10px; left:10px; margin:0; z-index:2;
+  background:rgba(0,0,0,.42); backdrop-filter:blur(6px); color:#fff; padding:5px 11px;
+  border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.08em; }
+.scene-prev-badge{ position:absolute; top:10px; right:10px; z-index:2; display:inline-flex; align-items:center; gap:4px;
+  background:var(--neon); color:#0f0d0b; padding:5px 11px; border-radius:999px;
+  font-size:10px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+.scene-banner-content{ position:absolute; left:0; right:0; bottom:0; z-index:2;
+  display:flex; align-items:center; gap:12px; padding:12px 14px; }
+.scene-banner .scene-avatar{ width:50px; height:50px; flex:0 0 auto; border-radius:14px; padding:4px;
+  background:rgba(0,0,0,.35); backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,.25);
+  display:flex; align-items:center; justify-content:center; }
+.scene-banner .scene-avatar svg{ width:100%; height:100%; }
+.scene-banner-text{ min-width:0; }
+.scene-banner-text b{ display:block; color:#fff; font-family:'Inter Tight',sans-serif; font-weight:800;
+  font-size:16px; line-height:1.12; text-shadow:0 2px 8px rgba(0,0,0,.65);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.scene-banner-text span{ display:block; color:rgba(255,255,255,.86); font-size:12px; font-weight:600;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.scene-banner.thinking{ filter:saturate(.85) brightness(.95); }
+.scene-banner.thinking .scene-avatar{ animation:neonPulse 1.2s ease-in-out infinite; }
+.scene-banner .scene-avatar.pop{ animation:mascotPop .6s var(--ease); }
+@keyframes mascotPop{ 0%{transform:translateY(0) scale(1);} 30%{transform:translateY(-11px) scale(1.16);}
+  60%{transform:translateY(0) scale(.95);} 100%{transform:translateY(0) scale(1);} }
+@media(min-width:768px){ .scene-banner{ height:200px; } .scene-banner-text b{ font-size:22px; } .scene-banner-text span{ font-size:13px; } }
+
+/* Lignes de dialogue (webtoon) */
+.story-row{ display:flex; gap:10px; align-items:flex-end; margin:12px 0;
+  opacity:0; transform:translateY(12px); animation:fadeUpRow .5s var(--ease) forwards; }
+@keyframes fadeUpRow{ to{ opacity:1; transform:none; } }
+.story-avatar{ flex:0 0 auto; width:40px; height:40px; border-radius:13px;
+  display:flex; align-items:center; justify-content:center; font-size:21px; }
+.narrator-avatar{ padding:5px; background:color-mix(in srgb,var(--neon) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--neon) 30%,transparent); }
+.narrator-avatar svg{ width:100%; height:100%; }
+.npc-avatar{ color:#fff; box-shadow:0 6px 16px -6px rgba(0,0,0,.55); border:2px solid rgba(255,255,255,.18); }
+.story-bubble{ max-width:82%; padding:11px 14px; border-radius:16px; font-size:15px; line-height:1.55; }
+.narration-bubble{ background:var(--surf); color:var(--foam); border:1px solid var(--card-border); border-bottom-left-radius:5px; }
+.npc-bubble{ background:color-mix(in srgb, var(--wave) 14%, var(--card)); color:var(--foam);
+  border:1px solid color-mix(in srgb,var(--wave) 38%,transparent); border-bottom-left-radius:5px; font-style:italic; }
+.story-bubble .speak-btn{ margin-left:6px; }
+
+/* Vocabulaire surligné interactif */
+.vocab-hl{ background:color-mix(in srgb,var(--neon) 20%,transparent); color:var(--foam); font-weight:800;
+  padding:1px 6px; border-radius:7px; cursor:pointer;
+  border-bottom:2px solid color-mix(in srgb,var(--neon) 60%,transparent); transition:background .2s, transform .1s; }
+.vocab-hl:hover{ background:color-mix(in srgb,var(--neon) 32%,transparent); }
+.vocab-hl:active{ transform:scale(.95); }
+
+/* Pop d'XP qui s'envole */
+.xp-pop{ position:fixed; left:50%; bottom:120px; transform:translateX(-50%); z-index:70; pointer-events:none;
+  font-family:'Inter Tight',sans-serif; font-weight:900; font-size:30px; color:var(--neon);
+  text-shadow:0 2px 16px color-mix(in srgb,var(--neon) 65%,transparent); animation:xpFly 1.3s var(--ease) forwards; }
+@keyframes xpFly{ 0%{opacity:0; transform:translate(-50%,12px) scale(.8);} 20%{opacity:1; transform:translate(-50%,0) scale(1.12);}
+  100%{opacity:0; transform:translate(-50%,-96px) scale(1);} }
+
+/* Bulle joueur (style app native) */
+.msg.user{ background:var(--wave); color:#0f0d0b; border-radius:16px; border-bottom-right-radius:5px; font-weight:600; }
