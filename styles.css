@@ -1382,3 +1382,15 @@ body:has(.landing-header) .theme-toggle{
 .poster-url{ color:rgba(255,255,255,.8); font-size:12px; margin-top:10px; font-weight:700; }
 .poster-actions{ display:flex; gap:10px; } .poster-actions .btn{ flex:1; }
 .poster-hint{ color:var(--muted); font-size:12.5px; text-align:center; margin-top:10px; }
+
+/* ===== Landing interactive (top SaaS) ===== */
+#scrollProgress{ position:fixed; top:0; left:0; right:0; height:3px; z-index:60;
+  background:var(--wave); transform:scaleX(0); transform-origin:left;
+  box-shadow:0 0 12px var(--wave); transition:transform .08s linear; }
+#cursorGlow{ position:fixed; top:0; left:0; width:600px; height:600px; border-radius:50%;
+  pointer-events:none; z-index:-1; will-change:transform;
+  background:radial-gradient(circle, color-mix(in srgb, var(--wave) 13%, transparent), transparent 60%); }
+@media(max-width:900px){ #cursorGlow{ display:none; } }
+.hm-animate .hm-msg, .hm-animate .hm-input{ opacity:0; transform:translateY(10px);
+  transition:opacity .5s var(--ease), transform .5s var(--ease); }
+.hm-animate .hm-msg.hm-show, .hm-animate .hm-input.hm-show{ opacity:1; transform:none; }
