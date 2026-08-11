@@ -1219,3 +1219,16 @@ footer b{ color:var(--foam); }
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-shadow:0 2px 8px rgba(0,0,0,.6); }
 .saga-poster-sub{ margin-top:3px; font-size:11px; font-weight:700; color:rgba(255,255,255,.82); text-transform:uppercase; letter-spacing:.06em; }
 .saga-actions{ display:flex; gap:6px; margin-top:8px; }
+
+/* =======================================================================
+   FIX — bouton thème (lune) qui chevauchait le menu sur les pages à en-tête
+   (affiliation, mentions légales, tarifs, support…). On le place en bas à
+   droite, visible et cliquable sur mobile ET desktop, sans recouvrir la nav.
+   ======================================================================= */
+body:has(.landing-header) .theme-toggle{
+  display:flex !important;
+  top:auto !important;
+  bottom:16px !important;
+  right:16px !important;
+  z-index:60;
+}
