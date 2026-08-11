@@ -110,6 +110,7 @@
       <a class="sidebar-item" onclick="toggleSidebar();openSagas()"><span class="si-icon">📚</span> Mes sagas</a>
       <a class="sidebar-item" onclick="toggleSidebar();openSharePoster()"><span class="si-icon">📣</span> Partager ma saga</a>
       <a class="sidebar-item" onclick="toggleSidebar();openVocabLibrary()"><span class="si-icon">📚</span> Mon vocabulaire</a>
+      <a class="sidebar-item" onclick="toggleSidebar();openWeeklyReport()"><span class="si-icon">📈</span> Ma progression</a>
       <div class="sidebar-divider"></div>
       <a class="sidebar-item" onclick="toggleSidebar();openSettings()"><span class="si-icon">🏆</span> Succès & Stats</a>
       <a class="sidebar-item" onclick="toggleSidebar();openSettings()"><span class="si-icon">👤</span> Personnages</a>
@@ -372,6 +373,29 @@
     <button class="btn" onclick="closeCelebration()">Continuer l'histoire</button>
     <button class="chip-btn" onclick="openSharePoster()" style="margin-top:10px;">📣 Partager ma saga</button>
     <button id="celNotifBtn" class="chip-btn notif-cta" onclick="enableNotifications()" style="display:none;margin-top:10px;">🔔 Me rappeler mon épisode</button>
+  </div>
+</div>
+
+<!-- Bilan hebdomadaire (preuve de progrès) -->
+<div id="reportModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Bilan de la semaine">
+  <div class="modal-backdrop" onclick="closeWeeklyReport()"></div>
+  <div class="modal-card report-card">
+    <span class="report-emoji">📈</span>
+    <h2>Ton bilan de la semaine</h2>
+    <div class="report-cefr">
+      <div class="report-cefr-top"><span>Niveau estimé</span><b id="repCefr">A1</b></div>
+      <div class="report-cefr-bar"><span id="repCefrFill"></span></div>
+      <div class="report-cefr-note" id="repCefrNote"></div>
+    </div>
+    <div class="report-grid">
+      <div class="report-stat"><b id="repNewWords">0</b><span>nouveaux mots</span></div>
+      <div class="report-stat"><b id="repReviewed">0</b><span>mots révisés</span></div>
+      <div class="report-stat"><b id="repChapters">0</b><span>chapitres</span></div>
+      <div class="report-stat"><b id="repXp">0</b><span>XP gagnés</span></div>
+    </div>
+    <p class="report-foot" id="repFoot"></p>
+    <p class="report-total" id="repTotal"></p>
+    <button class="btn" onclick="closeWeeklyReport()">Continuer l'histoire</button>
   </div>
 </div>
 

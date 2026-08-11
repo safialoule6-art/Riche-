@@ -255,6 +255,24 @@ function rollDay(){
   const t = todayKey();
   if(stats.dayKey !== t){ stats.dayKey = t; stats.chaptersToday = 0; saveStats(); }
 }
+// Renvoie le lundi (clé) de la semaine d'une date
+function mondayKey(dateStr){
+  const d = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();
+  const day = (d.getDay() + 6) % 7; // 0 = lundi
+  d.setDate(d.getDate() - day);
+  return d.toISOString().slice(0,10);
+}
+// Réinitialise les compteurs hebdomadaires au changement de semaine (baseline lundi)
+function rollWeek(){
+  const wk = mondayKey();
+  if(stats.weekKey !== wk){
+    stats.weekKey = wk;
+    stats.chaptersWeek = 0;
+    stats.xpWeekStart = xp;
+    stats.wordsWeekStart = stats.words.length;
+    saveStats();
+  }
+}
 function extractVocab(text){
   const out = []; const re = /\*\*(.+?)\*\*/g; let m;
   while((m = re.exec(text))){
@@ -320,8 +338,10 @@ function updateStatsPanel(){
 }
 function registerChapter(fullText){
   rollDay();
+  rollWeek();
   stats.chapters += 1;
   stats.chaptersToday += 1;
+  stats.chaptersWeek = (stats.chaptersWeek || 0) + 1;
   const before = stats.words.length;
   const newWords = extractVocab(fullText);
   newWords.forEach(w => {
@@ -407,6 +427,93 @@ window.closeCelebration = function(){
   if(m){ m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); }
   const box = document.getElementById('confetti'); if(box) box.innerHTML = '';
 };
+
+/* ===== BILAN HEBDOMADAIRE — preuve de progrès (mots appris + niveau qui monte) =====
+   Métriques honnêtes : mots/chapitres/XP de la semaine (baseline lundi),
+   mots révisés via la répétition espacée, et niveau CECR estimé à partir du
+   vocabulaire actif. */
+const CEFR_STEPS = [['A1',0],['A2',30],['B1',90],['B2',200],['C1',400],['C2',700]];
+function vocabScore(){
+  const mastered = stats.words.filter(w => (w.reviewCount||0) >= 3).length;
+  const seen = stats.words.length - mastered;
+  return Math.round(mastered * 1 + seen * 0.35);
+}
+function estimateCEFR(score){
+  let idx = 0;
+  for(let i=0;i<CEFR_STEPS.length;i++){ if(score >= CEFR_STEPS[i][1]) idx = i; }
+  const base = CEFR_STEPS[idx][1];
+  const next = CEFR_STEPS[idx+1] || null;
+  const pct = next ? Math.min(100, Math.round((score - base) / (next[1] - base) * 100)) : 100;
+  return { label: CEFR_STEPS[idx][0], idx, next: next ? next[0] : null, pct };
+}
+function computeWeeklyReport(){
+  rollWeek();
+  const weekAgo = shiftDay(todayKey(), -7);
+  const reviewed = stats.words.filter(w => w.lastSeen && w.lastSeen > weekAgo && (w.reviewCount||0) > 0).length;
+  const newWords = Math.max(0, stats.words.length - (stats.wordsWeekStart || 0));
+  const xpWeek = Math.max(0, xp - (stats.xpWeekStart || 0));
+  return {
+    newWords,
+    reviewed,
+    chapters: stats.chaptersWeek || 0,
+    xpWeek,
+    totalWords: stats.words.length,
+    mastered: stats.words.filter(w => (w.reviewCount||0) >= 3).length,
+    streak: progress.streak || 0,
+    level: levelOf(xp),
+    cefr: estimateCEFR(vocabScore()),
+  };
+}
+window.openWeeklyReport = function(){
+  const r = computeWeeklyReport();
+  const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  set('repNewWords', r.newWords);
+  set('repReviewed', r.reviewed);
+  set('repChapters', r.chapters);
+  set('repXp', r.xpWeek);
+  set('repCefr', r.cefr.label);
+  const fill = document.getElementById('repCefrFill');
+  if(fill) fill.style.width = r.cefr.pct + '%';
+  // Niveau qui monte : compare au dernier niveau vu
+  const prevSeen = stats.cefrSeen || 'A1';
+  const prevIdx = CEFR_STEPS.findIndex(s => s[0] === prevSeen);
+  const roseUp = r.cefr.idx > (prevIdx < 0 ? 0 : prevIdx);
+  const note = document.getElementById('repCefrNote');
+  if(note){
+    if(roseUp) note.textContent = `▲ Tu es passé de ${prevSeen} à ${r.cefr.label} — bravo !`;
+    else if(r.cefr.next) note.textContent = `Plus que ${100 - r.cefr.pct}% de vocabulaire actif pour viser ${r.cefr.next}.`;
+    else note.textContent = 'Niveau maximal estimé atteint. Continue à entretenir ton vocabulaire !';
+  }
+  const foot = document.getElementById('repFoot');
+  if(foot){
+    foot.textContent = r.newWords + r.chapters > 0
+      ? 'Ta régularité paie. Un nouvel épisode t\'attend pour continuer sur ta lancée.'
+      : 'Lance un épisode cette semaine pour faire grimper ton niveau estimé.';
+  }
+  const total = document.getElementById('repTotal');
+  if(total) total.textContent = `Total : ${r.totalWords} mots · ${r.mastered} maîtrisés · série ${r.streak} 🔥 · niveau ${r.level}`;
+  // Mémorise le niveau vu (pour la flèche "tu es passé de X à Y")
+  stats.cefrSeen = r.cefr.label; saveStats();
+  const m = document.getElementById('reportModal');
+  if(m){ m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); }
+};
+window.closeWeeklyReport = function(){
+  const m = document.getElementById('reportModal');
+  if(m){ m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); }
+};
+// Auto-affichage une fois par semaine si l'utilisateur a de l'activité
+function maybeShowWeeklyReport(){
+  try{
+    if(stats.chapters < 1 || stats.words.length < 3) return;
+    const shownKey = localStorage.getItem('sunami-weekly-shown');
+    if(shownKey === mondayKey()) return;
+    // Ne pas gêner l'onboarding ou une autre modale ouverte
+    if(document.querySelector('.modal.open')) return;
+    if(document.getElementById('onboarding') && document.getElementById('onboarding').classList.contains('open')) return;
+    localStorage.setItem('sunami-weekly-shown', mondayKey());
+    openWeeklyReport();
+  }catch(e){}
+}
 
 /* ===== SUCCÈS (ACHIEVEMENTS) ===== */
 const ACHIEVEMENTS = [
@@ -1375,6 +1482,7 @@ async function enterApp(email, uid){
   Ambience.initFromStorage();
   track('app_open');
   maybeOnboarding();
+  setTimeout(maybeShowWeeklyReport, 2000);
 
   if (progress.language && progress.level){
     pickedLang = progress.language;

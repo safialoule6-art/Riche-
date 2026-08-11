@@ -448,6 +448,24 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 .cel-stat.words .v{color:var(--wave-dim);}
 .cel-stats{flex-wrap:wrap;}
 .cel-stat{min-width:64px;}
+
+/* ===== Bilan hebdomadaire (preuve de progrès) ===== */
+.report-card{ text-align:center; }
+.report-emoji{ font-size:46px; line-height:1; display:block; margin-bottom:4px; }
+.report-card h2{ font-size:24px; margin:0 0 14px; }
+.report-cefr{ background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:14px; margin-bottom:14px; text-align:left; }
+.report-cefr-top{ display:flex; align-items:baseline; justify-content:space-between; }
+.report-cefr-top span{ font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.report-cefr-top b{ font-family:'Baloo 2',sans-serif; font-size:30px; color:var(--wave); line-height:1; }
+.report-cefr-bar{ height:10px; border-radius:999px; background:color-mix(in srgb,var(--foam) 10%,transparent); margin:10px 0 8px; overflow:hidden; }
+.report-cefr-bar span{ display:block; height:100%; border-radius:999px; background:var(--wave); transition:width .6s var(--ease); }
+.report-cefr-note{ font-size:12.5px; font-weight:600; color:var(--muted); }
+.report-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:14px; }
+.report-stat{ background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:14px 8px; }
+.report-stat b{ display:block; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:26px; line-height:1; color:var(--wave); }
+.report-stat span{ display:block; font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin-top:6px; }
+.report-foot{ font-size:13.5px; font-weight:600; color:var(--foam); margin:0 0 8px; }
+.report-total{ font-size:12px; color:var(--muted); margin:0 0 16px; }
 #confetti{position:absolute; inset:0; overflow:hidden; pointer-events:none;}
 .confetti-piece{position:absolute; top:-14px; width:9px; height:14px; border-radius:2px; opacity:.9; animation:fall linear forwards;}
 @keyframes fall{to{transform:translateY(105vh) rotate(720deg); opacity:1;}}
