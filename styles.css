@@ -1353,3 +1353,32 @@ body:has(.landing-header) .theme-toggle{
 .smap-dots{ display:flex; gap:6px; } .smap-dot{ width:10px; height:10px; border-radius:999px; background:var(--card-border); }
 .smap-dot.on{ background:var(--neon); }
 .smap-setting{ margin-top:12px; font-size:13px; color:var(--muted); }
+
+/* ===== Onboarding · Poster de partage ===== */
+.onboarding{ position:fixed; inset:0; z-index:210; display:none; align-items:center; justify-content:center; padding:20px;
+  background:rgba(10,9,8,.72); backdrop-filter:blur(8px); }
+.onboarding.open{ display:flex; }
+.ob-card{ position:relative; width:100%; max-width:380px; background:var(--card); border:1px solid var(--card-border);
+  border-radius:24px; padding:30px 22px 22px; box-shadow:var(--shadow-soft); text-align:center; }
+.ob-skip{ position:absolute; top:12px; right:14px; background:none; border:none; color:var(--muted); font-weight:700; cursor:pointer; font-size:13px; }
+.ob-slide{ display:none; }
+.ob-slide.active{ display:block; animation:fadeUpRow .4s var(--ease); }
+.ob-emoji{ font-size:58px; margin-bottom:8px; filter:drop-shadow(0 6px 16px color-mix(in srgb,var(--neon) 35%,transparent)); }
+.ob-card h2{ font-size:22px; margin-bottom:6px; }
+.ob-card p{ color:var(--muted); font-size:15px; line-height:1.5; }
+.ob-dots{ display:flex; gap:7px; justify-content:center; margin:18px 0; }
+.ob-dot{ width:8px; height:8px; border-radius:999px; background:var(--card-border); transition:all .25s var(--ease); }
+.ob-dot.on{ background:var(--neon); width:22px; }
+
+.poster{ position:relative; width:100%; aspect-ratio:4/5; border-radius:18px; overflow:hidden;
+  border:1px solid var(--card-border); margin-bottom:14px; background:var(--surf); }
+.poster-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.poster-grad{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.15) 45%, rgba(0,0,0,.9) 100%); }
+.poster-top{ position:absolute; top:14px; left:16px; z-index:2; color:#fff; font-weight:800; letter-spacing:.2em; font-size:13px; text-shadow:0 2px 8px rgba(0,0,0,.6); }
+.poster-body{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:18px; text-align:left; }
+.poster-title{ font-family:'Instrument Serif', serif; font-style:italic; font-size:30px; color:#fff; line-height:1.1; text-shadow:0 3px 14px rgba(0,0,0,.6); }
+.poster-ep{ color:var(--neon); font-weight:800; font-size:13px; margin-top:6px; text-transform:uppercase; letter-spacing:.06em; }
+.poster-stats{ color:#fff; font-weight:700; font-size:14px; margin-top:8px; }
+.poster-url{ color:rgba(255,255,255,.8); font-size:12px; margin-top:10px; font-weight:700; }
+.poster-actions{ display:flex; gap:10px; } .poster-actions .btn{ flex:1; }
+.poster-hint{ color:var(--muted); font-size:12.5px; text-align:center; margin-top:10px; }
