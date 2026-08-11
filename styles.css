@@ -353,8 +353,8 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 .speak-btn:active{transform:scale(.9);}
 .speak-btn.speaking{border-color:var(--wave); animation:pop .8s ease-in-out infinite;}
 
-.input-row{display:flex; gap:9px; position:sticky; bottom:0; padding-top:6px; background:linear-gradient(transparent, var(--abyss) 40%);}
-.input-row input{margin-bottom:0;}
+.input-row{display:flex; gap:9px; align-items:center; position:sticky; bottom:0; padding-top:6px; background:linear-gradient(transparent, var(--abyss) 40%);}
+.input-row input{margin-bottom:0; flex:1 1 auto; min-width:0; width:auto;}
 .input-row .btn{width:auto; padding:14px 20px;}
 .mic-btn{width:42px; height:42px; border-radius:99px; border:1.5px solid var(--wave); background:var(--surf); color:var(--wave); font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .2s;}
 .mic-btn:hover{background:var(--wave); color:#fff;}
@@ -1249,8 +1249,10 @@ body:has(.landing-header) .theme-toggle{
   background:linear-gradient(180deg, rgba(0,0,0,.12) 0%, rgba(0,0,0,.15) 40%, rgba(0,0,0,.88) 100%); }
 .scene-banner .scene-tag{ position:absolute; top:10px; left:10px; margin:0; z-index:2;
   background:rgba(0,0,0,.42); backdrop-filter:blur(6px); color:#fff; padding:5px 11px;
-  border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.08em; }
-.scene-prev-badge{ position:absolute; top:10px; right:10px; z-index:2; display:inline-flex; align-items:center; gap:4px;
+  border-radius:999px; font-size:10px; font-weight:800; letter-spacing:.08em;
+  max-width:calc(100% - 58px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.scene-prev-badge{ position:absolute; top:42px; left:10px; right:auto; z-index:2; display:inline-flex; align-items:center; gap:4px;
+  max-width:calc(100% - 20px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   background:var(--neon); color:#0f0d0b; padding:5px 11px; border-radius:999px;
   font-size:10px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
 .scene-banner-content{ position:absolute; left:0; right:0; bottom:0; z-index:2;
@@ -1308,7 +1310,6 @@ body:has(.landing-header) .theme-toggle{
 /* ===== UI+ : nom des PNJ, bouton ambiance ===== */
 .npc-name{ font-size:11px; font-weight:800; letter-spacing:.02em; margin-bottom:3px;
   font-style:normal; color:color-mix(in srgb, var(--wave) 70%, var(--foam)); }
-.scene-prev-badge{ left:50% !important; right:auto !important; transform:translateX(-50%); }
 .amb-btn{ position:absolute; top:10px; right:10px; z-index:3; width:32px; height:32px; border-radius:999px;
   border:1px solid rgba(255,255,255,.25); background:rgba(0,0,0,.42); backdrop-filter:blur(6px);
   color:#fff; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center;

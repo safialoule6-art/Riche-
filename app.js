@@ -864,7 +864,7 @@ function updateSceneMeta(){
   const nameEl = document.getElementById('sceneCharName');
   if(nameEl) nameEl.textContent = sagaTitle ? sagaTitle : 'Ton conteur';
   const setEl = document.getElementById('sceneSetting');
-  if(setEl) setEl.textContent = sagaSetting ? sagaSetting : "l'histoire s'écrit en direct…";
+  if(setEl) setEl.textContent = sagaSetting ? sagaSetting.replace(/\*\*/g, '') : "l'histoire s'écrit en direct…";
   updateSceneBanner();
 }
 
@@ -1089,7 +1089,7 @@ function resumeScene(s){
   if(sagaRecap){
     const banner = document.createElement('div');
     banner.className = 'prev-banner';
-    banner.innerHTML = '<div class="prev-label">📺 Previously on Sunami…</div>' + escapeHtml(sagaRecap);
+    banner.innerHTML = '<div class="prev-label">📺 Previously on Sunami…</div>' + formatRecap(sagaRecap);
     if(log) log.appendChild(banner);
   }
   const lastAI = [...chatHistory].reverse().find(m => m.role === 'assistant');
@@ -1218,7 +1218,7 @@ window.newEpisode = function(){
       const log = document.getElementById('chatLog');
       const sep = document.createElement('div');
       sep.className = 'prev-banner';
-      sep.innerHTML = '<div class="prev-label">🎬 Nouvel épisode</div>' + escapeHtml(sagaRecap);
+      sep.innerHTML = '<div class="prev-label">🎬 Nouvel épisode</div>' + formatRecap(sagaRecap);
       if(log) log.appendChild(sep);
       callAI(null, { newEpisode:true });
     } else {
@@ -1455,6 +1455,8 @@ function setMascotExpression(emo){
   if(emo === 'think') av.classList.add('emo-think');
 }
 function formatStory(s){ return escapeHtml(s).replace(/\*\*(.+?)\*\*/g, '<b class="vocab-hl">$1</b>').replace(/\n/g, '<br>'); }
+/* Rendu léger pour les résumés ("Previously on…") : gras markdown sans surlignage vocab */
+function formatRecap(s){ return escapeHtml(String(s||'')).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>'); }
 
 /* ===== RPG / Webtoon : rendu immersif des messages ===== */
 function emotionToExpr(e){ return (e === 'surprised' || e === 'think' || e === 'happy') ? e : 'happy'; }
@@ -1745,7 +1747,7 @@ async function callAI(userReply, opts){
     if(prev){
       const banner = document.createElement('div');
       banner.className = 'prev-banner';
-      banner.innerHTML = '<div class="prev-label">📺 Previously on Sunami…</div>' + escapeHtml(prev);
+      banner.innerHTML = '<div class="prev-label">📺 Previously on Sunami…</div>' + formatRecap(prev);
       document.getElementById('chatLog').appendChild(banner);
       scrollChat();
     }
