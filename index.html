@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sunami — Apprends une langue en vivant une histoire, pas des exercices</title>
-<meta name="description" content="Marre des flashcards qui t'endorment ? Sunami t'apprend une langue en te faisant vivre une histoire dont tu es le héros. Tuteur IA, 7 langues, niveaux A1→C2. 100% gratuit.">
+<meta name="description" content="Marre des flashcards qui t'endorment ? Sunami t'apprend une langue en te faisant vivre une histoire dont tu es le héros. Tuteur IA, 6 langues, niveaux A1→C2. 100% gratuit.">
 
 <!-- Open Graph (Facebook, LinkedIn, iMessage, Discord, WhatsApp…) -->
 <meta property="og:title" content="Sunami — Apprends une langue en vivant une histoire">
-<meta property="og:description" content="Fini les exercices. Un tuteur IA te fait parler dans une histoire dont tu veux connaître la suite. 7 langues, A1→C2, 100% gratuit.">
+<meta property="og:description" content="Fini les exercices. Un tuteur IA te fait parler dans une histoire dont tu veux connaître la suite. 6 langues, A1→C2, 100% gratuit.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://sunami-rho.vercel.app">
 <meta property="og:locale" content="fr_FR">
@@ -21,7 +21,7 @@
 <!-- Twitter / X -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Sunami — Apprends une langue en vivant une histoire">
-<meta name="twitter:description" content="Fini les exercices. Un tuteur IA te fait parler dans une histoire dont tu veux connaître la suite. 7 langues, A1→C2, 100% gratuit.">
+<meta name="twitter:description" content="Fini les exercices. Un tuteur IA te fait parler dans une histoire dont tu veux connaître la suite. 6 langues, A1→C2, 100% gratuit.">
 <meta name="twitter:image" content="https://sunami-rho.vercel.app/og-preview.png">
 <meta name="twitter:image:alt" content="Sunami — apprends une langue en vivant une histoire">
 
@@ -36,6 +36,26 @@
 <!-- Tracking centralisé (GA4 + TikTok) — configure les IDs dans /analytics.js -->
 <script src="/analytics.js"></script>
 <script src="/i18n.js"></script>
+
+<!-- Données structurées (SEO) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Sunami",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "Web, iOS, Android",
+  "url": "https://sunami-rho.vercel.app",
+  "description": "Sunami t'apprend une langue en te faisant vivre une histoire interactive avec un tuteur IA. 6 langues, niveaux A1 à C2.",
+  "inLanguage": ["fr", "en"],
+  "teaches": ["Anglais", "Espagnol", "Allemand", "Italien", "Arabe", "Portugais"],
+  "offers": [
+    { "@type": "Offer", "name": "Wave", "price": "0", "priceCurrency": "EUR", "description": "2 épisodes/jour, 3 langues, gratuit à vie" },
+    { "@type": "Offer", "name": "Sigma", "price": "4.99", "priceCurrency": "EUR", "description": "Épisodes illimités, 6 langues, correction grammaire, audio" },
+    { "@type": "Offer", "name": "Ultra", "price": "8.99", "priceCurrency": "EUR", "description": "Tout Sigma + hors-ligne, stats avancées, sagas personnalisées" }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -209,7 +229,7 @@
     <div class="section reveal">
       <div class="eyebrow" data-i18n="how_title">Comment ça marche</div>
       <div class="steps">
-        <div class="step"><div class="step-num">🌍</div><div><b data-i18n="how_s1t">Choisis ta langue &amp; ton niveau</b><span data-i18n="how_s1s">7 langues, du débutant (A1) à l'avancé (C2).</span></div></div>
+        <div class="step"><div class="step-num">🌍</div><div><b data-i18n="how_s1t">Choisis ta langue &amp; ton niveau</b><span data-i18n="how_s1s">6 langues, du débutant (A1) à l'avancé (C2).</span></div></div>
         <div class="step"><div class="step-num">📖</div><div><b data-i18n="how_s2t">Plonge dans l'épisode du jour</b><span data-i18n="how_s2s">Une intrigue qui avance : mêmes personnages, nouveaux rebondissements.</span></div></div>
         <div class="step"><div class="step-num">💬</div><div><b data-i18n="how_s3t">Réponds, l'histoire avance</b><span data-i18n="how_s3s">Le tuteur IA calibre chaque réplique à ton niveau — jamais trop dur, jamais trop mou.</span></div></div>
       </div>
@@ -308,7 +328,7 @@
           <div class="price-amt">4,99€ <span data-i18n="p_prem_price">/mois</span></div>
           <ul class="perks">
             <li data-i18n="p_prem_1">✅ Épisodes illimités</li>
-            <li data-i18n="p_prem_2">✅ 7 langues</li>
+            <li data-i18n="p_prem_2">✅ 6 langues</li>
             <li data-i18n="p_prem_3">✅ Correction grammaire</li>
             <li data-i18n="p_prem_4">✅ Micro &amp; Audio</li>
             <li data-i18n="p_prem_5">✅ Répétition espacée</li>
@@ -354,7 +374,7 @@
       <div class="eyebrow" data-i18n="faq_title">Questions fréquentes</div>
       <div class="faq">
         <details class="faq-item"><summary><span data-i18n="faq5_q">En quoi c'est mieux que Duolingo &amp; co ?</span><i>+</i></summary><p data-i18n="faq5_a">Les apps classiques t'apprennent des mots isolés avec des exercices répétitifs. Sunami te fait vivre une histoire continue où tu parles pour de vrai, corrigé par un tuteur IA calibré à ton niveau. Résultat : tu reviens pour connaître la suite, pas par culpabilité.</p></details>
-        <details class="faq-item"><summary><span data-i18n="faq1_q">C'est vraiment gratuit ?</span><i>+</i></summary><p><span data-i18n="faq1_a">Oui, l'offre gratuite donne 2 épisodes par jour avec 3 langues. Les offres Premium et Pro débloquent les épisodes illimités, 7 langues, la correction de grammaire et plus.</span> <a href="/pricing" data-i18n="faq1_link">Voir les offres →</a></p></details>
+        <details class="faq-item"><summary><span data-i18n="faq1_q">C'est vraiment gratuit ?</span><i>+</i></summary><p><span data-i18n="faq1_a">Oui, l'offre gratuite donne 2 épisodes par jour avec 3 langues. Les offres Premium et Pro débloquent les épisodes illimités, 6 langues, la correction de grammaire et plus.</span> <a href="/pricing" data-i18n="faq1_link">Voir les offres →</a></p></details>
         <details class="faq-item"><summary><span data-i18n="faq2_q">Ça marche pour mon niveau ?</span><i>+</i></summary><p data-i18n="faq2_a">Débutant à avancé (A1 à C2) — l'IA calibre chaque réplique à ton niveau.</p></details>
         <details class="faq-item"><summary><span data-i18n="faq3_q">Je peux changer de langue en cours de route ?</span><i>+</i></summary><p data-i18n="faq3_a">Oui, à tout moment depuis l'écran de conversation.</p></details>
         <details class="faq-item"><summary><span data-i18n="faq4_q">Mes données sont sauvegardées où ?</span><i>+</i></summary><p data-i18n="faq4_a">Ta progression est liée à ton compte (Google ou email), accessible depuis n'importe quel appareil.</p></details>

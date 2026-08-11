@@ -10,7 +10,7 @@ const MODEL = "llama-3.1-8b-instant";
 const FAQ = [
   { 
     keys: ["gratuit","prix","tarif","payer","coût","cout","free","abonnement","combien"],
-    reply: "🌊 Sunami a 3 offres : Wave (0€, 2 épisodes/jour, 3 langues), Sigma (5€/mois, illimité, 7 langues, correction grammaire, audio), et Ultra (9€/mois, tout + hors-ligne, stats avancées). Pas de carte bancaire pour commencer !"
+    reply: "🌊 Sunami a 3 offres : Wave (0€, 2 épisodes/jour, 3 langues), Sigma (5€/mois, illimité, 6 langues, correction grammaire, audio), et Ultra (9€/mois, tout + hors-ligne, stats avancées). Pas de carte bancaire pour commencer !"
   },
   {
     keys: ["remboursement","rembourser","annuler","résilier","resilier","argent"],
@@ -22,7 +22,7 @@ const FAQ = [
   },
   {
     keys: ["langue","langues","langage","disponible","quelle","quelles"],
-    reply: "🌍 7 langues dispos : Français 🇫🇷, Anglais 🇬🇧, Espagnol 🇪🇸, Allemand 🇩🇪, Italien 🇮🇹, Arabe 🇸🇦, Portugais 🇵🇹. En Wave tu as 3 langues, en Sigma/Ultra les 7."
+    reply: "🌍 6 langues dispos : Anglais 🇬🇧, Espagnol 🇪🇸, Allemand 🇩🇪, Italien 🇮🇹, Arabe 🇸🇦, Portugais 🇵🇹. En Wave tu as 3 langues, en Sigma/Ultra les 6."
   },
   {
     keys: ["niveau","débutant","debutant","avancé","intermédiaire","intermediaire","difficile","facile"],
@@ -91,7 +91,8 @@ export default async function handler(req) {
 
   const SYSTEM_PROMPT = `You are the support assistant for "Sunami", a language learning app.
 ABOUT SUNAMI:
-- 3 plans: Wave (0€, 2 episodes/day, 3 languages), Sigma (5€/month, unlimited, 7 languages, grammar correction, voice), Ultra (9€/month, all Sigma + offline, advanced stats, custom sagas)
+- 3 plans: Wave (0€, 2 episodes/day, 3 languages), Sigma (5€/month, unlimited, 6 languages, grammar correction, voice), Ultra (9€/month, all Sigma + offline, advanced stats, custom sagas)
+- Languages (6): English, Spanish, German, Italian, Arabic, Portuguese
 - Payment: Dodo Payment (coming September 2026)
 - Contact email: ahmedyas09020@gmail.com
 - Refund: 100% satisfied or refunded within 7 days
