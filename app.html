@@ -137,10 +137,15 @@
   </div>
 
   <div class="chat-wrap" id="chatScreen" style="display:none;">
-    <div class="scene-tag" id="sceneTag"></div>
-    <div class="scene-card">
-      <div class="scene-avatar" id="sceneAvatar"><svg class="mascot idle"><use href="#mascot"/></svg></div>
-      <div class="scene-meta"><b id="sceneCharName">Ton conteur</b><span>l'histoire s'écrit en direct · réponds dans la langue cible pour la faire continuer</span></div>
+    <div class="scene-banner" id="sceneBanner">
+      <img class="scene-banner-bg" id="sceneBannerBg" alt="" aria-hidden="true">
+      <div class="scene-banner-grad"></div>
+      <div class="scene-tag" id="sceneTag"></div>
+      <div class="scene-prev-badge" id="scenePrevBadge" style="display:none;">📺 Previously on Sunami</div>
+      <div class="scene-banner-content">
+        <div class="scene-avatar" id="sceneAvatar"><svg class="mascot idle" viewBox="0 0 120 140"><use href="#mascot"/></svg></div>
+        <div class="scene-banner-text"><b id="sceneCharName">Ton conteur</b><span id="sceneSetting">l'histoire s'écrit en direct…</span></div>
+      </div>
     </div>
     <div class="scene-actions">
       <button class="chip-btn" onclick="newEpisode()" title="Commencer un nouvel épisode de cette saga">✨ Nouvel épisode</button>
