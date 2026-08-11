@@ -104,6 +104,7 @@
     <div class="sidebar-body">
       <a class="sidebar-item" onclick="toggleSidebar();scrollToChat()"><span class="si-icon">💬</span> Mon histoire</a>
       <a class="sidebar-item" onclick="toggleSidebar();openSagas()"><span class="si-icon">📚</span> Mes sagas</a>
+      <a class="sidebar-item" onclick="toggleSidebar();openSharePoster()"><span class="si-icon">📣</span> Partager ma saga</a>
       <a class="sidebar-item" onclick="toggleSidebar();openVocabLibrary()"><span class="si-icon">📚</span> Mon vocabulaire</a>
       <div class="sidebar-divider"></div>
       <a class="sidebar-item" onclick="toggleSidebar();openSettings()"><span class="si-icon">🏆</span> Succès & Stats</a>
@@ -195,6 +196,13 @@
       </div>
     </div>
     <div class="set-group">
+      <div class="set-title">Sons</div>
+      <div class="set-row">
+        <div class="set-label"><b>Effets sonores</b><small>bonne réponse, niveau, fin d'épisode</small></div>
+        <button class="btn ghost set-btn" onclick="toggleSfx(this)">🔊 Effets activés</button>
+      </div>
+    </div>
+    <div class="set-group">
       <div class="set-title">Audio · synthèse vocale</div>
       <div class="set-row">
         <div class="set-label"><b>Lecture auto</b><small>lire chaque chapitre à voix haute</small></div>
@@ -279,6 +287,45 @@
 </div>
 
 <!-- Transition cinématique d'épisode -->
+<!-- Onboarding première visite -->
+<div id="onboarding" class="onboarding" aria-hidden="true">
+  <div class="ob-card">
+    <button class="ob-skip" onclick="closeOnboarding()">Passer</button>
+    <div id="obSlides">
+      <div class="ob-slide active"><div class="ob-emoji">🌊</div><h2>Bienvenue sur Sunami</h2><p>Apprends une langue en vivant une histoire dont tu es le héros.</p></div>
+      <div class="ob-slide"><div class="ob-emoji">🌍</div><h2>Choisis ta langue</h2><p>Plusieurs langues, du débutant à l'avancé. L'IA s'adapte à ton niveau.</p></div>
+      <div class="ob-slide"><div class="ob-emoji">💬</div><h2>Réponds, l'histoire avance</h2><p>Écris dans la langue cible. Touche les mots surlignés pour les entendre.</p></div>
+      <div class="ob-slide"><div class="ob-emoji">🔥</div><h2>Garde ta série</h2><p>Un nouvel épisode chaque jour, avec cliffhanger. Reviens pour la suite !</p></div>
+    </div>
+    <div class="ob-dots" id="obDots"></div>
+    <button class="btn" id="obNext" onclick="obNextSlide()">Suivant</button>
+  </div>
+</div>
+
+<!-- Poster de partage -->
+<div id="posterModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Partager ma saga">
+  <div class="modal-backdrop" onclick="closePoster()"></div>
+  <div class="modal-card">
+    <div class="modal-head"><h2>📣 Partager ma saga</h2><button class="icon-btn" onclick="closePoster()" aria-label="Fermer">✕</button></div>
+    <div class="poster" id="posterCard">
+      <img class="poster-bg" id="posterBg" alt="" aria-hidden="true">
+      <div class="poster-grad"></div>
+      <div class="poster-top">🌊 SUNAMI</div>
+      <div class="poster-body">
+        <div class="poster-title" id="posterTitle"></div>
+        <div class="poster-ep" id="posterEp"></div>
+        <div class="poster-stats" id="posterStats"></div>
+        <div class="poster-url">sunami-rho.vercel.app</div>
+      </div>
+    </div>
+    <div class="poster-actions">
+      <button class="btn" onclick="shareSaga()">Partager</button>
+      <button class="btn ghost" onclick="copySagaLink()">Copier le lien</button>
+    </div>
+    <p class="poster-hint">Astuce : fais une capture d'écran de l'affiche pour la poster 📸</p>
+  </div>
+</div>
+
 <div id="episodeTransition" class="episode-transition" aria-hidden="true">
   <div class="et-bg"></div>
   <div class="et-content">
@@ -319,6 +366,7 @@
       <div class="cel-stat total"><div class="v" id="celLvl">1</div><div class="l">Niveau</div></div>
     </div>
     <button class="btn" onclick="closeCelebration()">Continuer l'histoire</button>
+    <button class="chip-btn" onclick="openSharePoster()" style="margin-top:10px;">📣 Partager ma saga</button>
     <button id="celNotifBtn" class="chip-btn notif-cta" onclick="enableNotifications()" style="display:none;margin-top:10px;">🔔 Me rappeler mon épisode</button>
   </div>
 </div>

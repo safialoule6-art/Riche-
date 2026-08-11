@@ -34,7 +34,7 @@ function speak(text, btn){
   const v = voices.find(x => x.lang && x.lang.toLowerCase().startsWith(u.lang.slice(0,2).toLowerCase()));
   if(v) u.voice = v;
   if(btn){ u.onstart = ()=>btn.classList.add('speaking'); u.onend = u.onerror = ()=>btn.classList.remove('speaking'); }
-  const sc = document.querySelector('.scene-card');
+  const sc = document.getElementById('sceneBanner');
   const prevStart = u.onstart, prevEnd = u.onend;
   u.onstart = (e)=>{ if(sc) sc.classList.add('speaking'); if(prevStart) prevStart(e); };
   u.onend = u.onerror = (e)=>{ if(sc) sc.classList.remove('speaking'); if(prevEnd) prevEnd(e); };
@@ -224,6 +224,7 @@ function addXp(n){
   const after = levelOf(xp);
   if(after > before){
     track('level_up', { level: after });
+    if(window.SFX) SFX.play('levelup');
     setTimeout(() => celebrate({
       emoji: '⭐', title: 'Niveau ' + after + ' atteint !',
       sub: 'Tu maîtrises de plus en plus la langue. Continue sur ta lancée !'
@@ -1053,6 +1054,7 @@ function onEpisodeComplete(title){
   chapter = 0;
   saveProgress(); saveSaga();
   track('episode_complete', { episode: finishedEp, language: pickedLang });
+  if(window.SFX) SFX.play('complete');
   playEpisodeTransition({ label: 'Fin de l\'épisode ' + finishedEp, title: title || 'À suivre…', cover: sagaCover }).then(() => {
     celebrate({
       emoji: '🎬',
@@ -1372,6 +1374,7 @@ async function enterApp(email, uid){
   refreshPushSubscription();
   Ambience.initFromStorage();
   track('app_open');
+  maybeOnboarding();
 
   if (progress.language && progress.level){
     pickedLang = progress.language;
@@ -1818,6 +1821,7 @@ async function callAI(userReply, opts){
       addXp(gained);
       popXp(gained);
       mascotReact();
+      if(window.SFX) SFX.play('correct');
       addFeedback();
       track('reply_sent', { language: pickedLang, level: pickedLevel });
     }
@@ -2014,3 +2018,94 @@ function stopListening(){
   if(micBtn){ micBtn.classList.remove('listening'); micBtn.textContent = '🎤'; }
   if(input) input.placeholder = 'Réponds dans la langue cible...';
 }
+
+/* ===================================================================
+   Effets sonores (Web Audio) · Onboarding · Poster de partage
+   =================================================================== */
+const SFX = (function(){
+  let ctx = null;
+  function ac(){ if(ctx) return ctx; const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return null; ctx = new AC(); return ctx; }
+  function on(){ try{ return localStorage.getItem('sunami-sfx') !== '0'; }catch(e){ return true; } }
+  function tone(freq, t0, dur, type, vol){
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type || 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol || 0.14, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(ctx.destination); o.start(t0); o.stop(t0 + dur + 0.03);
+  }
+  function play(kind){
+    if(!on()) return; const c = ac(); if(!c) return; if(c.state === 'suspended') c.resume();
+    const t = c.currentTime;
+    if(kind === 'correct'){ tone(660, t, 0.12, 'sine', 0.12); tone(990, t + 0.09, 0.16, 'sine', 0.12); }
+    else if(kind === 'levelup'){ [523,659,784,1046].forEach((f,i) => tone(f, t + i*0.09, 0.22, 'triangle', 0.13)); }
+    else if(kind === 'complete'){ [392,523,659,784,1046].forEach((f,i) => tone(f, t + i*0.10, 0.30, 'sawtooth', 0.10)); }
+  }
+  return { play };
+})();
+window.SFX = SFX;
+window.toggleSfx = function(btn){
+  const isOn = (function(){ try{ return localStorage.getItem('sunami-sfx') !== '0'; }catch(e){ return true; } })();
+  const next = isOn ? '0' : '1';
+  try{ localStorage.setItem('sunami-sfx', next); }catch(e){}
+  if(btn) btn.textContent = next === '0' ? '🔇 Effets coupés' : '🔊 Effets activés';
+  if(next === '1') SFX.play('correct');
+};
+
+/* Onboarding première visite */
+let obIdx = 0;
+function obSlides(){ return document.querySelectorAll('#obSlides .ob-slide'); }
+function renderObDots(){
+  const d = document.getElementById('obDots'); if(!d) return;
+  const n = obSlides().length; d.innerHTML = '';
+  for(let i=0;i<n;i++){ const s = document.createElement('span'); s.className = 'ob-dot' + (i === obIdx ? ' on' : ''); d.appendChild(s); }
+}
+window.obNextSlide = function(){
+  const slides = obSlides(); if(!slides.length) return;
+  if(obIdx >= slides.length - 1){ closeOnboarding(); return; }
+  slides[obIdx].classList.remove('active'); obIdx++; slides[obIdx].classList.add('active');
+  renderObDots();
+  const btn = document.getElementById('obNext'); if(btn) btn.textContent = (obIdx >= slides.length - 1) ? 'Commencer ✨' : 'Suivant';
+};
+window.closeOnboarding = function(){
+  const o = document.getElementById('onboarding'); if(o){ o.classList.remove('open'); o.setAttribute('aria-hidden','true'); }
+  try{ localStorage.setItem('sunami-onboarded','1'); }catch(e){}
+};
+function maybeOnboarding(){
+  let seen = false; try{ seen = localStorage.getItem('sunami-onboarded') === '1'; }catch(e){}
+  if(seen) return;
+  const o = document.getElementById('onboarding'); if(!o) return;
+  obIdx = 0; obSlides().forEach((s,i) => s.classList.toggle('active', i === 0));
+  renderObDots();
+  const btn = document.getElementById('obNext'); if(btn) btn.textContent = 'Suivant';
+  o.classList.add('open'); o.setAttribute('aria-hidden','false');
+}
+
+/* Poster de partage */
+function sagaShareText(){
+  const lang = (LANGUAGES.find(l => l.code === pickedLang)?.label) || 'une langue';
+  return 'Je vis une histoire pour apprendre ' + lang + ' sur Sunami 🌊 — Épisode ' + (progress.episode || 1) + ', ' + (progress.streak || 0) + ' j de série !';
+}
+window.openSharePoster = function(){
+  const m = document.getElementById('posterModal'); if(!m) return;
+  const ep = progress.episode || 1;
+  const bg = document.getElementById('posterBg'); if(bg) bg.src = sagaCover || currentCoverUrl(ep);
+  const t = document.getElementById('posterTitle'); if(t) t.textContent = sagaTitle || 'Ma saga Sunami';
+  const lang = (LANGUAGES.find(l => l.code === pickedLang)?.label);
+  const e = document.getElementById('posterEp'); if(e) e.textContent = 'Épisode ' + ep + (lang ? (' · ' + lang) : '');
+  const st = document.getElementById('posterStats');
+  if(st) st.innerHTML = '🔥 ' + (progress.streak || 0) + ' j&nbsp;&nbsp; ⭐ ' + xp + ' XP&nbsp;&nbsp; 📚 ' + ((stats.words || []).length) + ' mots';
+  m.classList.add('open'); m.setAttribute('aria-hidden','false');
+};
+window.closePoster = function(){ const m = document.getElementById('posterModal'); if(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); } };
+window.shareSaga = async function(){
+  const url = 'https://sunami-rho.vercel.app', text = sagaShareText();
+  try{ if(navigator.share){ await navigator.share({ title:'Sunami', text, url }); track('share_saga'); return; } }catch(e){ return; }
+  try{ await navigator.clipboard.writeText(text + ' ' + url); alert('Texte + lien copiés !'); }catch(e){}
+};
+window.copySagaLink = async function(){ try{ await navigator.clipboard.writeText('https://sunami-rho.vercel.app'); alert('Lien copié !'); }catch(e){} };
+
+document.addEventListener('DOMContentLoaded', () => {
+  const b = document.querySelector('[onclick="toggleSfx(this)"]');
+  if(b){ let off=false; try{ off = localStorage.getItem('sunami-sfx') === '0'; }catch(e){} b.textContent = off ? '🔇 Effets coupés' : '🔊 Effets activés'; }
+});
