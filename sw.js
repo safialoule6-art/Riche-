@@ -1,11 +1,12 @@
 /* Sunami Service Worker — cache le shell pour usage hors-ligne */
-const CACHE = 'sunami-v2';
+const CACHE = 'sunami-v3';
 const SHELL = [
   '/',
   '/app',
   '/index.html',
   '/app.html',
   '/landing.js',
+  '/landing-fx.js',
   '/app.js',
   '/styles.css',
   '/theme.js',
