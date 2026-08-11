@@ -4,8 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tarifs — Sunami</title>
+<meta name="description" content="Sunami : commence gratuitement (2 épisodes/jour, sans carte). Passe Sigma (4,99€/mois) ou Ultra (8,99€/mois) pour les épisodes illimités, 6 langues et la correction grammaire. Mensuel ou annuel, 2 mois offerts.">
+<link rel="canonical" href="https://sunami-rho.vercel.app/pricing">
+<meta property="og:title" content="Tarifs — Sunami">
+<meta property="og:description" content="Gratuit pour commencer. Premium à partir de 4,99€/mois, ou annuel avec 2 mois offerts.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://sunami-rho.vercel.app/pricing">
 <link rel="stylesheet" href="/styles.css">
 <meta name="theme-color" content="#0f0d0b">
+<style>
+  .billing-toggle{ display:inline-flex; gap:4px; padding:4px; margin:6px auto 22px; border-radius:999px;
+    border:1px solid var(--card-border); background:var(--card); }
+  .billing-opt{ display:inline-flex; align-items:center; gap:8px; border:none; cursor:pointer;
+    font-family:'Inter Tight',sans-serif; font-weight:700; font-size:14px; color:var(--muted);
+    padding:9px 18px; border-radius:999px; background:transparent; transition:color .2s, background .2s; }
+  .billing-opt.active{ background:var(--wave); color:#0f0d0b; }
+  .save-pill{ font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px;
+    background:color-mix(in srgb,var(--neon) 18%,transparent); color:var(--wave); }
+  .billing-opt.active .save-pill{ background:rgba(0,0,0,.14); color:#0f0d0b; }
+</style>
 </head>
 <body>
 <header class="landing-header">
@@ -19,6 +36,11 @@
 
   <div class="money-back-badge">🛡️ Satisfait ou remboursé sous 7 jours</div>
   <div class="founder-badge">🔥 Offre fondateur : <b>-50% à vie</b> pour les 500 premiers abonnés</div>
+
+  <div class="billing-toggle" role="group" aria-label="Choix de facturation">
+    <button class="billing-opt active" id="billMonthly" type="button" aria-pressed="true" onclick="setBilling('m')">Mensuel</button>
+    <button class="billing-opt" id="billAnnual" type="button" aria-pressed="false" onclick="setBilling('a')">Annuel <span class="save-pill">2 mois offerts</span></button>
+  </div>
 
   <div class="pricing-grid">
     <!-- GRATUIT -->
@@ -44,9 +66,9 @@
     <div class="price-card featured">
       <div class="price-badge">⭐ Le plus populaire</div>
       <div class="price-name">⭐ Sigma</div>
-      <div class="price-amount">4,99€</div>
+      <div class="price-amount" data-m="4,99€" data-a="4,08€">4,99€</div>
       <div class="price-period">/mois</div>
-      <div class="price-annual">ou <b>49€/an</b> · 2 mois offerts</div>
+      <div class="price-annual" data-m="ou <b>49€/an</b> · 2 mois offerts" data-a="facturé <b>49€/an</b> · 2 mois offerts">ou <b>49€/an</b> · 2 mois offerts</div>
       <ul class="price-features">
         <li>✅ Épisodes illimités</li>
         <li>✅ 6 langues</li>
@@ -64,9 +86,9 @@
     <!-- PRO -->
     <div class="price-card">
       <div class="price-name">💎 Ultra</div>
-      <div class="price-amount">8,99€</div>
+      <div class="price-amount" data-m="8,99€" data-a="7,42€">8,99€</div>
       <div class="price-period">/mois</div>
-      <div class="price-annual">ou <b>89€/an</b> · 2 mois offerts</div>
+      <div class="price-annual" data-m="ou <b>89€/an</b> · 2 mois offerts" data-a="facturé <b>89€/an</b> · 2 mois offerts">ou <b>89€/an</b> · 2 mois offerts</div>
       <ul class="price-features">
         <li>✅ Tout Sigma +</li>
         <li>✅ Mode hors-ligne</li>
@@ -107,5 +129,17 @@
   <p><a href="/affiliate">Affiliation</a> · <a href="/privacy">Confidentialité</a> · <a href="/terms">Conditions</a> · <a href="/legal">Mentions légales</a></p>
   <p class="footer-copy">Fait avec ❤️ pour les curieux · © 2026</p>
 </footer>
+<script>
+  function setBilling(mode){
+    var annual = mode === 'a';
+    document.querySelectorAll('[data-m][data-a]').forEach(function(el){
+      el.innerHTML = annual ? el.getAttribute('data-a') : el.getAttribute('data-m');
+    });
+    var m = document.getElementById('billMonthly');
+    var a = document.getElementById('billAnnual');
+    m.classList.toggle('active', !annual); m.setAttribute('aria-pressed', String(!annual));
+    a.classList.toggle('active', annual);  a.setAttribute('aria-pressed', String(annual));
+  }
+</script>
 </body>
 </html>
