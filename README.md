@@ -26,7 +26,14 @@ Au lieu d'exercices répétitifs, un **conteur IA** raconte une histoire immersi
 
 | Variable | Description |
 |---|---|
-| `GROQ_API_KEY` | Clé API Groq (modèle : `llama-3.1-8b-instant`). Utilisée uniquement côté serveur dans `api/generate.js`. |
+| `GROQ_API_KEY` | Clé API Groq (modèle : `llama-3.1-8b-instant`). Utilisée côté serveur dans `api/generate.js` et `api/support.js`. |
+| `GROQ_API_KEY_2` | *(optionnel)* Seconde clé Groq : bascule automatique en cas de rate-limit 429. |
+| `SUPABASE_URL` | URL du projet Supabase (ex : `https://xxxx.supabase.co`). |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clé **service role** Supabase, utilisée côté serveur uniquement (`api/refund.js`, `api/referral.js`, `api/subscribe.js`, `api/send-reminders.js`). Contourne la RLS. **Ne jamais** l'exposer côté client. |
+
+> Les fonctions serveur acceptent aussi l'ancien nom `SUPABASE_SERVICE_KEY` en secours, mais `SUPABASE_SERVICE_ROLE_KEY` est le nom recommandé.
+
+> Push (optionnel) : `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET` (voir plus bas).
 
 ⚠️ **Ne jamais** commit de clé API dans le code. Toujours passer par `process.env`.
 
@@ -38,6 +45,7 @@ Au lieu d'exercices répétitifs, un **conteur IA** raconte une histoire immersi
 |---|---|
 | `sql/affiliate.sql` | Programme d'affiliation |
 | `sql/saga.sql` | **Persistance de la saga** (historique + résumé glissant par langue) et **état joueur durable** (XP, vocabulaire, personnages, lieux, succès) — corrige l'histoire "au hasard" et la perte de progression à la déconnexion. |
+| `sql/security.sql` | **Sécurité (RLS)** : verrouille l'accès public aux tables `progress`, `leads`, `refund_requests`, `referrals`. À exécuter pour éviter que la clé anon publique ne lise/écrive les données de tous les comptes. |
 
 > Tant que `sql/saga.sql` n'est pas exécuté, l'app fonctionne quand même : elle retombe automatiquement sur le stockage local (aucune régression), mais la synchro multi-appareils et la reprise cloud sont désactivées.
 

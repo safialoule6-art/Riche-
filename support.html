@@ -34,13 +34,14 @@
 </main>
 
 <script>
+function cbEsc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 async function sendChatbot(){
   const input = document.getElementById('chatbotInput');
   const log = document.getElementById('chatbotLog');
   const msg = input.value.trim();
   if(!msg) return;
   
-  log.innerHTML += '<div class="cb-msg user">' + msg + '</div>';
+  log.innerHTML += '<div class="cb-msg user">' + cbEsc(msg) + '</div>';
   input.value = '';
   log.innerHTML += '<div class="cb-msg bot typing">...</div>';
   log.scrollTop = log.scrollHeight;

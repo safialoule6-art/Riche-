@@ -1,8 +1,8 @@
 // api/refund.js — Edge function pour les demandes de remboursement
 export const config = { runtime: "edge" };
 
-const SUPABASE_URL = "https://cdtabuyomtkfasvugtck.supabase.co";
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || "";
+const SUPABASE_URL = process.env.SUPABASE_URL || "https://cdtabuyomtkfasvugtck.supabase.co";
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || "";
 
 export default async function handler(req) {
   if (req.method !== "POST") {
