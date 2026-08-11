@@ -1304,3 +1304,14 @@ body:has(.landing-header) .theme-toggle{
 
 /* Bulle joueur (style app native) */
 .msg.user{ background:var(--wave); color:#0f0d0b; border-radius:16px; border-bottom-right-radius:5px; font-weight:600; }
+
+/* ===== UI+ : nom des PNJ, bouton ambiance ===== */
+.npc-name{ font-size:11px; font-weight:800; letter-spacing:.02em; margin-bottom:3px;
+  font-style:normal; color:color-mix(in srgb, var(--wave) 70%, var(--foam)); }
+.scene-prev-badge{ left:50% !important; right:auto !important; transform:translateX(-50%); }
+.amb-btn{ position:absolute; top:10px; right:10px; z-index:3; width:32px; height:32px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.25); background:rgba(0,0,0,.42); backdrop-filter:blur(6px);
+  color:#fff; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:transform .15s var(--ease), background .2s; }
+.amb-btn:hover{ transform:scale(1.08); background:rgba(0,0,0,.6); }
+.amb-btn:active{ transform:scale(.92); }

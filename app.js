@@ -1087,7 +1087,7 @@ function resumeScene(s){
     if(log) log.appendChild(banner);
   }
   const lastAI = [...chatHistory].reverse().find(m => m.role === 'assistant');
-  if(lastAI){ renderStoryMessage(lastAI.content); }
+  if(lastAI){ renderStoryMessage(lastAI.content, characters); }
   const input = document.getElementById('userInput');
   if(input){ input.disabled = false; input.focus(); }
   scrollChat();
@@ -1362,6 +1362,7 @@ async function enterApp(email, uid){
   updateProgressChips();
   updateNotifButtons();
   refreshPushSubscription();
+  Ambience.initFromStorage();
   track('app_open');
 
   if (progress.language && progress.level){
@@ -1469,38 +1470,141 @@ function parseStorySegments(text){
   return parts;
 }
 
-const NPC_EMOJIS = ['🧑','👩','👨','🧙','🧕','👴','🧒','🕵️','👳','👸','🧑‍🌾','🧑‍🍳'];
-function npcVisual(text){
-  let h = 0; for(let i=0;i<text.length;i++) h = (h*31 + text.charCodeAt(i))>>>0;
-  return { emoji: NPC_EMOJIS[h % NPC_EMOJIS.length], color: 'hsl(' + (h % 360) + ' 65% 52%)' };
+const NAME_EMOJIS = ['🧑','👩','👨','🧙','🧕','👴','🧒','🕵️','👳','👸','🧑‍🌾','🧑‍🍳','👮','🧑‍🎓','👩‍⚕️','🧜','🧑‍🚀','🥷'];
+/* Avatar déterministe par NOM de personnage (même perso -> même avatar) */
+function charVisual(name){
+  const key = (name || '?').toLowerCase();
+  let h = 0; for(let i=0;i<key.length;i++) h = (h*31 + key.charCodeAt(i))>>>0;
+  return { emoji: NAME_EMOJIS[h % NAME_EMOJIS.length], color: 'hsl(' + (h % 360) + ' 62% 52%)' };
+}
+function escapeReg(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+/* Liste des noms connus (moteur + registre local) */
+function knownNames(chars){
+  const set = new Set();
+  const add = n => { n = (n||'').trim(); if(n.length >= 2) set.add(n); };
+  (chars || []).forEach(c => { if(c && c.name){ add(c.name); c.name.trim().split(/\s+/).forEach(add); } });
+  (characters || []).forEach(c => { if(c && c.name){ add(c.name); c.name.trim().split(/\s+/).forEach(add); } });
+  return [...set].sort((a,b) => b.length - a.length);
+}
+/* Devine qui parle : nom le plus proche dans la narration précédente */
+function detectSpeaker(prevText, dialogueText, names, last){
+  let best = null, bestIdx = -1;
+  const hay = prevText || '';
+  names.forEach(nm => {
+    try{ const re = new RegExp('\\b' + escapeReg(nm) + '\\b', 'g'); let m, idx = -1; while((m = re.exec(hay))) idx = m.index; if(idx > bestIdx){ bestIdx = idx; best = nm; } }catch(e){}
+  });
+  if(best) return best;
+  for(const nm of names){ try{ if(new RegExp('\\b' + escapeReg(nm) + '\\b').test(dialogueText)) return nm; }catch(e){} }
+  return last || null;
 }
 
-async function renderStoryMessage(fullText){
+/* Type de décor déduit du lieu courant (pour l'ambiance sonore) */
+function sceneTypeFrom(setting){
+  const s = (setting || '').toLowerCase();
+  const has = (...k) => k.some(w => s.includes(w));
+  if(has('mer','plage','océan','ocean','sea','beach','port','vague','bord de')) return 'sea';
+  if(has('forêt','foret','forest','bois','jungle','montagne','nature','parc','park','campagne')) return 'forest';
+  if(has('pluie','rain','orage','tempête','storm')) return 'rain';
+  if(has('café','cafe','bar','restaurant','marché','marche','market','boutique','magasin','cuisine')) return 'cafe';
+  if(has('ville','city','rue','street','métro','metro','gare','aéroport','airport','avenue','centre-ville')) return 'city';
+  if(has('nuit','night','soir','minuit','obscur')) return 'night';
+  return 'default';
+}
+
+/* ===== Ambiance sonore procédurale (Web Audio, 0 fichier) ===== */
+const Ambience = (function(){
+  let ctx = null, master = null, nodes = [], curType = 'default', enabled = false;
+  function ensure(){
+    if(ctx) return true;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return false;
+    ctx = new AC();
+    master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+    return true;
+  }
+  function noiseBuffer(){
+    const len = ctx.sampleRate * 2;
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    let last = 0;
+    for(let i=0;i<len;i++){ const w = Math.random()*2-1; last = (last + 0.02*w) / 1.02; d[i] = last * 3.2; }
+    return buf;
+  }
+  function clearNodes(){ nodes.forEach(n => { try{ n.stop && n.stop(); }catch(e){} try{ n.disconnect(); }catch(e){} }); nodes = []; }
+  function build(type){
+    clearNodes(); if(!ctx) return;
+    const src = ctx.createBufferSource(); src.buffer = noiseBuffer(); src.loop = true;
+    const filt = ctx.createBiquadFilter();
+    const g = ctx.createGain(); g.gain.value = 0.5;
+    if(type === 'sea'){ filt.type='lowpass'; filt.frequency.value=520; g.gain.value=0.5;
+      const lfo=ctx.createOscillator(), lg=ctx.createGain(); lfo.frequency.value=0.12; lg.gain.value=0.35; lfo.connect(lg); lg.connect(g.gain); lfo.start(); nodes.push(lfo); }
+    else if(type === 'forest'){ filt.type='lowpass'; filt.frequency.value=950; g.gain.value=0.32; }
+    else if(type === 'rain'){ filt.type='highpass'; filt.frequency.value=1200; g.gain.value=0.4; }
+    else if(type === 'city'){ filt.type='lowpass'; filt.frequency.value=340; g.gain.value=0.45; }
+    else if(type === 'cafe'){ filt.type='lowpass'; filt.frequency.value=720; g.gain.value=0.3; }
+    else if(type === 'night'){ filt.type='lowpass'; filt.frequency.value=420; g.gain.value=0.28;
+      const osc=ctx.createOscillator(), og=ctx.createGain(); osc.type='sine'; osc.frequency.value=110; og.gain.value=0.015; osc.connect(og); og.connect(master); osc.start(); nodes.push(osc); }
+    else { filt.type='lowpass'; filt.frequency.value=600; g.gain.value=0.3; }
+    src.connect(filt); filt.connect(g); g.connect(master); src.start(); nodes.push(src);
+  }
+  function setScene(type){ curType = type || 'default'; if(enabled && ensure()) build(curType); }
+  function toggle(){
+    if(!ensure()) return false;
+    enabled = !enabled;
+    if(enabled){ if(ctx.state === 'suspended') ctx.resume(); build(curType); master.gain.setTargetAtTime(0.06, ctx.currentTime, 0.5); }
+    else { master.gain.setTargetAtTime(0, ctx.currentTime, 0.3); setTimeout(clearNodes, 400); }
+    try{ localStorage.setItem('sunami-amb', enabled ? '1' : '0'); }catch(e){}
+    return enabled;
+  }
+  function initFromStorage(){
+    let on = false; try{ on = localStorage.getItem('sunami-amb') === '1'; }catch(e){}
+    if(!on) return;
+    enabled = true;
+    const start = () => { if(ensure()){ if(ctx.state==='suspended') ctx.resume(); build(curType); master.gain.setTargetAtTime(0.06, ctx.currentTime, 0.6); } const b=document.getElementById('ambBtn'); if(b) b.textContent='🔊'; document.removeEventListener('click', start); };
+    document.addEventListener('click', start, { once:true });
+  }
+  return { setScene, toggle, initFromStorage };
+})();
+window.toggleAmbience = function(){
+  const on = Ambience.toggle();
+  const btn = document.getElementById('ambBtn');
+  if(btn) btn.textContent = on ? '🔊' : '🔈';
+};
+
+async function renderStoryMessage(fullText, chars){
   const log = document.getElementById('chatLog');
   if(!log) return;
   const segs = parseStorySegments(fullText);
-  let lastBubble = null;
+  const names = knownNames(chars);
+  let lastBubble = null, lastSpeaker = null;
   for(let i=0;i<segs.length;i++){
     const seg = segs[i];
+    const isNpc = seg.type === 'dialogue';
     const row = document.createElement('div');
-    row.className = 'story-row ' + (seg.type === 'dialogue' ? 'npc' : 'narration');
-    let avatarHtml;
-    if(seg.type === 'dialogue'){
-      const v = npcVisual(seg.text);
-      avatarHtml = '<div class="story-avatar npc-avatar" style="background:' + v.color + '">' + v.emoji + '</div>';
+    row.className = 'story-row ' + (isNpc ? 'npc' : 'narration');
+    let speaker = null, vis = null;
+    if(isNpc){
+      const prev = (i > 0 && segs[i-1].type === 'narration') ? segs[i-1].text : '';
+      speaker = detectSpeaker(prev, seg.text, names, lastSpeaker);
+      if(speaker) lastSpeaker = speaker;
+      vis = speaker ? charVisual(speaker) : { emoji:'🗣️', color:'hsl(210 8% 45%)' };
+      row.innerHTML = '<div class="story-avatar npc-avatar" style="background:' + vis.color + '">' + vis.emoji + '</div>';
     } else {
-      avatarHtml = '<div class="story-avatar narrator-avatar"><svg viewBox="0 0 120 140"><use href="#mascot"/></svg></div>';
+      row.innerHTML = '<div class="story-avatar narrator-avatar"><svg viewBox="0 0 120 140"><use href="#mascot"/></svg></div>';
     }
-    row.innerHTML = avatarHtml;
     const bubble = document.createElement('div');
-    bubble.className = 'story-bubble ' + (seg.type === 'dialogue' ? 'npc-bubble' : 'narration-bubble');
-    bubble.innerHTML = formatStory(seg.text);
-    wireVocab(bubble);
+    bubble.className = 'story-bubble ' + (isNpc ? 'npc-bubble' : 'narration-bubble');
+    if(isNpc && speaker){ const nm = document.createElement('div'); nm.className = 'npc-name'; nm.textContent = speaker; bubble.appendChild(nm); }
+    const span = document.createElement('span');
+    const cursor = document.createElement('span'); cursor.className = 'stream-cursor';
+    bubble.appendChild(span); bubble.appendChild(cursor);
     row.appendChild(bubble);
     log.appendChild(row);
-    lastBubble = bubble;
     scrollChat();
-    await new Promise(r => setTimeout(r, 240));
+    await typewriter(span, seg.text);
+    cursor.remove();
+    wireVocab(bubble);
+    lastBubble = bubble;
   }
   if(lastBubble){ addSpeaker(lastBubble, cleanForSpeech(fullText)); }
 }
@@ -1537,6 +1641,7 @@ function updateSceneBanner(){
   const desc = sagaSetting || (label + ' city street');
   const url = bannerUrl(desc, _seedFrom((pickedLang||'') + ':scene:' + (sagaSetting||'')), sagaCoverStyle);
   if(bg.getAttribute('data-src') !== url){ bg.setAttribute('data-src', url); bg.src = url; }
+  Ambience.setScene(sceneTypeFrom(sagaSetting));
 }
 function cleanForSpeech(s){ return s.replace(/\*\*/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim(); }
 
@@ -1646,7 +1751,7 @@ async function callAI(userReply, opts){
     if(sceneCard){ sceneCard.classList.remove('thinking'); sceneCard.classList.add('speaking'); }
     setMascotExpression(emotionToExpr(data.emotion));
     const speech = cleanForSpeech(fullText);
-    await renderStoryMessage(fullText);
+    await renderStoryMessage(fullText, data.characters);
     chatHistory.push({ role:'assistant', content: fullText });
     chapter += 1; updateSceneMeta();
     registerChapter(fullText);
