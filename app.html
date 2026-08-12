@@ -110,6 +110,7 @@
       <a class="sidebar-item" onclick="toggleSidebar();openSagas()"><span class="si-icon">📚</span> Mes sagas</a>
       <a class="sidebar-item" onclick="toggleSidebar();openSharePoster()"><span class="si-icon">📣</span> Partager ma saga</a>
       <a class="sidebar-item" onclick="toggleSidebar();openVocabLibrary()"><span class="si-icon">📚</span> Mon vocabulaire</a>
+      <a class="sidebar-item" onclick="toggleSidebar();openVocabReview(false)"><span class="si-icon">🔁</span> Réviser mes mots</a>
       <a class="sidebar-item" onclick="toggleSidebar();openWeeklyReport()"><span class="si-icon">📈</span> Ma progression</a>
       <div class="sidebar-divider"></div>
       <a class="sidebar-item" onclick="toggleSidebar();openSettings()"><span class="si-icon">🏆</span> Succès & Stats</a>
@@ -288,7 +289,33 @@
       <span id="vocabTotal">0 mots</span>
       <span id="vocabReview">0 à réviser aujourd'hui</span>
     </div>
+    <button class="btn" id="vocabReviewBtn" onclick="closeVocabLibrary();openVocabReview(false)" style="margin-bottom:14px;">🔁 Réviser mes mots</button>
     <div class="vocab-list" id="vocabList"></div>
+  </div>
+</div>
+
+<!-- Mode révision (flashcards + répétition espacée) -->
+<div id="reviewModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Révision de vocabulaire">
+  <div class="modal-backdrop" onclick="closeVocabReview()"></div>
+  <div class="modal-card review-card">
+    <div class="modal-head">
+      <h2>🔁 Révision</h2>
+      <button class="icon-btn" onclick="closeVocabReview()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="review-progress" id="reviewProgress"></div>
+    <div id="reviewBody">
+      <div class="flashcard" id="flashcard" onclick="flipReviewCard()">
+        <div class="fc-word" id="fcWord"></div>
+        <div class="fc-hint" id="fcHint">Touche la carte pour révéler</div>
+        <div class="fc-answer" id="fcAnswer" style="display:none;"></div>
+      </div>
+      <button class="btn" id="revealBtn" onclick="flipReviewCard()">Révéler la traduction</button>
+      <div class="review-actions" id="reviewActions" style="display:none;">
+        <button class="btn ghost" onclick="rateReviewCard(false)">😕 À revoir</button>
+        <button class="btn" onclick="rateReviewCard(true)">😎 Je savais</button>
+      </div>
+    </div>
+    <div id="reviewDone" style="display:none;text-align:center;"></div>
   </div>
 </div>
 

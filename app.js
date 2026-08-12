@@ -174,6 +174,88 @@ window.closeVocabLibrary = function(){
   if(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
 };
 
+/* ===== MODE RÉVISION (flashcards + répétition espacée) ===== */
+function markWordForgotten(word){
+  const today = todayKey();
+  const entry = stats.words.find(w => w.word === word);
+  if(entry){ entry.lastSeen = today; entry.reviewCount = 1; entry.nextReview = shiftDay(today, 1); saveStats(); }
+}
+function dueWordsCount(){ const t = todayKey(); return stats.words.filter(w => (w.nextReview||t) <= t).length; }
+function getDueWordObjects(max = 20){
+  const t = todayKey();
+  return stats.words
+    .filter(w => (w.nextReview||t) <= t)
+    .sort((a,b) => (a.reviewCount||0) - (b.reviewCount||0))
+    .slice(0, max);
+}
+
+let _rev = { queue: [], idx: 0, known: 0, practice: false };
+window.openVocabReview = function(practice){
+  const words = practice ? [...stats.words].sort((a,b)=>(b.lastSeen||'').localeCompare(a.lastSeen||'')).slice(0,12) : getDueWordObjects(20);
+  _rev = { queue: words, idx: 0, known: 0, practice: !!practice };
+  const modal = document.getElementById('reviewModal');
+  if(!modal) return;
+  modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
+  if(!words.length){ showReviewDone(true); return; }
+  document.getElementById('reviewBody').style.display = 'block';
+  document.getElementById('reviewDone').style.display = 'none';
+  renderReviewCard();
+};
+function renderReviewCard(){
+  const w = _rev.queue[_rev.idx];
+  if(!w){ showReviewDone(false); return; }
+  const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent = v; };
+  set('reviewProgress', (_rev.idx + 1) + ' / ' + _rev.queue.length);
+  set('fcWord', w.word);
+  const ans = document.getElementById('fcAnswer');
+  ans.textContent = w.fr ? w.fr : '(traduction à deviner — note-toi honnêtement)';
+  ans.style.display = 'none';
+  document.getElementById('fcHint').style.display = 'block';
+  document.getElementById('revealBtn').style.display = 'block';
+  document.getElementById('reviewActions').style.display = 'none';
+}
+window.flipReviewCard = function(){
+  const ans = document.getElementById('fcAnswer');
+  if(!ans || ans.style.display === 'block') return;
+  ans.style.display = 'block';
+  document.getElementById('fcHint').style.display = 'none';
+  document.getElementById('revealBtn').style.display = 'none';
+  document.getElementById('reviewActions').style.display = 'flex';
+};
+window.rateReviewCard = function(known){
+  const w = _rev.queue[_rev.idx];
+  if(w){
+    if(known){ markWordReviewed(w.word); _rev.known++; if(!_rev.practice){ addXp(3); } }
+    else { markWordForgotten(w.word); }
+  }
+  _rev.idx++;
+  if(_rev.idx >= _rev.queue.length){ showReviewDone(false); }
+  else { renderReviewCard(); }
+};
+function showReviewDone(nothingDue){
+  document.getElementById('reviewBody').style.display = 'none';
+  const done = document.getElementById('reviewDone');
+  done.style.display = 'block';
+  const remaining = dueWordsCount();
+  if(nothingDue){
+    done.innerHTML = '<div class="review-done-emoji">🎉</div><h3>Tout est à jour !</h3>' +
+      '<p>Aucun mot à réviser aujourd\'hui. Reviens demain pour ancrer ton vocabulaire.</p>' +
+      (stats.words.length ? '<button class="btn ghost" onclick="openVocabReview(true)">S\'entraîner quand même</button>' : '') +
+      '<button class="btn" onclick="closeVocabReview()">Continuer l\'histoire</button>';
+  } else {
+    done.innerHTML = '<div class="review-done-emoji">✅</div><h3>Révision terminée</h3>' +
+      '<p>' + _rev.known + ' / ' + _rev.queue.length + ' mots su' + (_rev.known>1?'s':'') + '.' +
+      (remaining>0 ? ' Encore ' + remaining + ' à revoir.' : ' Plus rien pour aujourd\'hui 🎉') + '</p>' +
+      (remaining>0 ? '<button class="btn" onclick="openVocabReview(false)">Continuer la révision</button>' : '') +
+      '<button class="btn ghost" onclick="closeVocabReview()">Fermer</button>';
+  }
+}
+window.closeVocabReview = function(){
+  const m = document.getElementById('reviewModal');
+  if(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
+  updateProgressChips();
+};
+
 /* ===== DAILY NOTIFICATION ===== */
 function requestNotificationPermission(){
   if(!('Notification' in window)) return;

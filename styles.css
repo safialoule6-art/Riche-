@@ -466,6 +466,22 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 .report-stat span{ display:block; font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin-top:6px; }
 .report-foot{ font-size:13.5px; font-weight:600; color:var(--foam); margin:0 0 8px; }
 .report-total{ font-size:12px; color:var(--muted); margin:0 0 16px; }
+
+/* ===== Mode révision (flashcards) ===== */
+.review-card{ text-align:center; }
+.review-progress{ font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+.flashcard{ background:var(--card); border:1px solid var(--card-border); border-radius:18px; padding:34px 18px;
+  min-height:150px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+  cursor:pointer; box-shadow:var(--shadow-soft); margin-bottom:14px; user-select:none; }
+.fc-word{ font-family:'Baloo 2',sans-serif; font-weight:800; font-size:30px; color:var(--foam); line-height:1.15; }
+.fc-hint{ font-size:12px; color:var(--muted); font-weight:600; }
+.fc-answer{ font-size:20px; font-weight:700; color:var(--wave); }
+.review-actions{ display:flex; gap:10px; }
+.review-actions .btn{ flex:1; }
+.review-done-emoji{ font-size:46px; line-height:1; margin-bottom:4px; }
+#reviewDone h3{ margin:0 0 6px; }
+#reviewDone p{ color:var(--muted); font-weight:600; margin:0 0 16px; }
+#reviewDone .btn{ margin-top:6px; }
 #confetti{position:absolute; inset:0; overflow:hidden; pointer-events:none;}
 .confetti-piece{position:absolute; top:-14px; width:9px; height:14px; border-radius:2px; opacity:.9; animation:fall linear forwards;}
 @keyframes fall{to{transform:translateY(105vh) rotate(720deg); opacity:1;}}
