@@ -24,6 +24,11 @@ create table if not exists public.saga (
   primary key (user_id, language)
 );
 
+-- Colonnes ajoutées après coup (idempotent) : cover d'épisode + teaser de cliffhanger
+alter table public.saga add column if not exists cover       text;
+alter table public.saga add column if not exists cover_style text;
+alter table public.saga add column if not exists cliffhanger text;
+
 alter table public.saga enable row level security;
 
 drop policy if exists "saga_select_own" on public.saga;

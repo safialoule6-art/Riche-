@@ -22,7 +22,27 @@ function applySettings(){
   document.querySelectorAll('.seg-font').forEach(b => b.classList.toggle('active', b.dataset.font === settings.font));
 }
 
-if('speechSynthesis' in window){ try{ window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = ()=>window.speechSynthesis.getVoices(); }catch(e){} }
+if('speechSynthesis' in window){ try{ window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged = ()=>{ try{ window.speechSynthesis.getVoices(); }catch(e){} for(const k in _voiceCache) delete _voiceCache[k]; }; }catch(e){} }
+
+// Choisit la MEILLEURE voix dispo pour une langue : privilégie les voix
+// naturelles/neurales (Google, Apple "Natural/Enhanced/Premium/Siri", Microsoft "Natural").
+const _voiceCache = {};
+function pickBestVoice(bcp47){
+  const prefix = (bcp47 || 'en-US').slice(0,2).toLowerCase();
+  if(_voiceCache[prefix]) return _voiceCache[prefix];
+  let voices = [];
+  try{ voices = window.speechSynthesis.getVoices() || []; }catch(e){ return null; }
+  const sameLang = voices.filter(v => v.lang && v.lang.slice(0,2).toLowerCase() === prefix);
+  if(!sameLang.length) return null;
+  const PREMIUM = /natural|neural|google|enhanced|premium|siri|wavenet/i;
+  const exact = sameLang.filter(v => v.lang.toLowerCase() === bcp47.toLowerCase());
+  const best = exact.find(v => PREMIUM.test(v.name))
+            || sameLang.find(v => PREMIUM.test(v.name))
+            || exact[0]
+            || sameLang[0];
+  if(best) _voiceCache[prefix] = best;
+  return best;
+}
 
 function speak(text, btn){
   if(!('speechSynthesis' in window) || !text) return;
@@ -30,9 +50,8 @@ function speak(text, btn){
   const u = new SpeechSynthesisUtterance(text);
   u.lang = LOCALES[pickedLang] || 'en-US';
   u.rate = settings.rate;
-  const voices = window.speechSynthesis.getVoices();
-  const v = voices.find(x => x.lang && x.lang.toLowerCase().startsWith(u.lang.slice(0,2).toLowerCase()));
-  if(v) u.voice = v;
+  const v = pickBestVoice(u.lang);
+  if(v){ u.voice = v; u.lang = v.lang || u.lang; }
   if(btn){ u.onstart = ()=>btn.classList.add('speaking'); u.onend = u.onerror = ()=>btn.classList.remove('speaking'); }
   const sc = document.getElementById('sceneBanner');
   const prevStart = u.onstart, prevEnd = u.onend;
@@ -885,15 +904,18 @@ const LEVELS = [
   {code:'C1-C2 (avancé)', label:'Avancé', sub:'C1 · C2'},
 ];
 const THEMES = [
-  {code:'voyage', label:'Voyage', emoji:'✈️'},
-  {code:'quotidien', label:'Quotidien', emoji:'☕'},
-  {code:'travail', label:'Travail', emoji:'💼'},
-  {code:'mystere', label:'Mystère', emoji:'🕵️'},
+  {code:'cyberpunk', label:'Cyberpunk · Tokyo', emoji:'🌃'},
+  {code:'polar', label:'Enquête · Londres', emoji:'🕵️'},
+  {code:'fantasy', label:'Fantasy · forêt magique', emoji:'🧙'},
+  {code:'espace', label:'Espace · science-fiction', emoji:'🚀'},
+  {code:'voyage', label:'Voyage · road trip', emoji:'✈️'},
   {code:'romance', label:'Romance', emoji:'💛'},
-  {code:'aventure', label:'Aventure', emoji:'🗺️'},
+  {code:'mystere', label:'Manoir · mystère', emoji:'🕯️'},
+  {code:'quotidien', label:'Quotidien · café', emoji:'☕'},
 ];
 let pickedLang = null, pickedLevel = null;
 let pickedTheme = localStorage.getItem('sunami-theme-ctx') || null;
+let pickedUniverse = localStorage.getItem('sunami-universe-ctx') || '';
 let chapter = 0;
 let episodeConsumed = false;
 
@@ -940,11 +962,30 @@ function renderPickers(){
         const already = t.code === pickedTheme;
         document.querySelectorAll('#themeGrid .pick-card').forEach(x=>x.classList.remove('active'));
         if(already){ pickedTheme = null; localStorage.removeItem('sunami-theme-ctx'); }
-        else { c.classList.add('active'); pickedTheme = t.code; localStorage.setItem('sunami-theme-ctx', t.code); }
+        else {
+          c.classList.add('active'); pickedTheme = t.code; localStorage.setItem('sunami-theme-ctx', t.code);
+          pickedUniverse = ''; localStorage.removeItem('sunami-universe-ctx');
+          const ci = document.getElementById('customUniverse'); if(ci) ci.value = '';
+        }
         checkReady();
       };
       themeGrid.appendChild(c);
     });
+  }
+  const custom = document.getElementById('customUniverse');
+  if(custom){
+    custom.value = pickedUniverse || '';
+    custom.oninput = ()=>{
+      pickedUniverse = custom.value.trim();
+      if(pickedUniverse){
+        localStorage.setItem('sunami-universe-ctx', pickedUniverse);
+        pickedTheme = null; localStorage.removeItem('sunami-theme-ctx');
+        document.querySelectorAll('#themeGrid .pick-card').forEach(x=>x.classList.remove('active'));
+      } else {
+        localStorage.removeItem('sunami-universe-ctx');
+      }
+      checkReady();
+    };
   }
 }
 function checkReady(){
@@ -1037,6 +1078,13 @@ let sagaCoverStyle = 'cinematic';
 let coverSalt = 0;
 let sagaSetting = '';
 let sagaProtagonist = '';
+let sagaCliffhanger = localStorage.getItem('sunami-cliffhanger') || '';
+// Extrait un teaser de suspense (1-2 dernières phrases, nettoyé) pour la relance du lendemain
+function cliffhangerFrom(text){
+  const clean = String(text||'').replace(/\*\*/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim();
+  const parts = clean.split(/(?<=[.!?…])\s+/).filter(s => s.trim().length > 4);
+  return parts.slice(-2).join(' ').trim().slice(0, 160);
+}
 let _syncTimer = null;
 
 async function pullCloud(){
@@ -1100,7 +1148,7 @@ function saveSaga(){
       history: (chatHistory || []).slice(-24),
       updated_at: new Date().toISOString(),
     };
-    const full = { ...base, title: sagaTitle || null, cover: sagaCover || null, cover_style: sagaCoverStyle || null };
+    const full = { ...base, title: sagaTitle || null, cover: sagaCover || null, cover_style: sagaCoverStyle || null, cliffhanger: sagaCliffhanger || null };
     try{
       const { error } = await supabase.from('saga').upsert(full);
       if(error){ await supabase.from('saga').upsert(base); } // colonnes title/cover pas encore migrées
@@ -1163,10 +1211,11 @@ function onEpisodeComplete(title){
   track('episode_complete', { episode: finishedEp, language: pickedLang });
   if(window.SFX) SFX.play('complete');
   playEpisodeTransition({ label: 'Fin de l\'épisode ' + finishedEp, title: title || 'À suivre…', cover: sagaCover }).then(() => {
+    const teaser = sagaCliffhanger ? ('« ' + sagaCliffhanger + ' »') : '';
     celebrate({
       emoji: '🎬',
       title: title ? ('Épisode terminé — ' + title) : 'Épisode terminé !',
-      sub: 'La suite t\'attend. Clique « Nouvel épisode » pour lancer la suite, ou reviens demain pour garder ta série.',
+      sub: (teaser ? teaser + ' … ' : '') + 'À suivre. Reviens demain pour découvrir la suite et garder ta série 🔥',
       cover: sagaCover,
       coverTools: true
     });
@@ -1883,7 +1932,7 @@ async function callAI(userReply, opts){
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         history: chatHistory, userReply,
-        language: pickedLang, level: pickedLevel, theme: pickedTheme,
+        language: pickedLang, level: pickedLevel, theme: pickedTheme, universe: pickedUniverse || '',
         vocabulary: getWordsForReview(5),
         recap: sagaRecap, characters, setting: sagaSetting,
         protagonist: sagaProtagonist, episode: progress.episode || 1, chapter,
@@ -1970,6 +2019,10 @@ async function callAI(userReply, opts){
     mergeStructuredVocab(data.vocab);
     mergeStructuredCharacters(data.characters);
     renderChoices(data.choices);
+    if(data.episodeComplete){
+      sagaCliffhanger = cliffhangerFrom(fullText);
+      try{ localStorage.setItem('sunami-cliffhanger', sagaCliffhanger); }catch(e){}
+    }
     saveSaga();
     syncCloud();
     if(data.episodeComplete){ onEpisodeComplete(data.episodeTitle); }

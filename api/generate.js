@@ -33,11 +33,15 @@ const GROQ_TIMEOUT_MS = 25000;
 const CHAPTERS_PER_EPISODE = 5; // un épisode = ~5 chapitres puis cliffhanger
 
 const THEME_HINTS = {
-  voyage: "JOURNEY (airports, train stations, hotels, encounters, discovering new places).",
+  cyberpunk: "CYBERPUNK in a neon-lit Tokyo: rain, holograms, hackers, megacorps, gritty futuristic streets.",
+  polar: "DETECTIVE INVESTIGATION in London: clues, suspects, foggy streets, suspense, a mystery to solve.",
+  fantasy: "FANTASY in a magical forest: mythical creatures, spells, ancient secrets, a quest.",
+  espace: "SPACE / SCIENCE-FICTION: a starship, distant planets, aliens, exploration and wonder.",
+  voyage: "JOURNEY / road trip (airports, train stations, hotels, encounters, discovering new places).",
+  romance: "ENCOUNTER and gentle emotions, light and warm.",
+  mystere: "MYSTERY in an old mansion: hidden rooms, secrets, gentle suspense, intriguing characters.",
   quotidien: "EVERYDAY LIFE (café, market, neighbors, small daily scenes).",
   travail: "WORLD OF WORK (office, meeting, interview, colleagues, career).",
-  mystere: "MYSTERY / investigation (clues, suspense, intriguing characters).",
-  romance: "ENCOUNTER and gentle emotions, light and warm.",
   aventure: "ADVENTURE (nature, exploration, obstacles to overcome, action).",
 };
 
@@ -59,8 +63,10 @@ const LEVEL_GUIDE = {
 };
 
 function buildSystemPrompt(o) {
-  const { language, level, theme, hasUserReply, vocabulary, recap, characters, setting, protagonist, episode, chapter } = o;
-  const themeLine = theme && THEME_HINTS[theme] ? `\nSTORY CONTEXT: ${THEME_HINTS[theme]}` : "";
+  const { language, level, theme, universe, hasUserReply, vocabulary, recap, characters, setting, protagonist, episode, chapter } = o;
+  const themeLine = universe
+    ? `\nSTORY CONTEXT (user's custom universe — honor it): ${universe}.`
+    : (theme && THEME_HINTS[theme] ? `\nSTORY CONTEXT: ${THEME_HINTS[theme]}` : "");
   const levelGuide = LEVEL_GUIDE[level] || "";
   const vocabLine = vocabulary && vocabulary.length
     ? `\nSPACED REPETITION: naturally reuse at least 2 of these known words: ${vocabulary.join(", ")}.` : "";
@@ -152,19 +158,20 @@ export default async function handler(req) {
   let body;
   try { body = await req.json(); } catch { body = {}; }
   const {
-    history, userReply, language, level, theme, vocabulary,
+    history, userReply, language, level, theme, universe, vocabulary,
     recap, characters, setting, protagonist, episode, chapter,
   } = body || {};
 
   const targetLanguage = LANG_NAME[language] || language || "English";
   const cefrLevel = LEVEL_NAME[level] || level || "A1-A2 (beginner)";
+  const customUniverse = (typeof universe === "string" ? universe.trim() : "").slice(0, 160);
   const vocabList = Array.isArray(vocabulary) ? vocabulary.filter(v => typeof v === "string" && v) : [];
   const charList = Array.isArray(characters) ? characters.filter(c => c && c.name) : [];
   const trimmed = Array.isArray(history) ? history.slice(-8) : [];
   const hasUserReply = !!userReply;
 
   const system = buildSystemPrompt({
-    language: targetLanguage, level: cefrLevel, theme: theme || null, hasUserReply,
+    language: targetLanguage, level: cefrLevel, theme: theme || null, universe: customUniverse, hasUserReply,
     vocabulary: vocabList, recap: recap || "", characters: charList,
     setting: setting || "", protagonist: protagonist || "", episode: episode || 1, chapter: chapter || 1,
   });

@@ -33,9 +33,35 @@ export default async function handler(req, res) {
     supa("push_subscriptions?select=id,user_id,endpoint,subscription", SUPA_URL, SERVICE),
     supa("progress?select=user_id,last_active", SUPA_URL, SERVICE),
   ]);
+  // La colonne "cliffhanger" peut ne pas être migrée → on tente avec, sinon sans.
+  let sagaRows = await supa("saga?select=user_id,title,recap,cliffhanger,episode,updated_at&order=updated_at.desc", SUPA_URL, SERVICE);
+  if (!sagaRows.length) sagaRows = await supa("saga?select=user_id,title,recap,episode,updated_at&order=updated_at.desc", SUPA_URL, SERVICE);
   const activeToday = new Set(progressRows.filter(p => p.last_active === t).map(p => p.user_id));
 
-  const payload = JSON.stringify({
+  // Dernière saga par utilisateur (la plus récemment mise à jour)
+  const sagaByUser = {};
+  (sagaRows || []).forEach(s => { if (s.user_id && !sagaByUser[s.user_id]) sagaByUser[s.user_id] = s; });
+
+  function teaserFrom(s) {
+    if (!s) return "";
+    if (s.cliffhanger && String(s.cliffhanger).trim()) return String(s.cliffhanger).trim();
+    const recap = String(s.recap || "").replace(/\s+/g, " ").trim();
+    if (!recap) return "";
+    const parts = recap.split(/(?<=[.!?…])\s+/).filter(x => x.trim().length > 4);
+    return parts.length ? parts[parts.length - 1].slice(0, 140) : "";
+  }
+  function payloadFor(userId) {
+    const s = userId ? sagaByUser[userId] : null;
+    const teaser = teaserFrom(s);
+    const ep = s && s.episode ? s.episode : null;
+    const title = ep ? `🎬 L'épisode ${ep} t'attend` : "🌊 Ton prochain épisode t'attend";
+    const body = teaser
+      ? `${teaser} … Découvre la suite${s && s.title ? ` de « ${s.title} »` : ""} et garde ta série 🔥`
+      : "Reprends ton histoire et garde ta série 🔥";
+    return JSON.stringify({ title, body, url: "/app" });
+  }
+
+  const genericPayload = JSON.stringify({
     title: "🌊 Ton prochain épisode t'attend",
     body: "Reprends ton histoire et garde ta série 🔥",
     url: "/app",
@@ -44,6 +70,7 @@ export default async function handler(req, res) {
   let sent = 0, removed = 0, failed = 0;
   await Promise.all((subs || []).map(async (row) => {
     if (row.user_id && activeToday.has(row.user_id)) return;
+    const payload = row.user_id ? payloadFor(row.user_id) : genericPayload;
     try { await webpush.sendNotification(row.subscription, payload); sent++; }
     catch (err) {
       const code = err && err.statusCode;
