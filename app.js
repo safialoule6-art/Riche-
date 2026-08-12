@@ -181,6 +181,13 @@ function markWordForgotten(word){
   if(entry){ entry.lastSeen = today; entry.reviewCount = 1; entry.nextReview = shiftDay(today, 1); saveStats(); }
 }
 function dueWordsCount(){ const t = todayKey(); return stats.words.filter(w => (w.nextReview||t) <= t).length; }
+// Affiche/masque le rappel "N mots à réviser" sur l'écran d'histoire
+function updateReviewNudge(){
+  const el = document.getElementById('reviewNudge'); if(!el) return;
+  const n = dueWordsCount();
+  if(n > 0){ el.textContent = '🔁 ' + n + ' mot' + (n>1?'s':'') + ' à réviser'; el.style.display = 'inline-flex'; }
+  else { el.style.display = 'none'; }
+}
 function getDueWordObjects(max = 20){
   const t = todayKey();
   return stats.words
@@ -255,6 +262,16 @@ window.closeVocabReview = function(){
   if(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
   updateProgressChips();
 };
+// Raccourcis clavier pendant la révision (desktop) : Espace = révéler, 1 = à revoir, 2 = je savais
+document.addEventListener('keydown', (e)=>{
+  const m = document.getElementById('reviewModal');
+  if(!m || !m.classList.contains('open')) return;
+  const actions = document.getElementById('reviewActions');
+  const revealed = actions && actions.style.display === 'flex';
+  if(e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); if(!revealed) flipReviewCard(); }
+  else if(revealed && e.key === '1'){ rateReviewCard(false); }
+  else if(revealed && e.key === '2'){ rateReviewCard(true); }
+});
 
 /* ===== DAILY NOTIFICATION ===== */
 function requestNotificationPermission(){
@@ -387,6 +404,7 @@ function updateProgressChips(){
   const chip = document.getElementById('wordsChip');
   if(wc) wc.textContent = stats.words.length;
   if(chip) chip.style.display = stats.words.length > 0 ? 'inline-flex' : 'none';
+  updateReviewNudge();
 }
 
 // Spaced repetition: returns words due for review today
@@ -1663,6 +1681,17 @@ function addMsg(type, text, html){
   return div;
 }
 
+// Message d'erreur AVEC bouton "Réessayer" (relance callAI avec les mêmes args)
+function retryMsg(message, userReply, opts){
+  const el = addMsg('feedback wrong', message);
+  const b = document.createElement('button');
+  b.className = 'chip retry-chip'; b.type = 'button'; b.textContent = '↻ Réessayer';
+  b.onclick = ()=>{ el.remove(); callAI(userReply, opts); };
+  el.appendChild(document.createElement('br'));
+  el.appendChild(b);
+  return el;
+}
+
 /* Feedback encourageant du conteur (récompense variable, ton de tuteur) */
 const PRAISE = [
   "Belle réponse ! ✨", "Bravo, continue comme ça ! 👏", "Super, l'histoire avance 🌊",
@@ -2028,7 +2057,7 @@ async function callAI(userReply, opts){
       loadingEl.remove();
       if(sceneCard) sceneCard.classList.remove('thinking');
       setMascotColor('red');
-      addMsg('feedback wrong', '⏳ Trop de demandes d\u2019un coup — patiente ~30 secondes puis réessaie.');
+      retryMsg('⏳ Trop de demandes d\u2019un coup — patiente ~30 secondes puis réessaie.', userReply, opts);
       sendBtn.disabled = false; input.disabled = false;
       return;
     }
@@ -2039,7 +2068,7 @@ async function callAI(userReply, opts){
       loadingEl.remove();
       if(sceneCard) sceneCard.classList.remove('thinking');
       setMascotColor('red');
-      addMsg('feedback wrong', 'Erreur : ' + (data.error || ('HTTP ' + res.status)));
+      retryMsg('Le conteur a rencontré un souci. Réessaie dans un instant.', userReply, opts);
       sendBtn.disabled = false; input.disabled = false;
       return;
     }
@@ -2051,7 +2080,7 @@ async function callAI(userReply, opts){
     if(!fullText.trim()){
       if(sceneCard) sceneCard.classList.remove('thinking');
       setMascotColor('red');
-      addMsg('feedback wrong', 'Le conteur n\u2019a rien répondu — réessaie.');
+      retryMsg('Le conteur n\u2019a rien répondu — réessaie.', userReply, opts);
       sendBtn.disabled = false; input.disabled = false;
       return;
     }
@@ -2118,9 +2147,9 @@ async function callAI(userReply, opts){
     setMascotColor('red');
     console.error('[CLIENT] Erreur callAI — name=' + (err.name || '?') + ' message=' + (err.message || '?'));
     if(err.name === 'AbortError'){
-      addMsg('feedback wrong', '⏱️ Le conteur met trop de temps à répondre, réessaie.');
+      retryMsg('⏱️ Le conteur met trop de temps à répondre.', userReply, opts);
     } else {
-      addMsg('feedback wrong', 'Erreur réseau : ' + err.message);
+      retryMsg('⚠️ Problème de connexion. Vérifie ta connexion et réessaie.', userReply, opts);
     }
     sendBtn.disabled = false; input.disabled = false;
   }

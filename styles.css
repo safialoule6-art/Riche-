@@ -1154,6 +1154,9 @@ footer b{ color:var(--foam); }
 
 /* Barre d'actions sous la scène */
 .scene-actions{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:10px 0 4px; }
+.review-nudge{ display:inline-flex; margin:2px auto 8px; align-self:center;
+  background:color-mix(in srgb,var(--neon) 14%,transparent); border-color:color-mix(in srgb,var(--neon) 45%,transparent); color:var(--wave); font-weight:800; }
+.retry-chip{ margin-top:8px; }
 .chip-btn{
   font-family:'Inter Tight',sans-serif; font-weight:600; font-size:13px; letter-spacing:-.01em;
   padding:8px 14px; border-radius:999px; cursor:pointer;
