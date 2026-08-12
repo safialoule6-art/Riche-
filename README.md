@@ -43,11 +43,16 @@ Au lieu d'exercices répétitifs, un **conteur IA** raconte une histoire immersi
 
 | Fichier | Rôle |
 |---|---|
-| `sql/affiliate.sql` | Programme d'affiliation |
-| `sql/saga.sql` | **Persistance de la saga** (historique + résumé glissant par langue) et **état joueur durable** (XP, vocabulaire, personnages, lieux, succès) — corrige l'histoire "au hasard" et la perte de progression à la déconnexion. |
-| `sql/security.sql` | **Sécurité (RLS)** : verrouille l'accès public aux tables `progress`, `leads`, `refund_requests`, `referrals`. À exécuter pour éviter que la clé anon publique ne lise/écrive les données de tous les comptes. |
+| Fichier | Rôle |
+|---|---|
+| **`sql/setup.sql`** | **⭐ Tout-en-un (recommandé)** — regroupe saga + état joueur + push + affiliation + sécurité (RLS), avec garde-fous. **Colle-le une fois dans le SQL Editor de Supabase et clique Run.** Idempotent. |
+| `sql/saga.sql` | Persistance de la saga (historique + résumé + cliffhanger) et état joueur durable (XP, vocabulaire, personnages…). |
+| `sql/affiliate.sql` | Programme d'affiliation. |
+| `sql/security.sql` | Sécurité (RLS) : verrouille `progress`, `leads`, `refund_requests`, `referrals`. |
 
-> Tant que `sql/saga.sql` n'est pas exécuté, l'app fonctionne quand même : elle retombe automatiquement sur le stockage local (aucune régression), mais la synchro multi-appareils et la reprise cloud sont désactivées.
+> `sql/setup.sql` contient déjà le contenu des trois autres : si tu l'exécutes, tu n'as pas besoin de lancer les autres.
+
+> Tant que le SQL n'est pas exécuté, l'app fonctionne quand même : elle retombe sur le stockage local (aucune régression), mais la synchro multi-appareils, la reprise cloud et le push personnalisé sont désactivés.
 
 ## Moteur narratif (continuité)
 

@@ -2130,6 +2130,12 @@ window.toggleVoiceInput = function(){
   if(isListening){ stopListening(); return; }
   startListening();
 };
+// Polish : masque le micro si la reconnaissance vocale n'est pas supportée (iOS Safari, Firefox…)
+document.addEventListener('DOMContentLoaded', () => {
+  if(!(window.SpeechRecognition || window.webkitSpeechRecognition)){
+    const m = document.getElementById('micBtn'); if(m) m.style.display = 'none';
+  }
+});
 
 function startListening(){
   recognition = initSpeechRecognition();

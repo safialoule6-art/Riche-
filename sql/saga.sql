@@ -75,10 +75,8 @@ create policy "user_state_update_own" on public.user_state
 -- Idempotent — ré-exécutable sans risque.
 -- ============================================================================
 
--- Colonnes affiche de série sur la saga
+-- Colonne titre de saga (jaquette de série)
 alter table public.saga add column if not exists title       text;
-alter table public.saga add column if not exists cover       text;
-alter table public.saga add column if not exists cover_style text;
 
 -- Abonnements push (écrits par le serveur via service_role ; RLS verrouillé)
 create table if not exists public.push_subscriptions (
