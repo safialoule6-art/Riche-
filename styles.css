@@ -277,6 +277,27 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 #xpChip{color:var(--gold); display:none;}
 .chip.pop{animation:pop .4s var(--ease);}
 @keyframes pop{0%{transform:scale(1);}40%{transform:scale(1.22);}100%{transform:scale(1);}}
+/* ---- Tap-first : boutons de choix proeminents ---- */
+.choice-list{display:flex; flex-direction:column; gap:8px; margin:10px 0 2px;}
+.choice-label{font-size:12px; font-weight:800; color:var(--muted); margin-bottom:2px;}
+.choice-btn{display:flex; align-items:center; gap:10px; width:100%; text-align:left; cursor:pointer;
+  background:var(--card); border:2px solid var(--card-border); border-radius:14px; padding:12px 14px;
+  font-family:inherit; font-size:14px; font-weight:700; color:var(--foam); transition:border-color .15s, background .15s, transform .07s;}
+.choice-btn:hover{border-color:var(--neon,var(--wave)); background:color-mix(in srgb, var(--neon,var(--wave)) 10%, transparent);}
+.choice-btn:active{transform:translateY(2px);}
+.choice-arrow{color:var(--neon,var(--wave)); font-size:12px; flex-shrink:0;}
+/* ---- Question de comprehension (tap) ---- */
+.comp-card{margin:10px 0; padding:14px; background:var(--surf); border:2px solid var(--card-border); border-radius:16px;}
+.comp-q{font-size:14px; font-weight:800; color:var(--foam); margin-bottom:10px;}
+.comp-opts{display:flex; flex-direction:column; gap:8px;}
+.comp-opt{width:100%; text-align:left; cursor:pointer; background:var(--card); border:2px solid var(--card-border);
+  border-radius:12px; padding:10px 12px; font-family:inherit; font-size:13px; font-weight:700; color:var(--foam); transition:border-color .15s, background .15s;}
+.comp-opt:hover:not(:disabled){border-color:var(--neon,var(--wave));}
+.comp-opt:disabled{cursor:default;}
+.comp-opt.right{border-color:var(--ok); background:color-mix(in srgb, var(--ok) 16%, transparent);}
+.comp-opt.wrong{border-color:var(--err); background:color-mix(in srgb, var(--err) 14%, transparent);}
+.comp-fb{margin-top:8px; font-size:13px; font-weight:800;}
+.comp-fb.ok{color:var(--ok);} .comp-fb.ko{color:var(--err);}
 .icon-btn{width:38px; height:38px; border-radius:12px; border:2px solid var(--line); background:var(--card); color:var(--foam);
   cursor:pointer; font-size:16px; display:inline-flex; align-items:center; justify-content:center; transition:transform .12s var(--ease), border-color .2s;}
 .icon-btn:hover{border-color:var(--wave);}

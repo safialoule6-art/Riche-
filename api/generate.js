@@ -108,9 +108,10 @@ OUTPUT — return ONLY a valid minified JSON object, no markdown, with EXACTLY t
  "emotion": "happy|surprised|think|neutral",
  "episodeComplete": ${nearEnd ? "true" : "false"},
  "episodeTitle": "<short FR episode title when episodeComplete is true, else empty>",
- "choices": ["<short suggested reply in ${language}>","<another short suggested reply in ${language}>"]
+ "choices": ["<short suggested reply in ${language}>","<another short suggested reply in ${language}>"],
+ "quiz": {"q":"<short FRENCH comprehension question about what just happened in the story, or empty string on the very first chapter>","options":["<French option>","<French option>","<French option>"],"answer":<0-based index of the correct option>}
 }
-The "vocab" array must list the words you highlighted in "story" with their French translation. The "recap" must be cumulative so a future episode stays consistent.`;
+The "vocab" array must list the words you highlighted in "story" with their French translation. The "recap" must be cumulative so a future episode stays consistent. The "quiz" is a quick comprehension check written in FRENCH about the latest story beat, with 3 plausible French options and the 0-based index of the correct one; include it from the 2nd chapter onward, and for the very first chapter set it to {"q":"","options":[],"answer":0}.`;
 }
 
 function jsonResponse(data, status) {
@@ -229,6 +230,9 @@ export default async function handler(req) {
     episodeComplete: parsed.episodeComplete === true,
     episodeTitle: (parsed.episodeTitle && String(parsed.episodeTitle).trim()) || "",
     choices: Array.isArray(parsed.choices) ? parsed.choices.filter(c => typeof c === "string" && c).slice(0, 3) : [],
+    quiz: (parsed.quiz && typeof parsed.quiz.q === "string" && parsed.quiz.q.trim() && Array.isArray(parsed.quiz.options) && parsed.quiz.options.length >= 2)
+      ? { q: parsed.quiz.q.trim(), options: parsed.quiz.options.filter(o => typeof o === "string" && o).slice(0, 4), answer: Number.isInteger(parsed.quiz.answer) ? parsed.quiz.answer : 0 }
+      : null,
   };
 
   return jsonResponse(out, 200);
