@@ -115,7 +115,7 @@
     <a href="#pricing" data-i18n="nav_pricing">Tarifs</a>
     <button class="theme-toggle-inline" onclick="toggleTheme()" aria-label="Changer de thème" title="Changer de thème">🌙</button>
     <button class="btn ghost small" id="langSwitchNav" onclick="switchLang()" data-i18n="lang_switch" style="width:auto;padding:6px 10px;font-size:12px;">🇫🇷 FR</button>
-    <a href="/app" class="btn ghost small" data-i18n="nav_login">Se connecter</a>
+    <a href="/app" id="navLoginLink" class="btn ghost small" data-i18n="nav_login">Se connecter</a>
     <button class="btn small nav-install-btn" id="installBtnNav" onclick="installPwa()" style="background:linear-gradient(135deg,var(--wave-2),var(--wave));color:#fff;border:none;width:auto;">↓ App</button>
   </div>
 </nav>
@@ -130,6 +130,13 @@
       <div class="hero-text">
         <h1 class="hero-title"><span data-i18n="hero_title_1">Vis une histoire.</span><br><span class="hl" data-i18n="hero_title_2">Apprends une langue.</span></h1>
         <p class="hero-sub" data-i18n="hero_sub">Les autres apps te font traduire « le chat mange ». Sunami te plonge dans une histoire dont tu veux connaître la suite — et tu apprends une langue sans t'en rendre compte.</p>
+        <!-- Accueil "bon retour" pour un utilisateur déjà connecté (affiché par landing.js) -->
+        <div id="welcomeBack" class="welcome-back" style="display:none;flex-direction:column;gap:14px;align-items:stretch;">
+          <p class="hero-sub" style="margin:0;"><span data-i18n="wb_title">Content de te revoir</span> <span aria-hidden="true">👋</span><br><b id="wbEmail" style="color:var(--foam);"></b></p>
+          <button class="btn" type="button" onclick="enterApp()" data-i18n="wb_continue">Reprendre mon histoire</button>
+          <button class="text-link small" type="button" onclick="logoutFromLanding()" data-i18n="wb_logout">Ce n'est pas toi ? Se déconnecter</button>
+        </div>
+        <div id="signedOutCta">
         <button class="btn" id="googleBtn" onclick="loginWithGoogle()" data-i18n="hero_cta">Commencer mon histoire — gratuit</button>
         <div class="error-msg" id="authError"></div>
         <div class="auth-divider"><span data-i18n="hero_ou">ou</span></div>
@@ -155,6 +162,7 @@
       </form>
 
       <div class="cta-note"><span data-i18n="hero_note">via Google ou email</span> · <b data-i18n="hero_free">100% gratuit</b> · <span data-i18n="hero_devices">sur tous tes appareils</span></div>
+      </div><!-- /signedOutCta -->
 
       <div class="lang-pills">
         <span class="lang-pill">🇬🇧 Anglais</span>
