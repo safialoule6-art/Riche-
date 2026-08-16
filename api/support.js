@@ -4,7 +4,7 @@
 export const config = { runtime: "edge" };
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama-3.1-8b-instant";
+const MODEL = "openai/gpt-oss-120b";
 
 // FAQ : répond sans aucun appel API
 const FAQ = [
@@ -102,14 +102,14 @@ YOUR ROLE: Answer in French, be friendly, concise (max 3-4 sentences). If you do
     let groqRes = await fetch(GROQ_URL, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: MODEL, messages: [{ role:"system", content: SYSTEM_PROMPT }, { role:"user", content: message }], stream: false, temperature: 0.7, max_tokens: 200 }),
+      body: JSON.stringify({ model: MODEL, messages: [{ role:"system", content: SYSTEM_PROMPT }, { role:"user", content: message }], stream: false, temperature: 0.7, max_completion_tokens: 800, reasoning_effort: "low", include_reasoning: false }),
     });
     // Fallback sur la 2e clé si rate limit
     if(groqRes.status === 429 && apiKey2){
       groqRes = await fetch(GROQ_URL, {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${apiKey2}` },
-        body: JSON.stringify({ model: MODEL, messages: [{ role:"system", content: SYSTEM_PROMPT }, { role:"user", content: message }], stream: false, temperature: 0.7, max_tokens: 200 }),
+        body: JSON.stringify({ model: MODEL, messages: [{ role:"system", content: SYSTEM_PROMPT }, { role:"user", content: message }], stream: false, temperature: 0.7, max_completion_tokens: 800, reasoning_effort: "low", include_reasoning: false }),
       });
     }
 
