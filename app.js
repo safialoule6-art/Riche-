@@ -118,8 +118,8 @@ window.resetProgress = async function(){
   xp = 0; localStorage.setItem('sunami-xp', '0');
   stats = { words: [], chapters: 0, dayKey: null, chaptersToday: 0, goalHitDay: null };
   localStorage.removeItem('sunami-stats');
-  characters = []; storyLocations = []; unlockedAchievements = [];
-  localStorage.removeItem('sunami-characters'); localStorage.removeItem('sunami-locations'); localStorage.removeItem('sunami-achievements');
+  characters = []; storyLocations = []; unlockedAchievements = []; sagaEpisodes = [];
+  localStorage.removeItem('sunami-characters'); localStorage.removeItem('sunami-locations'); localStorage.removeItem('sunami-achievements'); localStorage.removeItem('sunami-saga-episodes');
   sagaRecap = ''; sagaSetting = ''; chatHistory = [];
   try{ await saveProgress(); }catch(e){}
   // Efface aussi la persistance cloud (sinon elle reviendrait au rechargement)
@@ -767,21 +767,61 @@ function detectLocation(text){
   localStorage.setItem('sunami-locations', JSON.stringify(storyLocations));
 }
 
+/* ===== Journal des épisodes joués (pour la carte interactive) ===== */
+let sagaEpisodes = [];
+try{ sagaEpisodes = JSON.parse(localStorage.getItem('sunami-saga-episodes') || '[]'); }catch(e){}
+function saveEpisodesLog(){ try{ localStorage.setItem('sunami-saga-episodes', JSON.stringify(sagaEpisodes.slice(-50))); }catch(e){} }
+function logCompletedEpisode(ep, title){
+  const entry = { ep, title: (title || '').trim(), setting: sagaSetting || '', recap: sagaRecap || '' };
+  const i = sagaEpisodes.findIndex(e => e.ep === ep);
+  if(i >= 0) sagaEpisodes[i] = entry; else sagaEpisodes.push(entry);
+  saveEpisodesLog();
+}
+
+/* Carte de l'histoire : parcours d'épisodes cliquable, base sur les vraies donnees */
 function renderStoryMap(){
   const container = document.getElementById('storyMapContainer');
   if(!container) return;
   if(!isPro()){ container.innerHTML = '<div class="ach-empty">🔒 Carte interactive — disponible en offre Pro</div>'; return; }
-  if(storyLocations.length === 0){ container.innerHTML = '<div class="ach-empty">Aucun lieu exploré. Continue l\'histoire !</div>'; return; }
-  container.innerHTML = '<div class="story-map">' +
-    storyLocations.map((l,i) =>
-      '<div class="map-node">' +
-        (i > 0 ? '<div class="map-line"></div>' : '') +
-        '<div class="map-dot">' + l.emoji + '</div>' +
-        '<div class="map-label">' + l.name + '<small>Ch. ' + l.chapter + '</small></div>' +
-      '</div>'
-    ).join('') +
-  '</div>';
+  const cur = progress.episode || 1;
+  const byEp = {}; sagaEpisodes.forEach(e => { byEp[e.ep] = e; });
+  const nodes = [];
+  for(let ep = 1; ep < cur; ep++){
+    const info = byEp[ep] || {};
+    nodes.push({ ep, state:'done', title: info.title || ('Épisode ' + ep), setting: info.setting || '', recap: info.recap || '' });
+  }
+  nodes.push({ ep: cur, state:'current',
+    title: sagaTitle ? (sagaTitle + ' — Ép. ' + cur) : ('Épisode ' + cur),
+    setting: sagaSetting || '', recap: sagaRecap || '', chapters: Math.min(chapter || 0, 5) });
+  nodes.push({ ep: cur + 1, state:'locked', title:'Épisode ' + (cur + 1), setting:'', recap:'' });
+
+  container.innerHTML = '<div class="emap">' + nodes.map(n => {
+    const icon = n.state === 'done' ? '✓' : (n.state === 'current' ? '🌊' : '🔒');
+    const metaTxt = n.state === 'locked' ? 'À venir'
+      : (n.setting ? '📍 ' + escapeHtml(n.setting) : (n.state === 'current' ? 'En cours' : 'Terminé'));
+    const clickable = n.state !== 'locked';
+    let detail = '';
+    if(clickable){
+      const chaps = n.state === 'current' ? '<div class="emap-chaps">Chapitre ' + (n.chapters || 0) + '/5</div>' : '';
+      const body = n.recap ? '<p>' + escapeHtml(n.recap) + '</p>' : '<p class="emap-empty">Pas encore de résumé pour cet épisode.</p>';
+      detail = '<div class="emap-detail" id="emap-d-' + n.ep + '">' + chaps + body + '</div>';
+    }
+    return '<div class="emap-node ' + n.state + '">' +
+      '<div class="emap-row"' + (clickable ? ' role="button" tabindex="0" onclick="toggleEpisodeDetail(' + n.ep + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleEpisodeDetail(' + n.ep + ');}"' : '') + '>' +
+        '<div class="emap-dot">' + icon + '</div>' +
+        '<div class="emap-info"><b>' + escapeHtml(n.title) + '</b><small>' + metaTxt + '</small></div>' +
+        (clickable ? '<span class="emap-caret">▾</span>' : '') +
+      '</div>' + detail +
+    '</div>';
+  }).join('') + '</div>';
 }
+window.toggleEpisodeDetail = function(ep){
+  const d = document.getElementById('emap-d-' + ep);
+  if(!d) return;
+  const open = d.classList.toggle('open');
+  const node = d.closest('.emap-node');
+  if(node) node.classList.toggle('expanded', open);
+};
 
 /* ===== PREMIUM ===== */
 function isPremium(){ return progress.plan === 'premium' || progress.plan === 'pro' || isDevAccount(); }
@@ -1303,6 +1343,7 @@ function renderChoices(choices){
 /* Fin d'épisode : on passe à l'épisode suivant, on célèbre, on sauvegarde */
 function onEpisodeComplete(title){
   const finishedEp = progress.episode || 1;
+  logCompletedEpisode(finishedEp, title);
   sagaCover = buildCover(finishedEp, sagaCoverStyle, coverSalt, false);
   appendEpisodeCover(title, finishedEp);
   progress.episode = finishedEp + 1;
