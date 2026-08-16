@@ -979,7 +979,7 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
    ======================================================================= */
 
 /* ---- Palette : thème sombre (vedette, fidèle à la référence) ---- */
-[data-theme="dark"]{
+html[data-theme="dark"]{
   --abyss:#0f0d0b; --deep:#17140f; --surf:#1c1814; --foam:#f5f2ec; --muted:#a49c8d;
   --wave:#bfff2e; --wave-2:#d4ff63; --wave-dim:#a6e600; --btn-shadow:transparent;
   --accent:#ff5d63; --accent-dim:#c9454b; --gold:#ffcf4d;
