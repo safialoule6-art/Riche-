@@ -31,11 +31,48 @@ let inRecovery = isRecoveryLink();
   }
 })();
 
-/* Déjà connecté ? -> on file directement vers l'app (sauf lien de récupération en cours) */
+/* ===== Retour d'un utilisateur déjà connecté =====
+   Best practice UX : on NE force PAS la redirection instantanée d'un visiteur qui
+   revient sur la landing (frustrant, il perd le contrôle et ne peut plus voir le
+   marketing / se déconnecter). On l'accueille avec un "content de te revoir" + un
+   bouton "Reprendre". On ne redirige automatiquement QUE lorsqu'il vient de se
+   connecter volontairement (email/Google), signalé par un drapeau d'intention. */
+const LOGIN_INTENT_KEY = 'sunami_login_intent';
+function markLoginIntent(){ try{ sessionStorage.setItem(LOGIN_INTENT_KEY, '1'); }catch(e){} }
+function consumeLoginIntent(){ try{ const v = sessionStorage.getItem(LOGIN_INTENT_KEY); sessionStorage.removeItem(LOGIN_INTENT_KEY); return !!v; }catch(e){ return false; } }
+function enterApp(){ window.location.replace('/app'); }
+
+function showWelcomeBack(session){
+  const run = ()=>{
+    const wb = document.getElementById('welcomeBack');
+    const cta = document.getElementById('signedOutCta');
+    if(!wb){ enterApp(); return; } // filet de sécurité si l'UI d'accueil est absente
+    const emailEl = document.getElementById('wbEmail');
+    if(emailEl && session && session.user && session.user.email) emailEl.textContent = session.user.email;
+    if(cta) cta.style.display = 'none';
+    wb.style.display = 'flex';
+    const navLogin = document.getElementById('navLoginLink');
+    if(navLogin){ navLogin.textContent = (document.documentElement.lang === 'en') ? 'Open the app' : "Ouvrir l'app"; }
+  };
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
+}
+
+window.enterApp = enterApp;
+window.logoutFromLanding = async function(){
+  try{ await supabase.auth.signOut(); }catch(e){}
+  consumeLoginIntent();
+  const wb = document.getElementById('welcomeBack'); if(wb) wb.style.display = 'none';
+  const cta = document.getElementById('signedOutCta'); if(cta) cta.style.display = '';
+  const navLogin = document.getElementById('navLoginLink'); if(navLogin) navLogin.textContent = (document.documentElement.lang === 'en') ? 'Sign in' : 'Se connecter';
+};
+
 (async function(){
   if(inRecovery) return;
   const { data } = await supabase.auth.getSession();
-  if(data.session) window.location.replace('/app');
+  if(!data.session) return;
+  if(consumeLoginIntent()){ enterApp(); return; } // connexion volontaire -> on entre direct
+  showWelcomeBack(data.session);                  // simple visite -> accueil "bon retour"
 })();
 supabase.auth.onAuthStateChange((event, session)=>{
   if(event === 'PASSWORD_RECOVERY'){
@@ -45,7 +82,10 @@ supabase.auth.onAuthStateChange((event, session)=>{
     const recBox = document.getElementById('recoveryBox'); if(recBox) recBox.style.display = 'flex';
     return;
   }
-  if(session && !inRecovery) window.location.replace('/app');
+  if(event === 'SIGNED_IN' && session && !inRecovery){
+    if(consumeLoginIntent()) enterApp();   // login volontaire (email même page / retour OAuth Google)
+    else showWelcomeBack(session);          // session restaurée -> pas de redirection forcée
+  }
 });
 
 window.confirmNewPassword = async function(){
@@ -63,6 +103,7 @@ window.loginWithGoogle = async function(){
   const errEl = document.getElementById('authError'); if(errEl) errEl.textContent = '';
   try{ if(window.sunamiTrack) window.sunamiTrack('login_start', { method: 'google' }); }catch(e){}
   // On revient sur '/', puis la landing détecte la session et redirige vers '/app'
+  markLoginIntent();
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: window.location.origin }
@@ -107,6 +148,7 @@ window.loginWithEmail = async function(){
   if(!password){ setEmailAuthMsg('Entre ton mot de passe.', true); return; }
   setEmailAuthMsg(''); setEmailAuthBusy(true);
   try{ if(window.sunamiTrack) window.sunamiTrack('login_start', { method: 'email' }); }catch(e){}
+  markLoginIntent();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   setEmailAuthBusy(false);
   if(error){ setEmailAuthMsg(error.message === 'Invalid login credentials' ? 'Email ou mot de passe incorrect.' : error.message, true); }
@@ -119,6 +161,7 @@ window.signupWithEmail = async function(){
   if(!password || password.length < 6){ setEmailAuthMsg('Le mot de passe doit faire au moins 6 caractères.', true); return; }
   setEmailAuthMsg(''); setEmailAuthBusy(true);
   try{ if(window.sunamiTrack) window.sunamiTrack('login_start', { method: 'email_signup' }); }catch(e){}
+  markLoginIntent();
   const { data, error } = await supabase.auth.signUp({ email, password });
   setEmailAuthBusy(false);
   if(error){
