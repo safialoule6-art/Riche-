@@ -2115,14 +2115,96 @@ function updateSceneBanner(){
 }
 function cleanForSpeech(s){ return s.replace(/\*\*/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim(); }
 
+/* ===== ENTRAINEMENT PRONONCIATION (reponse a l'oral notee) =====
+   Reutilise la reconnaissance vocale du navigateur (gratuit) : l'apprenant
+   repete la phrase de l'histoire, on compare a la cible -> score + mots a
+   corriger. Non bloquant. Le bouton n'apparait que si la reco est dispo. */
+const SPEECH_REC_OK = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+let pronRec = null, pronBusy = false;
+function pronNormalize(s){
+  return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean);
+}
+function scorePronunciation(expected, said){
+  const exp = pronNormalize(expected);
+  const pool = pronNormalize(said);
+  const marks = exp.map(w => { const i = pool.indexOf(w); if(i >= 0){ pool.splice(i, 1); return true; } return false; });
+  const ok = marks.filter(Boolean).length;
+  return { pct: exp.length ? Math.round(ok / exp.length * 100) : 0, exp, marks };
+}
+function renderPronResult(card, res, clean, rawTarget){
+  const words = res.exp.map((w, i) => '<span class="pron-word ' + (res.marks[i] ? 'ok' : 'bad') + '">' + escapeHtml(w) + '</span>').join(' ');
+  let verdict, cls;
+  if(res.pct >= 85){ verdict = 'Excellente prononciation ! 🌟'; cls = 'great'; }
+  else if(res.pct >= 60){ verdict = 'Bien ! Continue 👍'; cls = 'good'; }
+  else { verdict = 'Reessaie — ecoute d\'abord le modele 🔁'; cls = 'low'; }
+  card.innerHTML =
+    '<div class="pron-score ' + cls + '">Prononciation : ' + res.pct + '%</div>' +
+    '<div class="pron-words">' + words + '</div>' +
+    '<div class="pron-fb">' + verdict + '</div>' +
+    '<div class="pron-actions"></div>';
+  const actions = card.querySelector('.pron-actions');
+  const bModel = document.createElement('button');
+  bModel.type = 'button'; bModel.className = 'btn ghost small'; bModel.textContent = '🔊 Ecouter le modele';
+  bModel.onclick = () => speak(clean);
+  const bRetry = document.createElement('button');
+  bRetry.type = 'button'; bRetry.className = 'btn ghost small'; bRetry.textContent = '🎙️ Reessayer';
+  bRetry.onclick = () => { const bubble = card.closest('.story-bubble') || card.parentNode; card.remove(); practicePronunciation(rawTarget, bubble, bubble.querySelector('.pron-btn')); };
+  actions.appendChild(bModel); actions.appendChild(bRetry);
+  if(res.pct >= 80){ try{ addXp(6); popXp(6); }catch(e){} if(window.SFX) SFX.play('correct'); }
+  scrollChat();
+}
+function practicePronunciation(rawTarget, bubble, btn){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR || pronBusy || !bubble) return;
+  try{ if(typeof isListening !== 'undefined' && isListening) stopListening(); }catch(e){}
+  const clean = cleanForSpeech(rawTarget);
+  bubble.querySelectorAll('.pron-card').forEach(e => e.remove());
+  const card = document.createElement('div');
+  card.className = 'pron-card';
+  card.innerHTML = '<div class="pron-target">' + escapeHtml(clean) + '</div>' +
+    '<div class="pron-status">🎙️ Parle maintenant… repete la phrase</div>';
+  bubble.appendChild(card); scrollChat();
+  pronRec = new SR();
+  pronRec.lang = SPEECH_LANG[pickedLang] || LOCALES[pickedLang] || 'en-US';
+  pronRec.continuous = false; pronRec.interimResults = false; pronRec.maxAlternatives = 1;
+  pronBusy = true; if(btn) btn.classList.add('listening');
+  let got = false;
+  pronRec.onresult = (ev) => {
+    got = true;
+    let said = '';
+    for(let i = 0; i < ev.results.length; i++) said += ev.results[i][0].transcript + ' ';
+    renderPronResult(card, scorePronunciation(clean, said), clean, rawTarget);
+  };
+  pronRec.onerror = (ev) => {
+    const st = card.querySelector('.pron-status');
+    if(st) st.textContent = (ev.error === 'not-allowed' || ev.error === 'service-not-allowed')
+      ? '🎙️ Autorise le micro pour t\'entrainer.' : '🎙️ Je n\'ai rien entendu — reessaie.';
+  };
+  pronRec.onend = () => {
+    pronBusy = false; if(btn) btn.classList.remove('listening');
+    if(!got){ const st = card.querySelector('.pron-status'); if(st && !card.querySelector('.pron-fb')) st.textContent = '🎙️ Je n\'ai rien entendu — reessaie.'; }
+  };
+  try{ pronRec.start(); }catch(e){ pronBusy = false; if(btn) btn.classList.remove('listening'); }
+}
+
 function addSpeaker(bubble, text){
-  if(!('speechSynthesis' in window)) return;
-  const spk = document.createElement('button');
-  spk.className = 'speak-btn'; spk.type = 'button';
-  spk.setAttribute('aria-label','Écouter'); spk.title = 'Écouter';
-  spk.textContent = '🔊';
-  spk.onclick = () => speak(text, spk);
-  bubble.appendChild(spk);
+  if('speechSynthesis' in window){
+    const spk = document.createElement('button');
+    spk.className = 'speak-btn'; spk.type = 'button';
+    spk.setAttribute('aria-label','Écouter'); spk.title = 'Écouter';
+    spk.textContent = '🔊';
+    spk.onclick = () => speak(text, spk);
+    bubble.appendChild(spk);
+  }
+  if(SPEECH_REC_OK && text && text.trim()){
+    const pr = document.createElement('button');
+    pr.className = 'pron-btn'; pr.type = 'button';
+    pr.setAttribute('aria-label','Repeter a voix haute'); pr.title = "S'entrainer a prononcer";
+    pr.textContent = '🎙️';
+    pr.onclick = () => practicePronunciation(text, bubble, pr);
+    bubble.appendChild(pr);
+  }
 }
 
 async function callAI(userReply, opts){
