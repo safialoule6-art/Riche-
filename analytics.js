@@ -38,14 +38,44 @@
   /* ── API unique de tracking ──
      Appelle window.sunamiTrack('nom_evenement', { … }) partout dans l'app.
      Route automatiquement vers GA4 et TikTok si activés. */
+  /* ── Identite anonyme (visiteur persistant) + session (par onglet) ── */
+  var _vid;
+  try {
+    _vid = localStorage.getItem('sunami_vid');
+    if (!_vid) { _vid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8); localStorage.setItem('sunami_vid', _vid); }
+  } catch (e) { _vid = 'anon'; }
+  var _sid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  var _uid = null;
+  // L'app appelle ceci une fois l'utilisateur connu (pour relier visiteur -> compte).
+  window.sunamiSetUser = function (id) { _uid = id || null; };
+
+  /* ── Puits "first-party" : envoie l'evenement a /api/track (Supabase) ── */
+  function firstPartySink(event, params) {
+    try {
+      var payload = JSON.stringify({
+        event: event, props: params || {},
+        visitor_id: _vid, session_id: _sid, user_id: _uid,
+        path: location.pathname, referrer: document.referrer || ''
+      });
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/api/track', new Blob([payload], { type: 'application/json' }));
+      } else {
+        fetch('/api/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true }).catch(function () {});
+      }
+    } catch (e) {}
+  }
+
   window.sunamiTrack = function (event, params) {
     if (!event) return;
     params = params || {};
+    firstPartySink(event, params); // toujours actif (analytics maison, sans IDs externes)
     try { if (gaOn) window.gtag('event', event, params); } catch (e) {}
     try { if (ttOn && window.ttq) window.ttq.track(event, params); } catch (e) {}
-    // Trace visible en console tant que les pixels ne sont pas branchés
     if (!gaOn && !ttOn && window.console && console.debug) {
       console.debug('[sunami-track]', event, params);
     }
   };
+
+  // Vue de page automatique (funnel d'acquisition).
+  try { window.sunamiTrack('page_view', { title: document.title }); } catch (e) {}
 })();
