@@ -1329,14 +1329,57 @@ function renderChoices(choices){
   document.querySelectorAll('.quick-chips').forEach(e=>e.remove());
   if(!Array.isArray(choices) || !choices.length) return;
   const wrap = document.createElement('div');
-  wrap.className = 'chips quick-chips';
+  wrap.className = 'choice-list quick-chips';
+  const label = document.createElement('div');
+  label.className = 'choice-label';
+  label.textContent = '💬 Choisis ta réponse — ou écris la tienne';
+  wrap.appendChild(label);
   choices.forEach(txt=>{
     const b = document.createElement('button');
-    b.type = 'button'; b.className = 'chip'; b.textContent = txt;
+    b.type = 'button'; b.className = 'choice-btn';
+    b.innerHTML = '<span class="choice-arrow">➤</span><span>' + escapeHtml(txt) + '</span>';
     b.onclick = ()=>{ const input = document.getElementById('userInput'); if(input) input.value = txt; document.querySelectorAll('.quick-chips').forEach(e=>e.remove()); sendReply(); };
     wrap.appendChild(b);
   });
   document.getElementById('chatLog').appendChild(wrap);
+  scrollChat();
+}
+
+/* Mini-question de comprehension (tap) : verifie que l'histoire a ete comprise.
+   Non bloquant : feedback instantane + petit bonus d'XP si correct. */
+function renderComprehension(quiz){
+  document.querySelectorAll('.comp-card').forEach(e=>e.remove());
+  if(!quiz || typeof quiz.q !== 'string' || !quiz.q.trim() || !Array.isArray(quiz.options) || quiz.options.length < 2) return;
+  const answer = Number.isInteger(quiz.answer) && quiz.answer >= 0 && quiz.answer < quiz.options.length ? quiz.answer : 0;
+  const card = document.createElement('div');
+  card.className = 'comp-card';
+  const q = document.createElement('div');
+  q.className = 'comp-q'; q.innerHTML = '🧩 ' + escapeHtml(quiz.q);
+  card.appendChild(q);
+  const opts = document.createElement('div'); opts.className = 'comp-opts';
+  let answered = false;
+  quiz.options.forEach((txt, i)=>{
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'comp-opt'; b.textContent = txt;
+    b.onclick = ()=>{
+      if(answered) return; answered = true;
+      const correct = i === answer;
+      opts.querySelectorAll('.comp-opt').forEach((el, j)=>{
+        el.disabled = true;
+        if(j === answer) el.classList.add('right');
+        else if(j === i) el.classList.add('wrong');
+      });
+      const fb = document.createElement('div');
+      fb.className = 'comp-fb ' + (correct ? 'ok' : 'ko');
+      fb.textContent = correct ? '✓ Bien vu !' : '✗ Presque — relis le passage.';
+      card.appendChild(fb);
+      if(correct){ try{ addXp(5); popXp(5); }catch(e){} if(window.SFX) SFX.play('correct'); }
+      scrollChat();
+    };
+    opts.appendChild(b);
+  });
+  card.appendChild(opts);
+  document.getElementById('chatLog').appendChild(card);
   scrollChat();
 }
 
@@ -2170,6 +2213,7 @@ async function callAI(userReply, opts){
     if(!sagaProtagonist && userEmail){ sagaProtagonist = userEmail.split('@')[0] || ''; }
     mergeStructuredVocab(data.vocab);
     mergeStructuredCharacters(data.characters);
+    renderComprehension(data.quiz);
     renderChoices(data.choices);
     if(data.episodeComplete){
       sagaCliffhanger = cliffhangerFrom(fullText);
