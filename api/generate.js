@@ -1,6 +1,6 @@
 // api/generate.js
 //
-// Moteur narratif de Sunami — Groq (llama-3.1-8b-instant), SORTIE JSON STRUCTURÉE.
+// Moteur narratif de Sunami — Groq (openai/gpt-oss-120b), SORTIE JSON STRUCTURÉE.
 //
 // Objectif : une vraie SAGA à suivre (mêmes personnages, même intrigue, épisodes
 // qui s'enchaînent), pas des scènes au hasard. La continuité est garantie par un
@@ -28,7 +28,7 @@
 export const config = { runtime: "edge" };
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "llama-3.1-8b-instant";
+const MODEL = "openai/gpt-oss-120b";
 const GROQ_TIMEOUT_MS = 25000;
 const CHAPTERS_PER_EPISODE = 5; // un épisode = ~5 chapitres puis cliffhanger
 
@@ -139,8 +139,13 @@ async function callGroq(apiKey, messages, signal) {
       model: MODEL,
       messages,
       stream: false,
-      temperature: 0.8,
-      max_tokens: 900,
+      temperature: 0.7,
+      // gpt-oss-120b est un modèle de raisonnement : les tokens de "pensée" comptent
+      // dans le budget, donc on prévoit large pour ne pas tronquer le JSON, et on met
+      // l'effort de raisonnement au minimum (récit = pas besoin de raisonnement lourd).
+      max_completion_tokens: 2000,
+      reasoning_effort: "low",
+      include_reasoning: false,
       response_format: { type: "json_object" },
     }),
     signal,
