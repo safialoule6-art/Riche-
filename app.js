@@ -557,6 +557,19 @@ function vocabScore(){
   const seen = stats.words.length - mastered;
   return Math.round(mastered * 1 + seen * 0.35);
 }
+/* Estimation honnete par competence : la comprehension precede l'expression.
+   Comprehension = exposition (mots vus, chapitres lus). Expression = production
+   correcte (mots reactives via repetition espacee, phrases jugees justes). */
+function skillScores(){
+  const mastered = stats.words.filter(w => (w.reviewCount||0) >= 3).length;
+  const seen = stats.words.length;
+  const chapters = stats.chapters || 0;
+  const perfects = stats.perfectCount || 0;
+  return {
+    comp: Math.round(seen * 0.5 + mastered * 0.8 + chapters * 1.6),
+    expr: Math.round(mastered * 1.1 + perfects * 2.2 + seen * 0.12),
+  };
+}
 function estimateCEFR(score){
   let idx = 0;
   for(let i=0;i<CEFR_STEPS.length;i++){ if(score >= CEFR_STEPS[i][1]) idx = i; }
@@ -590,18 +603,28 @@ window.openWeeklyReport = function(){
   set('repReviewed', r.reviewed);
   set('repChapters', r.chapters);
   set('repXp', r.xpWeek);
-  set('repCefr', r.cefr.label);
+  // Estimation honnete : comprehension vs expression (deux competences distinctes).
+  // Le niveau global affiche = le plus faible des deux (on n'est fluide que par son maillon faible).
+  const sk = skillScores();
+  const compCefr = estimateCEFR(sk.comp);
+  const exprCefr = estimateCEFR(sk.expr);
+  const lower = compCefr.idx <= exprCefr.idx ? compCefr : exprCefr;
+  set('repCefr', lower.label);
   const fill = document.getElementById('repCefrFill');
-  if(fill) fill.style.width = r.cefr.pct + '%';
-  // Niveau qui monte : compare au dernier niveau vu
+  if(fill) fill.style.width = lower.pct + '%';
+  const split = document.getElementById('repCefrSplit');
+  if(split) split.innerHTML = '<span>📖 Compréhension&nbsp;: <b>' + compCefr.label + '</b></span><span>🗣️ Expression&nbsp;: <b>' + exprCefr.label + '</b></span>';
+  // Niveau qui monte : compare au dernier niveau global vu
   const prevSeen = stats.cefrSeen || 'A1';
   const prevIdx = CEFR_STEPS.findIndex(s => s[0] === prevSeen);
-  const roseUp = r.cefr.idx > (prevIdx < 0 ? 0 : prevIdx);
+  const roseUp = lower.idx > (prevIdx < 0 ? 0 : prevIdx);
   const note = document.getElementById('repCefrNote');
   if(note){
-    if(roseUp) note.textContent = `▲ Tu es passé de ${prevSeen} à ${r.cefr.label} — bravo !`;
-    else if(r.cefr.next) note.textContent = `Plus que ${100 - r.cefr.pct}% de vocabulaire actif pour viser ${r.cefr.next}.`;
-    else note.textContent = 'Niveau maximal estimé atteint. Continue à entretenir ton vocabulaire !';
+    let msg;
+    if(roseUp) msg = `▲ Tu es passé de ${prevSeen} à ${lower.label} — bravo !`;
+    else if(lower.next) msg = `Encore un peu de pratique pour viser ${lower.next}.`;
+    else msg = 'Niveau maximal estimé atteint. Continue à entretenir tes acquis !';
+    note.textContent = msg + ' Estimation indicative — pas un test officiel.';
   }
   const foot = document.getElementById('repFoot');
   if(foot){
@@ -612,7 +635,7 @@ window.openWeeklyReport = function(){
   const total = document.getElementById('repTotal');
   if(total) total.textContent = `Total : ${r.totalWords} mots · ${r.mastered} maîtrisés · série ${r.streak} 🔥 · niveau ${r.level}`;
   // Mémorise le niveau vu (pour la flèche "tu es passé de X à Y")
-  stats.cefrSeen = r.cefr.label; saveStats();
+  stats.cefrSeen = lower.label; saveStats();
   const m = document.getElementById('reportModal');
   if(m){ m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); }
 };
