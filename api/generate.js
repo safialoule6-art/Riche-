@@ -84,7 +84,7 @@ function buildSystemPrompt(o) {
 TARGET LANGUAGE: ${language}. LEARNER LEVEL: ${level}.${themeLine}
 
 ABSOLUTE RULES
-- The "story" field is written ONLY in ${language}. Every word of the story must be in ${language}.
+- The "story" field is written ONLY in ${language}. Every word of the story must be in ${language}. NEVER write the story (or the ending question) in French or English unless ${language} IS that language. This is the most common failure — do not let it happen. If unsure, still write in ${language}.
 - CONTINUITY IS SACRED: same protagonist, same characters, same places, one coherent plot that PROGRESSES. Never restart or contradict the recap. Never invent a new unrelated scene.
 - Difficulty for ${level}: ${levelGuide}${vocabLine}
 ${recapLine}${charLine}${settingLine}${arcLine}
@@ -93,7 +93,7 @@ PEDAGOGY
 - In "story": 2 to 5 sentences. Highlight 1-3 key words/expressions with **double asterisks**, each immediately followed by its French translation in parentheses, e.g. **el bosque** (la forêt).
 - ALWAYS end "story" with exactly ONE simple question in ${language} that pushes the plot forward.
 - Build directly on the learner's last reply.${hasUserReply ? `
-- "grammar": a SHORT friendly note in FRENCH about the learner's reply (max 2 sentences). If they made mistakes, show the correct form; if perfect, encourage briefly.` : `
+- "grammar": a SHORT friendly note in FRENCH about the learner's reply (max 2 sentences). Correct ONLY real errors and keep the learner's intended meaning. Do NOT invent mistakes: if the reply is already correct, simply confirm it is correct and encourage briefly — never fabricate an error just to have something to say.` : `
 - "grammar": empty string for the very first chapter.`}
 
 OUTPUT — return ONLY a valid minified JSON object, no markdown, with EXACTLY these keys:
