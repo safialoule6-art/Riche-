@@ -1745,6 +1745,8 @@ async function enterApp(email, uid){
   document.getElementById('userLabel').textContent = email;
   userId = uid;
   userEmail = email;
+  try{ if(window.sunamiSetUser) window.sunamiSetUser(uid); }catch(e){}
+  track('app_opened', {});
   await loadProgress(uid);
   await pullCloud();
   showDevNotif();
