@@ -887,10 +887,12 @@ window.cancelSubscription = async function(){
 window.requestRefund = async function(){
   if(!confirm('Demander un remboursement intégral ? Traité sous 3-5 jours.')) return;
   try{
+    const sess = (await supabase.auth.getSession()).data.session;
+    if(!sess){ alert('Reconnecte-toi pour demander un remboursement.'); return; }
     const res = await fetch('/api/refund', {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ email: userEmail || 'inconnu', reason: 'Remboursement demandé depuis les paramètres' })
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+sess.access_token},
+      body: JSON.stringify({ reason: 'Remboursement demandé depuis les paramètres' })
     });
     const data = await res.json();
     if(data.success){
@@ -984,8 +986,8 @@ async function loadReferralCode(){
   try{
     const res = await fetch('/api/referral', {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ action:'generate', userId })
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token},
+      body: JSON.stringify({ action:'generate' })
     });
     const d = await res.json();
     if(d.code){
@@ -1001,8 +1003,8 @@ async function loadReferralStats(){
   try{
     const res = await fetch('/api/referral', {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ action:'stats', userId: data.session.user.id })
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token},
+      body: JSON.stringify({ action:'stats' })
     });
     referralStats = await res.json();
   }catch(e){}
@@ -1016,8 +1018,8 @@ async function claimReferral(){
   try{
     await fetch('/api/referral', {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ action:'claim', userId: data.session.user.id, referralCode: ref })
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token},
+      body: JSON.stringify({ action:'claim', referralCode: ref })
     });
     localStorage.removeItem('sunami_ref');
   }catch(e){}
@@ -1711,7 +1713,7 @@ async function subscribePush(){
   const reg = await navigator.serviceWorker.ready;
   let sub = await reg.pushManager.getSubscription();
   if(!sub){ sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey: urlBase64ToUint8Array(key) }); }
-  try{ await fetch('/api/subscribe', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ user_id:userId, subscription: sub }) }); }catch(e){}
+  try{ const sess = (await supabase.auth.getSession()).data.session; if(sess){ await fetch('/api/subscribe', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+sess.access_token}, body: JSON.stringify({ subscription: sub }) }); } }catch(e){}
 }
 window.enableNotifications = async function(){
   if(!('Notification' in window)){ alert('Les notifications ne sont pas supportées sur ce navigateur.'); return; }

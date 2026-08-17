@@ -30,6 +30,16 @@ const $ = (id) => document.getElementById(id);
 
 let referralCode = '';
 
+// En-tetes authentifies (JWT Supabase) pour les appels /api/referral.
+async function affAuthHeaders(){
+  try{
+    const { data } = await supabase.auth.getSession();
+    const t = data && data.session && data.session.access_token;
+    return t ? { 'Content-Type':'application/json', 'Authorization':'Bearer '+t }
+             : { 'Content-Type':'application/json' };
+  }catch(e){ return { 'Content-Type':'application/json' }; }
+}
+
 async function init() {
   const { data } = await supabase.auth.getSession();
   const session = data && data.session;
@@ -60,8 +70,8 @@ async function loadCode(userId) {
   try {
     const res = await fetch('/api/referral', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'generate', userId }),
+      headers: await affAuthHeaders(),
+      body: JSON.stringify({ action: 'generate' }),
     });
     const d = await res.json();
     if (d.code) {
@@ -80,8 +90,8 @@ async function loadStats(userId) {
   try {
     const res = await fetch('/api/referral', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'stats', userId }),
+      headers: await affAuthHeaders(),
+      body: JSON.stringify({ action: 'stats' }),
     });
     stats = { ...stats, ...(await res.json()) };
   } catch (e) { /* affiche des zéros */ }
@@ -169,8 +179,8 @@ window.affWithdraw = async function () {
   try {
     const res = await fetch('/api/referral', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'withdraw', userId: data.session.user.id, amount: ready }),
+      headers: await affAuthHeaders(),
+      body: JSON.stringify({ action: 'withdraw', amount: ready }),
     });
     const d = await res.json();
     msg.textContent = d && d.ok
