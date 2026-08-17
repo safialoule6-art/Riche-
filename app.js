@@ -1169,10 +1169,21 @@ async function loadProgress(uid){
 async function touchStreak(){
   const today = new Date().toISOString().slice(0,10);
   let increased = false;
+  let restDay = false;
   if (progress.last_active !== today){
     const y = new Date(); y.setDate(y.getDate()-1);
     const yesterday = y.toISOString().slice(0,10);
-    progress.streak = (progress.last_active === yesterday) ? (progress.streak || 0) + 1 : 1;
+    const y2 = new Date(); y2.setDate(y2.getDate()-2);
+    const dayBefore = y2.toISOString().slice(0,10);
+    if(progress.last_active === yesterday){
+      progress.streak = (progress.streak || 0) + 1;
+    } else if(progress.last_active === dayBefore && (progress.streak || 0) > 0){
+      // Gamification bienveillante : un seul jour manqué NE casse PAS la série (jour de repos).
+      progress.streak = (progress.streak || 0) + 1;
+      restDay = true;
+    } else {
+      progress.streak = 1;
+    }
     progress.last_active = today;
     increased = true;
   }
@@ -1186,8 +1197,13 @@ async function touchStreak(){
     track('streak_milestone', { streak: progress.streak });
     setTimeout(() => celebrate({
       emoji: '🔥', title: progress.streak + ' jours de série !',
-      sub: 'Quelle régularité ! Reviens demain pour ne pas briser ta flamme.'
+      sub: 'Quelle régularité ! Et si tu sautes un jour, pas de stress : tu as droit à un jour de repos. 🌿'
     }), 900);
+  } else if(restDay){
+    setTimeout(() => celebrate({
+      emoji: '🌿', title: 'Jour de repos pris en compte',
+      sub: 'Tu as sauté un jour ? Pas de panique : ta série continue. Ce qui compte, c\'est de revenir — pas la perfection.'
+    }), 600);
   }
 }
 
@@ -1399,7 +1415,7 @@ function onEpisodeComplete(title){
     celebrate({
       emoji: '🎬',
       title: title ? ('Épisode terminé — ' + title) : 'Épisode terminé !',
-      sub: (teaser ? teaser + ' … ' : '') + 'À suivre. Reviens demain pour découvrir la suite et garder ta série 🔥',
+      sub: (teaser ? teaser + ' … ' : '') + 'À suivre. Reviens quand tu veux pour la suite — ton histoire t\'attend. 🌊',
       cover: sagaCover,
       coverTools: true
     });
