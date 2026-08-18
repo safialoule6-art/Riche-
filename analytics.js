@@ -14,6 +14,16 @@
   var gaOn = !isPlaceholder(GA_ID);
   var ttOn = !isPlaceholder(TIKTOK_ID);
 
+  /* ── Microsoft Clarity (heatmaps + rejeu de session) ── */
+  var CLARITY_ID = 'y476ahxu8i';
+  if (CLARITY_ID && CLARITY_ID.indexOf('X') === -1) {
+    (function (c, l, a, r, i, t, y) {
+      c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments) };
+      t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
+      y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+    })(window, document, "clarity", "script", CLARITY_ID);
+  }
+
   /* ── Google Analytics 4 ── */
   window.dataLayer = window.dataLayer || [];
   window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
