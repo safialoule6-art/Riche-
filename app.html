@@ -164,7 +164,7 @@
     </div>
     <button class="chip-btn review-nudge" id="reviewNudge" onclick="openVocabReview(false)" style="display:none;"></button>
     <div id="chatLog"></div>
-    <div class="input-row">
+    <div class="input-row" id="composer">
       <button class="mic-btn" id="micBtn" onclick="toggleVoiceInput()" title="Répondre à l'oral" aria-label="Répondre à l'oral">🎤</button>
       <input id="userInput" placeholder="Réponds dans la langue cible..." onkeydown="if(event.key==='Enter')sendReply()">
       <button class="btn" id="sendBtn" onclick="sendReply()">Envoyer</button>

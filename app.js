@@ -416,6 +416,16 @@ function getWordsForReview(maxWords = 5){
     .slice(0, maxWords);
   return due.map(w => w.word);
 }
+/* Mots connus a faire reutiliser par l'IA (repetition espacee) : d'abord les mots
+   dus, puis les plus recents, pour qu'il y ait TOUJOURS du materiel a reutiliser. */
+function getKnownWordsForPrompt(max = 8){
+  const today = todayKey();
+  const due = stats.words.filter(w => w.nextReview <= today)
+    .sort((a,b) => (a.reviewCount||0) - (b.reviewCount||0));
+  const rest = stats.words.filter(w => w.nextReview > today)
+    .sort((a,b) => (b.lastSeen||'').localeCompare(a.lastSeen||''));
+  return [...due, ...rest].slice(0, max).map(w => w.word);
+}
 
 // Spaced repetition: update review schedule after a word is used
 function markWordReviewed(word){
@@ -1368,12 +1378,16 @@ function mergeStructuredCharacters(chars){
 /* Suggestions de réponse cliquables (réduit la page blanche) */
 function renderChoices(choices){
   document.querySelectorAll('.quick-chips').forEach(e=>e.remove());
-  if(!Array.isArray(choices) || !choices.length) return;
+  const composer = document.getElementById('composer');
+  // Pas de choix (repli, ou niveau avance sans suggestions) -> saisie libre visible.
+  if(!Array.isArray(choices) || !choices.length){ if(composer) composer.style.display = ''; return; }
+  // Choix = interaction PRINCIPALE ; la saisie libre devient secondaire (masquee).
+  if(composer) composer.style.display = 'none';
   const wrap = document.createElement('div');
   wrap.className = 'choice-list quick-chips';
   const label = document.createElement('div');
   label.className = 'choice-label';
-  label.textContent = '💬 Choisis ta réponse — ou écris la tienne';
+  label.textContent = '💬 Que réponds-tu ?';
   wrap.appendChild(label);
   choices.forEach(txt=>{
     const b = document.createElement('button');
@@ -1382,6 +1396,15 @@ function renderChoices(choices){
     b.onclick = ()=>{ const input = document.getElementById('userInput'); if(input) input.value = txt; document.querySelectorAll('.quick-chips').forEach(e=>e.remove()); sendReply(); };
     wrap.appendChild(b);
   });
+  // Option secondaire : ecrire sa propre reponse (niveaux avances / liberte)
+  const write = document.createElement('button');
+  write.type = 'button'; write.className = 'choice-write';
+  write.textContent = '✍️ Écrire ma propre réponse';
+  write.onclick = ()=>{
+    if(composer){ composer.style.display = ''; const i = document.getElementById('userInput'); if(i) i.focus(); }
+    write.style.display = 'none';
+  };
+  wrap.appendChild(write);
   document.getElementById('chatLog').appendChild(wrap);
   scrollChat();
 }
@@ -2253,7 +2276,7 @@ async function callAI(userReply, opts){
       body: JSON.stringify({
         history: chatHistory, userReply,
         language: pickedLang, level: pickedLevel, theme: pickedTheme, universe: pickedUniverse || '',
-        vocabulary: getWordsForReview(5),
+        vocabulary: getKnownWordsForPrompt(8),
         recap: sagaRecap, characters, setting: sagaSetting,
         protagonist: sagaProtagonist, episode: progress.episode || 1, chapter,
         newEpisode: !!opts.newEpisode,
