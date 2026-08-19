@@ -1,5 +1,5 @@
 /* Sunami Service Worker — cache le shell pour usage hors-ligne */
-const CACHE = 'sunami-v4';
+const CACHE = 'sunami-v5';
 const SHELL = [
   '/',
   '/app',
