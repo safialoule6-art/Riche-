@@ -250,21 +250,64 @@ function renderDemoScene(i){
 }
 renderDemoScene(0);
 
-/* PWA Install — déclenche le dialogue natif */
-let deferredPrompt = null;
+/* ===== PWA Install — robuste : prompt natif + repli instructions ===== */
+let deferredPrompt = window.__sunamiBIP || null;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
+  window.__sunamiBIP = e;
 });
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null; window.__sunamiBIP = null;
+  try{ if(window.sunamiTrack) window.sunamiTrack('pwa_installed', {}); }catch(e){}
+});
+function isStandalone(){
+  return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+}
 window.installPwa = async function(){
-  if(deferredPrompt){
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    deferredPrompt = null;
-  } else {
-    alert('📱 Ouvre le menu du navigateur → "Ajouter à l\'écran d\'accueil"');
+  // Deja installee (lancee en standalone) -> on ouvre l'app au lieu de reinstaller.
+  if(isStandalone()){ window.location.href = '/app'; return; }
+  const dp = deferredPrompt || window.__sunamiBIP;
+  if(dp){
+    try{
+      dp.prompt();
+      const { outcome } = await dp.userChoice;
+      try{ if(window.sunamiTrack) window.sunamiTrack('pwa_prompt', { outcome }); }catch(e){}
+      deferredPrompt = null; window.__sunamiBIP = null;
+      if(outcome === 'accepted') return;
+      // refus -> on n'insiste pas
+      return;
+    }catch(err){ /* le prompt a echoue -> instructions manuelles */ }
   }
+  showInstallHelp();
 };
+function showInstallHelp(){
+  if(document.getElementById('pwaHelp')) return;
+  const ua = navigator.userAgent || '';
+  const isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isAndroid = /android/i.test(ua);
+  let steps;
+  if(isIOS){
+    steps = "Dans <b>Safari</b> :<br>1. Appuie sur <b>Partager</b> (l'icone \u2191 en bas).<br>2. Choisis <b>&laquo;\u00a0Sur l'ecran d'accueil\u00a0&raquo;</b>.<br>3. Appuie sur <b>Ajouter</b>.";
+  } else if(isAndroid){
+    steps = "Dans <b>Chrome</b> :<br>1. Ouvre le menu <b>\u22ee</b> (en haut a droite).<br>2. Choisis <b>&laquo;\u00a0Installer l'application\u00a0&raquo;</b> (ou &laquo;\u00a0Ajouter a l'ecran d'accueil\u00a0&raquo;).<br>3. Confirme avec <b>Installer</b>.<br><br><i>Astuce : si tu es dans un autre navigateur (Mi Browser, etc.), ouvre le site dans Chrome.</i>";
+  } else {
+    steps = "Dans le menu de ton navigateur, choisis <b>&laquo;\u00a0Installer l'application\u00a0&raquo;</b> ou <b>&laquo;\u00a0Ajouter a l'ecran d'accueil\u00a0&raquo;</b>.";
+  }
+  const ov = document.createElement('div');
+  ov.id = 'pwaHelp';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:20px;';
+  ov.innerHTML =
+    '<div style="max-width:340px;width:100%;background:var(--card,#fff);color:var(--foam,#12302d);border-radius:18px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.35);">' +
+      '<div style="font-size:34px;text-align:center;margin-bottom:6px;">\ud83d\udcf1</div>' +
+      '<h3 style="margin:0 0 10px;font-size:18px;text-align:center;">Installer Sunami</h3>' +
+      '<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">' + steps + '</p>' +
+      '<button type="button" id="pwaHelpClose" style="width:100%;padding:12px;border:none;border-radius:12px;background:var(--wave,#14b8a6);color:#fff;font-weight:800;font-size:15px;cursor:pointer;">OK, compris</button>' +
+    '</div>';
+  ov.addEventListener('click', (e) => { if(e.target === ov || (e.target && e.target.id === 'pwaHelpClose')) ov.remove(); });
+  document.body.appendChild(ov);
+  try{ if(window.sunamiTrack) window.sunamiTrack('pwa_help_shown', { platform: isIOS ? 'ios' : (isAndroid ? 'android' : 'other') }); }catch(e){}
+}
 
 /* Animated demo — simulation complète de l'app */
 (function(){
