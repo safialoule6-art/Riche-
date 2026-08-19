@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- Master d'icone SUNAMI (source officielle). MASKABLE-safe + marge
-       renforcee : fond plein pleine page + goutte a ~47% de hauteur, tres
-       centree, pour survivre au ZOOM que certains launchers (Xiaomi/MIUI)
-       appliquent aux icones maskable et qui rognait la pointe. -->
+  <!-- Master d'icone SUNAMI (source officielle). Fond plein pleine page +
+       goutte agrandie mais centree avec ~23% de marge (survit au zoom des
+       launchers type Xiaomi). Reflet blanc retire : le rasteriseur SVG
+       ignorait son opacite et le rendait en blanc plein (pointe blanche). -->
   <defs>
     <linearGradient id="mg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#2dd4bf"/>
@@ -10,17 +10,16 @@
     </linearGradient>
   </defs>
   <rect width="512" height="512" fill="#0f2e2b"/>
-  <g transform="translate(142,123) scale(1.9)">
+  <g transform="translate(124,100) scale(2.2)">
     <path d="M60 8 C60 8 102 62 102 92 A42 42 0 1 1 18 92 C18 62 60 8 60 8 Z" fill="url(#mg)"/>
-    <path d="M60 8 C60 8 78 32 88 54 C72 44 52 46 40 60 C46 40 60 8 60 8 Z" fill="#ffffff" opacity="0.18"/>
     <ellipse cx="47" cy="93" rx="12" ry="14" fill="#ffffff"/>
     <ellipse cx="76" cy="93" rx="12" ry="14" fill="#ffffff"/>
     <circle cx="49" cy="96" r="6" fill="#0f2e2b"/>
     <circle cx="74" cy="96" r="6" fill="#0f2e2b"/>
     <circle cx="51" cy="93" r="2.2" fill="#ffffff"/>
     <circle cx="76" cy="93" r="2.2" fill="#ffffff"/>
-    <circle cx="33" cy="108" r="6" fill="#ff8a8f" opacity="0.55"/>
-    <circle cx="90" cy="108" r="6" fill="#ff8a8f" opacity="0.55"/>
+    <circle cx="33" cy="108" r="7" fill="#ff8a8f"/>
+    <circle cx="90" cy="108" r="7" fill="#ff8a8f"/>
     <path d="M51 113 Q61.5 123 72 113" stroke="#0f2e2b" stroke-width="3.6" fill="none" stroke-linecap="round"/>
   </g>
 </svg>
