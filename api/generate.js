@@ -57,9 +57,9 @@ const LEVEL_NAME = {
 };
 
 const LEVEL_GUIDE = {
-  "A1-A2 (beginner)": "Use ONLY present tense. Sentences of 5-8 words max. Only the ~500 most common words. No idioms.",
-  "B1-B2 (intermediate)": "Use present, past and future. Moderate vocabulary. A few idioms are OK. Clear sentences.",
-  "C1-C2 (advanced)": "All tenses, rich vocabulary, idioms, complex structures. Native-level prose.",
+  "A1-A2 (beginner)": "HARD LIMITS — max 8 words per sentence; PRESENT TENSE ONLY; only the ~500 most frequent words; exactly ONE idea/event per sentence; NO idioms, NO subordinate clauses (no 'that/which/because' chains). If a sentence would break a rule, split it or make it simpler.",
+  "B1-B2 (intermediate)": "Sentences of 10-15 words; present, past and future allowed; common everyday vocabulary; simple subordinate clauses OK; a few common idioms OK.",
+  "C1-C2 (advanced)": "Complex structures, subordinate clauses, nuance, idioms and rich native-level vocabulary allowed.",
 };
 
 function buildSystemPrompt(o) {
@@ -69,7 +69,7 @@ function buildSystemPrompt(o) {
     : (theme && THEME_HINTS[theme] ? `\nSTORY CONTEXT: ${THEME_HINTS[theme]}` : "");
   const levelGuide = LEVEL_GUIDE[level] || "";
   const vocabLine = vocabulary && vocabulary.length
-    ? `\nSPACED REPETITION: naturally reuse at least 2 of these known words: ${vocabulary.join(", ")}.` : "";
+    ? `\nVOCABULARY MEMORY (spaced repetition): the learner ALREADY KNOWS these words: ${vocabulary.join(", ")}. REUSE at least 2-3 of them naturally in this scene BEFORE introducing any new word — this is what makes vocabulary stick.` : "";
   const charLine = characters && characters.length
     ? `\nKNOWN CHARACTERS (keep them consistent, do NOT rename): ${characters.map(c => `${c.name} (${c.role || "?"})`).join("; ")}.` : "";
   const settingLine = setting ? `\nCURRENT SETTING: ${setting}.` : "";
@@ -86,15 +86,23 @@ TARGET LANGUAGE: ${language}. LEARNER LEVEL: ${level}.${themeLine}
 ABSOLUTE RULES
 - The "story" field is written ONLY in ${language}. Every word of the story must be in ${language}. NEVER write the story (or the ending question) in French or English unless ${language} IS that language. This is the most common failure — do not let it happen. If unsure, still write in ${language}.
 - CONTINUITY IS SACRED: same protagonist, same characters, same places, one coherent plot that PROGRESSES. Never restart or contradict the recap. Never invent a new unrelated scene.
-- Difficulty for ${level}: ${levelGuide}${vocabLine}
+- LEVEL CALIBRATION for ${level} is a HARD CONSTRAINT, not a stylistic suggestion. Apply it to EVERY sentence; exceeding it must be treated as a BUG: ${levelGuide}${vocabLine}
 ${recapLine}${charLine}${settingLine}${arcLine}
 
 PEDAGOGY
-- In "story": 2 to 5 sentences. Highlight 1-3 key words/expressions with **double asterisks**, each immediately followed by its French translation in parentheses, e.g. **el bosque** (la forêt).
+- In "story": 2 to 5 sentences. Highlight 1-3 key words/expressions with **double asterisks**, each immediately followed by its French translation in parentheses, e.g. **el bosque** (la forêt). Introduce AT MOST 3 new words per scene, and prefer reusing words the learner already knows (see VOCABULARY MEMORY) over adding new ones.
 - ALWAYS end "story" with exactly ONE simple question in ${language} that pushes the plot forward.
 - Build directly on the learner's last reply.${hasUserReply ? `
 - "grammar": a SHORT friendly note in FRENCH about the learner's reply (max 2 sentences). Correct ONLY real errors and keep the learner's intended meaning. Do NOT invent mistakes: if the reply is already correct, simply confirm it is correct and encourage briefly — never fabricate an error just to have something to say.` : `
 - "grammar": empty string for the very first chapter.`}
+
+INTERACTION (branching dialogue)
+- "choices": propose 2-3 short replies the learner could say, written in ${language} at the learner's level. Each choice MUST lead to a genuinely DIFFERENT continuation of the story (a real branch: a different action, attitude or decision) — never a mere right/wrong variant. Keep them short and clearly distinct so a beginner can pick by tapping.
+
+NARRATIVE CRAFT
+- Every scene has a clear STAKE: make it obvious why it matters that the protagonist resolves the current tension (a goal to reach, a risk, a mystery to uncover).
+- Keep the TONE consistent with the chosen genre for the WHOLE saga; do not change tone from scene to scene.
+- End every EPISODE on an unresolved tension (a real cliffhanger), never a flat, tidy ending.
 
 OUTPUT — return ONLY a valid minified JSON object, no markdown, with EXACTLY these keys:
 {
@@ -108,10 +116,10 @@ OUTPUT — return ONLY a valid minified JSON object, no markdown, with EXACTLY t
  "emotion": "happy|surprised|think|neutral",
  "episodeComplete": ${nearEnd ? "true" : "false"},
  "episodeTitle": "<short FR episode title when episodeComplete is true, else empty>",
- "choices": ["<short suggested reply in ${language}>","<another short suggested reply in ${language}>"],
+ "choices": ["<reply option in ${language}>","<a clearly different option in ${language}>","<optional third option in ${language}>"],
  "quiz": {"q":"<short FRENCH comprehension question about what just happened in the story, or empty string on the very first chapter>","options":["<French option>","<French option>","<French option>"],"answer":<0-based index of the correct option>}
 }
-The "vocab" array must list the words you highlighted in "story" with their French translation. The "recap" must be cumulative so a future episode stays consistent. The "quiz" is a quick comprehension check written in FRENCH about the latest story beat, with 3 plausible French options and the 0-based index of the correct one; include it from the 2nd chapter onward, and for the very first chapter set it to {"q":"","options":[],"answer":0}.`;
+The "vocab" array must list the words you highlighted in "story" with their French translation. The "recap" must be cumulative so a future episode stays consistent. The "quiz" is a quick comprehension check written in FRENCH about the latest story beat, with 3 plausible French options and the 0-based index of the correct one; include it from the 2nd chapter onward, and for the very first chapter set it to {"q":"","options":[],"answer":0}. Each entry in "choices" must open a DIFFERENT branch of the story.`;
 }
 
 function jsonResponse(data, status) {
