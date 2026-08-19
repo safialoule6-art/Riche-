@@ -1,20 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Master d'icone d'app SUNAMI (source officielle des PNG).
+       Concu pour MASKABLE : fond plein PLEINE PAGE (l'OS applique lui-meme
+       la forme du masque) + mascotte confinee dans la zone de securite
+       (~66% central) avec marge haut/bas, pour ne JAMAIS etre rognee. -->
   <defs>
     <linearGradient id="mg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#2dd4bf"/>
       <stop offset="1" stop-color="#14b8a6"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="120" fill="#0f2e2b"/>
-  <path d="M256 30 C256 30 430 260 430 390 A174 174 0 1 1 82 390 C82 260 256 30 256 30 Z" fill="url(#mg)"/>
-  <path d="M256 30 C256 30 330 140 370 230 C310 210 230 220 190 260 C210 180 256 30 256 30 Z" fill="#ffffff" opacity="0.18"/>
-  <ellipse cx="200" cy="395" rx="48" ry="56" fill="#ffffff"/>
-  <ellipse cx="320" cy="395" rx="48" ry="56" fill="#ffffff"/>
-  <circle cx="208" cy="405" r="24" fill="#0f2e2b"/>
-  <circle cx="312" cy="405" r="24" fill="#0f2e2b"/>
-  <circle cx="216" cy="390" r="9" fill="#ffffff"/>
-  <circle cx="320" cy="390" r="9" fill="#ffffff"/>
-  <circle cx="140" cy="450" r="24" fill="#ff8a8f" opacity="0.55"/>
-  <circle cx="380" cy="450" r="24" fill="#ff8a8f" opacity="0.55"/>
-  <path d="M210 465 Q256 510 310 465" stroke="#0f2e2b" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <rect width="512" height="512" fill="#0f2e2b"/>
+  <g transform="translate(112,88) scale(2.4)">
+    <path d="M60 8 C60 8 102 62 102 92 A42 42 0 1 1 18 92 C18 62 60 8 60 8 Z" fill="url(#mg)"/>
+    <path d="M60 8 C60 8 78 32 88 54 C72 44 52 46 40 60 C46 40 60 8 60 8 Z" fill="#ffffff" opacity="0.18"/>
+    <ellipse cx="47" cy="93" rx="12" ry="14" fill="#ffffff"/>
+    <ellipse cx="76" cy="93" rx="12" ry="14" fill="#ffffff"/>
+    <circle cx="49" cy="96" r="6" fill="#0f2e2b"/>
+    <circle cx="74" cy="96" r="6" fill="#0f2e2b"/>
+    <circle cx="51" cy="93" r="2.2" fill="#ffffff"/>
+    <circle cx="76" cy="93" r="2.2" fill="#ffffff"/>
+    <circle cx="33" cy="108" r="6" fill="#ff8a8f" opacity="0.55"/>
+    <circle cx="90" cy="108" r="6" fill="#ff8a8f" opacity="0.55"/>
+    <path d="M51 113 Q61.5 123 72 113" stroke="#0f2e2b" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+  </g>
 </svg>

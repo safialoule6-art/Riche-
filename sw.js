@@ -1,5 +1,5 @@
 /* Sunami Service Worker — cache le shell pour usage hors-ligne */
-const CACHE = 'sunami-v3';
+const CACHE = 'sunami-v4';
 const SHELL = [
   '/',
   '/app',
@@ -10,7 +10,9 @@ const SHELL = [
   '/app.js',
   '/styles.css',
   '/theme.js',
-  '/manifest.json'
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
 // Nettoie les anciens caches à chaque nouvelle version
@@ -48,8 +50,8 @@ self.addEventListener('push', (e) => {
   try { if (e.data) { data = Object.assign(data, e.data.json()); } } catch (_) {}
   e.waitUntil(self.registration.showNotification(data.title, {
     body: data.body,
-    icon: '/og-preview.png',
-    badge: '/og-preview.png',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
     data: { url: (data.url || '/app') },
   }));
 });
