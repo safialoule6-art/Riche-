@@ -18,7 +18,7 @@ permissions:
 jobs:
   batch:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,7 +41,7 @@ jobs:
           curl -fsSL https://ollama.com/install.sh | sh
           ollama serve >/tmp/ollama.log 2>&1 &
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:11434/api/tags >/dev/null && break; sleep 2; done
-          ollama pull qwen3:0.6b
+          ollama pull qwen3:4b
 
       - name: Agent research — inspect Sunami and TikTok Creative Center first
         env:
@@ -50,7 +50,7 @@ jobs:
 
       - name: Autonomous AI creative director — decide the 50 angles
         env:
-          OLLAMA_MODEL: qwen3:0.6b
+          OLLAMA_MODEL: qwen3:4b
         run: python agent/creative_llm_agent.py
 
       - name: Browser agent — execute the AI decisions and render 50 videos
@@ -59,7 +59,7 @@ jobs:
       - name: Verify exactly 50 MP4 files
         run: |
           test "$(find agent/artifacts/videos -maxdepth 1 -type f -name 'sunami-*.mp4' | wc -l)" -eq 50
-          ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 agent/artifacts/videos/sunami-01.mp4
+          for f in agent/artifacts/videos/sunami-*.mp4; do ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$f" >/dev/null; done
 
       - name: Publish central video library as latest GitHub release
         env:
