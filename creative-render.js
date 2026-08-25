@@ -1,0 +1,16 @@
+// Browser-only free renderer. Stays isolated from Sunami production files.
+function drawText(ctx,text,x,y,maxWidth,fontSize,color='#fff'){
+  ctx.font=`800 ${fontSize}px Arial,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+  const words=text.split(' ');let lines=[],line='';
+  for(const w of words){const t=line?line+' '+w:w;if(ctx.measureText(t).width>maxWidth&&line){lines.push(line);line=w}else line=t} if(line)lines.push(line);
+  const lh=fontSize*1.05,start=y-(lines.length-1)*lh/2;
+  for(let i=0;i<lines.length;i++){const yy=start+i*lh;ctx.lineWidth=12;ctx.strokeStyle='rgba(0,0,0,.58)';ctx.strokeText(lines[i],x,yy);ctx.fillStyle=color;ctx.fillText(lines[i],x,yy)}
+}
+function makeAudio(ac){const dest=ac.createMediaStreamDestination(),master=ac.createGain();master.gain.value=.055;master.connect(dest);const notes=[220,277.18,329.63,277.18,246.94,311.13,369.99,311.13];let t=ac.currentTime+.05;for(let i=0;i<60;i++){const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=notes[i%notes.length];g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.45,t+.03);g.gain.exponentialRampToValueAtTime(.001,t+.42);o.connect(g);g.connect(master);o.start(t);o.stop(t+.45);t+=.25}return dest.stream}
+export async function renderCreative({videos,lines,duration=12,onProgress=()=>{}}){
+ if(!videos?.length)throw new Error('Aucun clip sélectionné.');const W=1080,H=1920,canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d',{alpha:false});
+ const els=[];for(const item of videos.slice(0,4)){const v=document.createElement('video');v.crossOrigin='anonymous';v.muted=true;v.playsInline=true;v.preload='auto';v.src=item.url;await new Promise((ok,bad)=>{v.onloadedmetadata=ok;v.onerror=()=>bad(new Error('Un clip Pexels ne peut pas être lu.'))});await v.play().catch(()=>{});els.push(v)}
+ const ac=new AudioContext(),audio=makeAudio(ac),stream=new MediaStream([...canvas.captureStream(30).getVideoTracks(),...audio.getAudioTracks()]);const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')?'video/webm;codecs=vp9,opus':'video/webm';const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8000000}),chunks=[];rec.ondataavailable=e=>e.data.size&&chunks.push(e.data);const done=new Promise(r=>rec.onstop=r);rec.start(250);await ac.resume();const start=performance.now();
+ function frame(now){const elapsed=(now-start)/1000;if(elapsed>=duration){rec.stop();return}const scene=Math.min(3,Math.floor(elapsed/(duration/4))),local=elapsed%(duration/4),v=els[scene%els.length],scale=Math.max(W/v.videoWidth,H/v.videoHeight),dw=v.videoWidth*scale,dh=v.videoHeight*scale;ctx.fillStyle='#080808';ctx.fillRect(0,0,W,H);ctx.drawImage(v,(W-dw)/2+Math.sin(elapsed*1.8)*18,(H-dh)/2,dw,dh);if(local<.22){ctx.fillStyle=`rgba(255,255,255,${.18*(1-local/.22)})`;ctx.fillRect(0,0,W,H)}const li=Math.min(lines.length-1,Math.floor(elapsed/(duration/lines.length))),accent=li===lines.length-1?'#72f2a4':li%2?'#59c7ff':'#fff';drawText(ctx,lines[li]||'',W/2,H*.73,W*.82,72,accent);onProgress(Math.round(elapsed/duration*100));requestAnimationFrame(frame)}
+ requestAnimationFrame(frame);await done;const blob=new Blob(chunks,{type:mime});return{blob,url:URL.createObjectURL(blob),filename:`sunami-tiktok-${Date.now()}.webm`}
+}
