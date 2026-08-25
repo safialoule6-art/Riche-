@@ -1,8 +1,7 @@
-"""Run the browser-based Sunami autopilot and download its 50 accepted renders.
+"""Run the browser-based Sunami autopilot and download its accepted renders.
 
-The creative page does all composition in-browser. This wrapper behaves like a human:
-open the page, let the 50-video queue run, wait for the library, then download every
-accepted render as an artifact.
+The creative page does composition in-browser. This wrapper behaves like a human:
+open the page, let the queue run, wait for completion, then download every accepted render.
 """
 from __future__ import annotations
 
@@ -24,8 +23,13 @@ async def main():
         await page.goto(SITE, wait_until="domcontentloaded", timeout=60000)
         await page.wait_for_selector("#libraryGrid", timeout=60000)
 
-        # The browser renders one video at a time to avoid blowing up memory.
-        await page.wait_for_function("document.querySelector('#libraryStatus')?.textContent?.includes('50 / 50')", timeout=50*60*1000)
+        await page.wait_for_function(
+            """() => {
+                const s = document.querySelector('#status')?.textContent || '';
+                return s.includes('Autopilot terminé') || s.includes('Autopilot arrêté');
+            }""",
+            timeout=50*60*1000,
+        )
         links = page.locator("#libraryGrid a.download")
         count = await links.count()
         if count < 1:
