@@ -7,18 +7,18 @@ on:
       - 'creative*.js'
       - 'creative*.html'
       - 'creative*.css'
-      - 'agent/SUNAMI_CREATIVE_CONTRACT.md'
-      - 'agent/tiktok-research-2026-08.json'
+      - 'agent/**'
+      - 'api/creative-library.js'
   schedule:
     - cron: '31 5 * * 1'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   batch:
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,31 +28,58 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Playwright
+      - name: Install browser and video tools
         run: |
           python -m pip install --upgrade pip
           pip install playwright
           python -m playwright install --with-deps chromium
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+
+      - name: Install free local AI runtime
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          ollama serve >/tmp/ollama.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:11434/api/tags >/dev/null && break; sleep 2; done
+          ollama pull qwen3:0.6b
 
       - name: Agent research — inspect Sunami and TikTok Creative Center first
         env:
           SUNAMI_URL: https://sunami-rho.vercel.app
         run: python agent/browser_agent.py
 
-      - name: Run the 50-video browser autopilot
+      - name: Autonomous AI creative director — decide the 50 angles
+        env:
+          OLLAMA_MODEL: qwen3:0.6b
+        run: python agent/creative_llm_agent.py
+
+      - name: Browser agent — execute the AI decisions and render 50 videos
         run: python agent/render_50.py
+
+      - name: Verify exactly 50 MP4 files
+        run: |
+          test "$(find agent/artifacts/videos -maxdepth 1 -type f -name 'sunami-*.mp4' | wc -l)" -eq 50
+          ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 agent/artifacts/videos/sunami-01.mp4
+
+      - name: Publish central video library as latest GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="creative-batch-$(date -u +%Y%m%d-%H%M%S)"
+          gh release create "$TAG" agent/artifacts/videos/sunami-*.mp4 --repo "$GITHUB_REPOSITORY" --title "Sunami · 50 vidéos prêtes · $TAG" --notes "Batch validé par l'agent IA local + navigateur + Pexels. 50 MP4 réellement produits." --latest
+          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
 
       - name: Upload agent research and QA evidence
         uses: actions/upload-artifact@v4
         with:
           name: sunami-agent-evidence
           path: agent/artifacts/*.json
-          retention-days: 7
+          retention-days: 1
 
-      - name: Upload the 50 ready-to-post videos
+      - name: Upload a lightweight backup artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sunami-50-videos
-          path: agent/artifacts/videos/
-          retention-days: 7
+          name: sunami-batch-manifest
+          path: agent/artifacts/batch-status.json
+          retention-days: 1
           if-no-files-found: error
