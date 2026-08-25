@@ -1,9 +1,8 @@
 """Autonomous local creative director for Sunami.
 
-The previous version spent the whole GitHub runner budget timing out on large
-Qwen3 requests. This version keeps the model intelligent but makes the task
-bounded: short research context, five concepts per call, ten calls max, and
-forgiving schema repair for Pexels searches.
+The model receives live TikTok research plus the official Remotion agent skills as
+production guidance. It decides the creative angles; the browser and renderer execute
+them. The task is bounded to 10 short calls so the free GitHub runner can finish.
 """
 from __future__ import annotations
 import json, os, re, urllib.request
@@ -68,6 +67,20 @@ def load_research():
         return {}
 
 
+def load_remotion_guidance():
+    parts = []
+    for name, limit in [
+        ("remotion-best-practices/SKILL.md", 2200),
+        ("remotion-captions/SKILL.md", 1600),
+        ("remotion-render/SKILL.md", 1200),
+    ]:
+        p = ROOT / ".agents" / "skills" / name
+        if p.exists():
+            text = p.read_text(encoding="utf-8", errors="ignore")
+            parts.append(f"--- {name} ---\n{text[:limit]}")
+    return "\n".join(parts)
+
+
 def normalize_searches(value, hook: str):
     out = []
     if isinstance(value, list):
@@ -120,7 +133,8 @@ def validate(items, seen):
 
 def main():
     research = load_research()
-    visible = str(research.get("visible_text_sample", ""))[:3500]
+    visible = str(research.get("visible_text_sample", ""))[:2800]
+    remotion = load_remotion_guidance()[:5000]
     situations = [
         "ami bilingue", "restaurant", "travail", "appel", "aéroport", "date", "série", "jeu", "cours", "message vocal",
         "voyage", "honte du jugement", "petite victoire", "mot qui bloque", "accent",
@@ -140,6 +154,9 @@ ANGLES À EXPLORER: {', '.join(sit)}
 SIGNaux OBSERVÉS DANS TIKTOK CREATIVE CENTER:
 {visible}
 
+GUIDANCE DE PRODUCTION REMOTION (à utiliser comme référence de montage/captions, pas à réciter):
+{remotion}
+
 HOOKS DÉJÀ PRIS: {json.dumps([x['hook'] for x in all_items[-20:]], ensure_ascii=False)}
 
 Retourne UNIQUEMENT une liste JSON de 5 objets. Format minimal obligatoire:
@@ -149,7 +166,7 @@ Pas de markdown. Pas d'explication. Pas de texte avant/après le JSON."""
             parsed = extract_json(call_llm(prompt))
             new = validate(parsed, seen)
             all_items.extend(new)
-            print(json.dumps({"batch": batch + 1, "accepted": len(new), "total": len(all_items), "model": MODEL}, ensure_ascii=False), flush=True)
+            print(json.dumps({"batch": batch + 1, "accepted": len(new), "total": len(all_items), "model": MODEL, "remotion_guidance": bool(remotion)}, ensure_ascii=False), flush=True)
         except Exception as exc:
             print(json.dumps({"batch": batch + 1, "accepted": 0, "error": str(exc)[:180]}, ensure_ascii=False), flush=True)
         if len(all_items) >= 50:
@@ -162,7 +179,7 @@ Pas de markdown. Pas d'explication. Pas de texte avant/après le JSON."""
     for i, c in enumerate(final, 1):
         c["id"] = f"FR-AI-{i:02d}"
     (ART / "agent-concepts.json").write_text(json.dumps(final, ensure_ascii=False, indent=2), encoding="utf-8")
-    (ART / "creative-director-report.json").write_text(json.dumps({"agent": "qwen3-local", "model": MODEL, "concepts": 50, "research_used": bool(visible)}, ensure_ascii=False, indent=2), encoding="utf-8")
+    (ART / "creative-director-report.json").write_text(json.dumps({"agent": "qwen3-local", "model": MODEL, "concepts": 50, "research_used": bool(visible), "remotion_guidance_loaded": bool(remotion)}, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({"agent": "qwen3-local", "model": MODEL, "concepts": 50, "status": "success"}, ensure_ascii=False), flush=True)
 
 
