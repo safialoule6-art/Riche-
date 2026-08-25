@@ -1,0 +1,46 @@
+name: Sunami Creative Autopilot — 50 videos
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'creative*.js'
+      - 'creative*.html'
+      - 'creative*.css'
+      - 'agent/SUNAMI_CREATIVE_CONTRACT.md'
+      - 'agent/tiktok-research-2026-08.json'
+  schedule:
+    - cron: '31 5 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  batch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Playwright
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Run the 50-video browser autopilot
+        run: python agent/render_50.py
+
+      - name: Upload the 50 ready-to-post videos
+        uses: actions/upload-artifact@v4
+        with:
+          name: sunami-50-videos
+          path: agent/artifacts/videos/
+          retention-days: 7
+          if-no-files-found: error
