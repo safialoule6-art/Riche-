@@ -1,57 +1,10 @@
-name: Sunami QA Agent
+name: Sunami QA Agent (disabled)
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '17 */6 * * *'
-  push:
-    branches: [main]
-    paths:
-      - 'creative.html'
-      - 'creative.js'
-      - 'creative.css'
-      - 'creative-render.js'
-      - 'creative-strategy.js'
-      - 'api/**'
-      - 'qa/**'
-      - '.github/workflows/sunami-qa-agent.yml'
 
 jobs:
-  audit:
+  disabled:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install Playwright
-        run: |
-          npm init -y
-          npm install --no-save @playwright/test
-          npx playwright install --with-deps chromium
-
-      - name: Run Sunami QA agent
-        run: npx playwright test qa/sunami-agent.spec.js --workers=1
-
-      - name: Upload screenshots and report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: sunami-qa-report
-          path: artifacts/
-          if-no-files-found: warn
-
-      - name: Write job summary
-        if: always()
-        run: |
-          if [ -f artifacts/sunami-agent-report.md ]; then
-            cat artifacts/sunami-agent-report.md >> "$GITHUB_STEP_SUMMARY"
-          fi
+      - run: echo "Disabled: consolidated into Sunami Agent — QA + TikTok Research."
