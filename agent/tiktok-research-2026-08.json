@@ -1,0 +1,25 @@
+{
+  "market": "France",
+  "locale": "fr-FR",
+  "checked_at": "2026-08-25",
+  "sources": [
+    "https://ads.tiktok.com/creative/creativeCenter",
+    "https://ads.tiktok.com/help/article/creative-center?lang=fr",
+    "https://ads.tiktok.com/business/fr/inspiration"
+  ],
+  "observations": [
+    "TikTok Creative Center is a free public source for Top Ads, trends and creative guidance.",
+    "Top Ads can be filtered by region, industry, objective and language and inspected frame-by-frame.",
+    "Current TikTok Creative Center examples emphasize curiosity, everyday scenes, direct narrative and native pacing.",
+    "TikTok language-learning case studies show that authentic, fun, dynamic communication and a high volume of creative lines can outperform conventional educational advertising.",
+    "The language-learning category benefits from testing many creative lines rather than relying on one polished ad."
+  ],
+  "sunami_translation": {
+    "hook": "problem-first, immediately recognizable language-learning frustration",
+    "visual": "human reaction / conversation / POV before product",
+    "caption": "short mobile-readable phrases with selective emphasis",
+    "reveal": "late and brief",
+    "cta": "last beat only"
+  },
+  "agent_note": "Refresh this file before each major batch. Do not copy scripts or footage from references; extract patterns only."
+}
