@@ -25,7 +25,7 @@ jobs:
 
       - name: Install official Remotion agent skills
         run: |
-          npx --loglevel=error skills@1.5.20 add remotion-dev/skills --yes
+          npx skills add remotion-dev/skills --yes
           test -f .agents/skills/remotion-best-practices/SKILL.md
           test -f .agents/skills/remotion-captions/SKILL.md
           test -f .agents/skills/remotion-render/SKILL.md
@@ -74,7 +74,6 @@ jobs:
         run: |
           TAG="creative-batch-$(date -u +%Y%m%d-%H%M%S)"
           gh release create "$TAG" agent/artifacts/videos/sunami-*.mp4 --repo "$GITHUB_REPOSITORY" --title "Sunami · 50 vidéos prêtes · $TAG" --notes "Batch validé par l'agent IA local + navigateur + Pexels. 50 MP4 réellement produits." --latest
-          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
 
       - name: Upload agent research and QA evidence
         uses: actions/upload-artifact@v4
