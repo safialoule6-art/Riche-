@@ -34,8 +34,20 @@ jobs:
           pip install playwright
           python -m playwright install --with-deps chromium
 
+      - name: Agent research — inspect Sunami and TikTok Creative Center first
+        env:
+          SUNAMI_URL: https://sunami-rho.vercel.app
+        run: python agent/browser_agent.py
+
       - name: Run the 50-video browser autopilot
         run: python agent/render_50.py
+
+      - name: Upload agent research and QA evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sunami-agent-evidence
+          path: agent/artifacts/*.json
+          retention-days: 7
 
       - name: Upload the 50 ready-to-post videos
         uses: actions/upload-artifact@v4
