@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sunami Creative Engine</title>
+  <link rel="stylesheet" href="creative.css">
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <span class="pill">SUNAMI CREATIVE ENGINE</span>
+      <h1>Créer une vidéo TikTok qui ressemble à un TikTok.</h1>
+      <p>France d'abord. Problème → curiosité → solution → CTA. Aucun écran de l'app avant la révélation.</p>
+    </header>
+    <section class="panel">
+      <label>Idée / problème</label>
+      <textarea id="brief">Je comprends l'anglais mais dès qu'il faut parler, je bloque.</textarea>
+      <div class="grid">
+        <label>Marché<select id="market"><option value="fr">🇫🇷 France</option><option value="us">🇺🇸 USA</option><option value="es">🇪🇸 Espagne</option><option value="de">🇩🇪 Allemagne</option></select></label>
+        <label>Durée<select id="duration"><option value="12">12 secondes</option><option value="15">15 secondes</option><option value="20">20 secondes</option></select></label>
+      </div>
+      <button id="generate">Trouver les vrais clips</button>
+      <p id="status"></p>
+    </section>
+    <section id="results" class="results"></section>
+  </main>
+  <script src="creative.js"></script>
+</body>
+</html>
