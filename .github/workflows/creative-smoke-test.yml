@@ -1,0 +1,65 @@
+name: Sunami Creative smoke test
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  creative:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Wait for Vercel deployment
+        run: sleep 90
+      - name: Generate and inspect the creative
+        env:
+          SUNAMI_URL: https://sunami-rho.vercel.app/creative.html
+        run: |
+          node <<'NODE'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+          (async()=>{
+            const browser = await chromium.launch({headless:true});
+            const page = await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
+            await page.goto(process.env.SUNAMI_URL,{waitUntil:'networkidle',timeout:120000});
+            await page.screenshot({path:'creative-before.png',fullPage:true});
+            await page.locator('#generate').click();
+            await page.waitForSelector('#output video',{timeout:300000});
+            await page.screenshot({path:'creative-after.png',fullPage:true});
+            const result=await page.evaluate(async()=>{
+              const video=document.querySelector('#output video');
+              const text=document.querySelector('#status')?.textContent||'';
+              if(!video?.src) throw new Error('No rendered video URL');
+              const r=await fetch(video.src);
+              const b=new Uint8Array(await r.arrayBuffer());
+              let s=''; const chunk=0x8000;
+              for(let i=0;i<b.length;i+=chunk)s+=String.fromCharCode(...b.subarray(i,i+chunk));
+              return {base64:btoa(s),bytes:b.length,status:text};
+            });
+            fs.writeFileSync('sunami-creative-smoke.webm',Buffer.from(result.base64,'base64'));
+            fs.writeFileSync('creative-result.json',JSON.stringify(result,null,2));
+            console.log(`Rendered ${result.bytes} bytes — ${result.status}`);
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+      - name: Upload rendered creative
+        uses: actions/upload-artifact@v4
+        with:
+          name: sunami-creative-smoke
+          path: |
+            sunami-creative-smoke.webm
+            creative-before.png
+            creative-after.png
+            creative-result.json
