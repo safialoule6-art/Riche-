@@ -1,0 +1,23 @@
+{
+  "name": "sunami-tiktok-engine",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "render": "open-motion render -u http://localhost:4173 -o out/sunami-tiktok.mp4 --duration 390 --width 1080 --height 1920 --fps 30 --public-dir ./public"
+  },
+  "dependencies": {
+    "@open-motion/cli": "0.1.4",
+    "@open-motion/components": "0.1.4",
+    "@open-motion/core": "0.1.4",
+    "@open-motion/renderer": "0.1.4",
+    "@vitejs/plugin-react": "4.2.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "vite": "5.4.14"
+  },
+  "devDependencies": {
+    "typescript": "5.7.2"
+  }
+}
