@@ -23,6 +23,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install official Remotion agent skills
+        run: |
+          npx --loglevel=error skills@1.5.20 add remotion-dev/skills --yes
+          test -f .agents/skills/remotion-best-practices/SKILL.md
+          test -f .agents/skills/remotion-captions/SKILL.md
+          test -f .agents/skills/remotion-render/SKILL.md
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
