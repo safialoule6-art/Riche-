@@ -131,22 +131,50 @@
   <div id="pickScreen" class="chat-wrap">
     <div class="pick-hero">
       <svg class="mascot idle" aria-hidden="true"><use href="#mascot"/></svg>
-      <h2>Ta prochaine histoire commence ici</h2>
-      <p>Choisis ta langue, ton niveau et l'ambiance — le conteur écrit la suite en direct.</p>
+      <h2 id="pickHeroTitle">Ta prochaine histoire commence ici</h2>
+      <p id="pickHeroSub">Réponds à quelques questions — le conteur écrit la suite en direct.</p>
     </div>
-    <div class="eyebrow-left pick-section">1 · Comment on t'appelle&nbsp;?</div>
-    <input id="firstName" class="custom-universe" maxlength="24" autocomplete="given-name" placeholder="Ton prénom (utilisé pour te parler pendant les scènes)">
-    <div class="eyebrow-left pick-section">2 · Choisis ta langue</div>
-    <div class="pick-grid" id="langGrid"></div>
-    <div class="eyebrow-left pick-section" id="motivationLabel">3 · Pourquoi tu apprends&nbsp;?</div>
-    <div class="pick-grid" id="motivationGrid"></div>
-    <div class="eyebrow-left pick-section">4 · On calibre ton niveau</div>
-    <p class="pick-question" id="levelQuestion">Tu arrives à faire une phrase simple tout seul, dans cette langue&nbsp;?</p>
-    <div class="pick-grid" id="levelGrid"></div>
-    <div class="eyebrow-left pick-section">5 · Choisis ton univers</div>
-    <div class="pick-grid" id="themeGrid"></div>
-    <input id="customUniverse" class="custom-universe" maxlength="120" autocomplete="off" placeholder="✨ Ou décris ton univers : cyberpunk à Tokyo, pirates des Caraïbes…">
-    <button class="btn" style="margin-top:28px;" id="startBtn" onclick="confirmPick()" disabled>Commencer l'histoire ✨</button>
+
+    <div class="pick-steps-dots" id="pickDots" aria-hidden="true"></div>
+
+    <div class="pick-steps" id="pickSteps">
+      <!-- Étape 1 : prénom -->
+      <section class="pick-step" data-step="0">
+        <div class="eyebrow-left pick-section">Comment on t'appelle&nbsp;?</div>
+        <input id="firstName" class="custom-universe" maxlength="24" autocomplete="given-name" placeholder="Ton prénom">
+        <p class="pick-hint">Utilisé pour que le conteur te parle directement dans les scènes.</p>
+        <button class="btn pick-next" data-next="1" disabled>Continuer</button>
+      </section>
+
+      <!-- Étape 2 : langue -->
+      <section class="pick-step" data-step="1">
+        <div class="eyebrow-left pick-section" id="langLabel">Quelle langue veux-tu apprendre&nbsp;?</div>
+        <div class="pick-grid" id="langGrid"></div>
+      </section>
+
+      <!-- Étape 3 : motivation -->
+      <section class="pick-step" data-step="2">
+        <div class="eyebrow-left pick-section" id="motivationLabel">Pourquoi tu apprends&nbsp;?</div>
+        <div class="pick-grid" id="motivationGrid"></div>
+      </section>
+
+      <!-- Étape 4 : niveau -->
+      <section class="pick-step" data-step="3">
+        <div class="eyebrow-left pick-section">On calibre ton niveau</div>
+        <p class="pick-question" id="levelQuestion">Tu arrives à faire une phrase simple tout seul, dans cette langue&nbsp;?</p>
+        <div class="pick-grid" id="levelGrid"></div>
+      </section>
+
+      <!-- Étape 5 : univers -->
+      <section class="pick-step" data-step="4">
+        <div class="eyebrow-left pick-section" id="themeLabel">Dans quel univers&nbsp;?</div>
+        <div class="pick-grid" id="themeGrid"></div>
+        <input id="customUniverse" class="custom-universe" maxlength="120" autocomplete="off" placeholder="✨ Ou décris ton univers : cyberpunk à Tokyo, pirates des Caraïbes…">
+        <button class="btn" style="margin-top:22px;" id="startBtn" onclick="confirmPick()" disabled>Commencer l'histoire ✨</button>
+      </section>
+    </div>
+
+    <button class="pick-back" id="pickBack" onclick="pickStepPrev()" style="display:none;">← Retour</button>
   </div>
 
   <div class="chat-wrap" id="chatScreen" style="display:none;">
@@ -420,6 +448,19 @@
     <div class="reveal-chips" id="revealChips"></div>
     <p class="reveal-note" id="revealNote"></p>
     <button class="btn" id="revealBtn" onclick="launchSaga()">Lancer la 1ʳᵉ scène ✨</button>
+  </div>
+</div>
+
+<!-- ============ CAPTURE PRÉNOM (comptes existants sans first_name) ============ -->
+<div id="nameModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Ton prénom">
+  <div class="modal-backdrop"></div>
+  <div class="modal-card reveal-card">
+    <svg class="mascot idle reveal-mascot" aria-hidden="true"><use href="#mascot"/></svg>
+    <div class="reveal-kicker">FAISONS CONNAISSANCE</div>
+    <h2>Comment on t'appelle&nbsp;?</h2>
+    <p class="reveal-note">Ton prénom sert au conteur pour te parler directement dans les scènes.</p>
+    <input id="nameModalInput" class="custom-universe" maxlength="24" autocomplete="given-name" placeholder="Ton prénom" style="text-align:center;">
+    <button class="btn" onclick="submitNameCapture()">C'est parti ✨</button>
   </div>
 </div>
 

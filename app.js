@@ -1099,16 +1099,25 @@ let chapter = 0;
 let episodeConsumed = false;
 
 function renderPickers(){
+  pickStepInit();
   const nameInput = document.getElementById('firstName');
+  const nextBtn = document.querySelector('.pick-next[data-next="1"]');
+  const syncNameUI = ()=>{
+    if(nextBtn) nextBtn.disabled = !pickedFirstName;
+    updatePickHeadings();
+    checkReady();
+  };
   if(nameInput){
     nameInput.value = pickedFirstName || '';
     nameInput.oninput = ()=>{
       pickedFirstName = nameInput.value.trim();
       if(pickedFirstName) localStorage.setItem('sunami-firstname', pickedFirstName);
       else localStorage.removeItem('sunami-firstname');
-      checkReady();
+      syncNameUI();
     };
+    nameInput.onkeydown = (e)=>{ if(e.key === 'Enter' && pickedFirstName){ pickStepNext(1); } };
   }
+  if(nextBtn){ nextBtn.disabled = !pickedFirstName; nextBtn.onclick = ()=> pickStepNext(1); }
   const langGrid = document.getElementById('langGrid');
   langGrid.innerHTML = '';
   LANGUAGES.forEach(l=>{
@@ -1121,7 +1130,9 @@ function renderPickers(){
       c.classList.add('active');
       pickedLang = l.code;
       updateMotivationLabel();
+      updatePickHeadings();
       checkReady();
+      pickAdvance(2); // auto-avance vers la motivation après un court feedback
     };
     langGrid.appendChild(c);
   });
@@ -1139,6 +1150,7 @@ function renderPickers(){
         pickedMotivation = m.code;
         localStorage.setItem('sunami-motivation', m.code);
         checkReady();
+        pickAdvance(3); // -> calibrage niveau
       };
       motivationGrid.appendChild(c);
     });
@@ -1156,6 +1168,7 @@ function renderPickers(){
       c.classList.add('active');
       pickedLevel = lv.code;
       checkReady();
+      pickAdvance(4); // -> univers
     };
     levelGrid.appendChild(c);
   });
@@ -1201,12 +1214,63 @@ function updateMotivationLabel(){
   const el = document.getElementById('motivationLabel');
   if(!el) return;
   const langLabel = (LANGUAGES.find(l=>l.code===pickedLang)?.label) || '';
-  el.innerHTML = langLabel
-    ? `3 · Pourquoi tu apprends ${langLabel.startsWith('A')||langLabel.startsWith('I')||langLabel.startsWith('É')||langLabel.startsWith('E')?'l\u2019':'le '}${langLabel}\u00a0?`
-    : '3 · Pourquoi tu apprends\u00a0?';
+  const art = /^[AEIÉOUY]/i.test(langLabel) ? 'l\u2019' : 'le ';
+  el.textContent = langLabel ? `Pourquoi tu apprends ${art}${langLabel}\u00a0?` : 'Pourquoi tu apprends\u00a0?';
+}
+// Reformulations qui réutilisent le prénom dès qu'il est saisi (feedback perso).
+function updatePickHeadings(){
+  const name = pickedFirstName || '';
+  const heroTitle = document.getElementById('pickHeroTitle');
+  const heroSub = document.getElementById('pickHeroSub');
+  const langLabel = document.getElementById('langLabel');
+  if(heroTitle) heroTitle.textContent = name ? `Enchanté, ${name} 👋` : 'Ta prochaine histoire commence ici';
+  if(heroSub) heroSub.textContent = name ? 'Encore quelques réglages et ton conteur entre en scène.' : 'Réponds à quelques questions — le conteur écrit la suite en direct.';
+  if(langLabel) langLabel.textContent = name ? `${name}, quelle langue veux-tu apprendre\u00a0?` : 'Quelle langue veux-tu apprendre\u00a0?';
+}
+
+/* ===== Stepper d'onboarding : une étape à la fois, avec transitions ===== */
+const PICK_STEP_COUNT = 5;
+let pickStep = 0;
+function pickStepInit(){
+  const dots = document.getElementById('pickDots');
+  if(dots && !dots.childElementCount){
+    for(let i=0;i<PICK_STEP_COUNT;i++){ const d=document.createElement('span'); d.className='pick-dot'; dots.appendChild(d); }
+  }
+  pickStep = 0;
+  goToStep(0, true);
+  updatePickHeadings();
+}
+function goToStep(n, instant){
+  pickStep = Math.max(0, Math.min(PICK_STEP_COUNT-1, n));
+  document.querySelectorAll('#pickSteps .pick-step').forEach(sec=>{
+    const idx = parseInt(sec.getAttribute('data-step'), 10);
+    const active = idx === pickStep;
+    sec.classList.toggle('active', active);
+    if(instant) sec.style.transition = 'none';
+    if(active && !instant) sec.classList.add('slide-in');
+    else sec.classList.remove('slide-in');
+  });
+  if(instant){ requestAnimationFrame(()=> document.querySelectorAll('#pickSteps .pick-step').forEach(s=> s.style.transition='')); }
+  document.querySelectorAll('#pickDots .pick-dot').forEach((d,i)=>{
+    d.classList.toggle('done', i < pickStep);
+    d.classList.toggle('current', i === pickStep);
+  });
+  const back = document.getElementById('pickBack');
+  if(back) back.style.display = pickStep > 0 ? 'block' : 'none';
+  const active = document.querySelector('#pickSteps .pick-step.active');
+  const field = active && active.querySelector('input');
+  if(field && !instant) setTimeout(()=>{ try{ field.focus(); }catch(_){} }, 120);
+}
+function pickStepNext(n){ goToStep(typeof n === 'number' ? n : pickStep+1); }
+window.pickStepPrev = function(){ goToStep(pickStep-1); };
+// Auto-avance après une sélection : petit délai pour laisser voir le feedback visuel.
+function pickAdvance(target){
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  setTimeout(()=> goToStep(target), reduce ? 0 : 260);
 }
 function checkReady(){
-  document.getElementById('startBtn').disabled = !(pickedFirstName && pickedLang && pickedLevel && pickedMotivation);
+  const btn = document.getElementById('startBtn');
+  if(btn) btn.disabled = !(pickedFirstName && pickedLang && pickedLevel && pickedMotivation);
 }
 // Libellé user-facing du thème dérivé de la motivation (pour l'écran "ta série est prête").
 // Personnalisation pédagogique uniquement — jamais un argument de vente.
@@ -1216,14 +1280,16 @@ const MOTIVATION_THEME = {
   work: {emoji:'💼', label:'situations pro', note:'des réunions, échanges et coulisses du travail'},
   personal_challenge: {emoji:'🔥', label:'défis du quotidien', note:'des situations variées qui montent en difficulté à ton rythme'},
 };
-window.confirmPick = function(){
+window.confirmPick = async function(){
   progress.language = pickedLang;
   progress.level = pickedLevel;
   progress.first_name = pickedFirstName || null;
   progress.motivation = pickedMotivation || null;
   // Le prénom devient le protagoniste : l'IA s'adresse à l'apprenant par son prénom.
   if(pickedFirstName) sagaProtagonist = pickedFirstName;
-  saveProgress();
+  // On ATTEND la sauvegarde avant l'écran de révélation : évite toute course où la
+  // scène se génère / se sauve avant que first_name + motivation soient persistés.
+  await saveProgress();
   showStoryReveal();
 };
 // Piste B — écran "ta série est prête" : renvoie les réponses en plan visible AVANT
@@ -1550,7 +1616,15 @@ function resumeScene(s){
   chatHistory = Array.isArray(s.history) ? s.history.slice() : [];
   sagaRecap = s.recap || '';
   sagaSetting = s.setting || '';
-  sagaProtagonist = s.protagonist || '';
+  // Le protagoniste EST l'apprenant : on privilégie TOUJOURS son vrai prénom.
+  // Une saga créée avant l'ajout de first_name a stocké le préfixe de l'email
+  // (ex: "nm8935042") : il ne doit jamais écraser le prénom réel.
+  const _storedProto = s.protagonist || '';
+  const _realName = pickedFirstName || progress.first_name || '';
+  const _emailPrefix = userEmail ? (userEmail.split('@')[0] || '') : '';
+  sagaProtagonist = _realName || _storedProto || _emailPrefix;
+  // Si on a corrigé un protagoniste périmé, on persiste la correction dans la saga.
+  if(_realName && _storedProto !== _realName) saveSaga();
   sagaTitle = s.title || '';
   sagaCover = s.cover || '';
   sagaCoverStyle = s.cover_style || 'cinematic';
@@ -1571,6 +1645,7 @@ function resumeScene(s){
     if(log) log.appendChild(banner);
   }
   const lastAI = [...chatHistory].reverse().find(m => m.role === 'assistant');
+  if(sagaRecap && lastAI) appendNowDivider(log);
   if(lastAI){ renderStoryMessage(lastAI.content, characters); }
   const input = document.getElementById('userInput');
   if(input){ input.disabled = false; input.focus(); }
@@ -1867,16 +1942,49 @@ async function enterApp(email, uid){
     document.getElementById('pickScreen').style.display = 'none';
     document.getElementById('chatScreen').style.display = 'flex';
     updateSceneMeta();
-    resumeOrStart();
-    // Piste E — reprise contextualisée : salue l'apprenant par son prénom au retour.
-    if(pickedFirstName){
-      const langLabel = (LANGUAGES.find(l=>l.code===pickedLang)?.label) || '';
-      showGreeting(`Content de te revoir, ${pickedFirstName} 👋`, langLabel ? `On reprend ton histoire en ${langLabel}.` : 'On reprend ton histoire.');
+    // Comptes créés avant l'ajout de first_name : on n'a jamais capturé leur prénom
+    // (ils sautent l'onboarding). On le demande une fois, avant de reprendre l'histoire,
+    // pour que les scènes utilisent leur vrai prénom au lieu du préfixe email.
+    if(!pickedFirstName){
+      showNameCapture();
+    } else {
+      resumeOrStart();
+      greetReturning();
     }
   } else {
     renderPickers();
   }
 }
+function greetReturning(){
+  // Piste E — reprise contextualisée : salue l'apprenant par son prénom au retour.
+  if(!pickedFirstName) return;
+  const langLabel = (LANGUAGES.find(l=>l.code===pickedLang)?.label) || '';
+  showGreeting(`Content de te revoir, ${pickedFirstName} 👋`, langLabel ? `On reprend ton histoire en ${langLabel}.` : 'On reprend ton histoire.');
+}
+// Capture du prénom pour un compte existant qui n'en a pas encore.
+function showNameCapture(){
+  const m = document.getElementById('nameModal');
+  const inp = document.getElementById('nameModalInput');
+  if(!m || !inp){ resumeOrStart(); return; } // filet : on ne bloque jamais l'accès
+  m.classList.add('open'); m.setAttribute('aria-hidden','false');
+  setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 60);
+  inp.onkeydown = (e)=>{ if(e.key === 'Enter') submitNameCapture(); };
+}
+window.submitNameCapture = async function(){
+  const inp = document.getElementById('nameModalInput');
+  const name = inp ? inp.value.trim() : '';
+  const m = document.getElementById('nameModal');
+  if(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
+  if(name){
+    pickedFirstName = name;
+    progress.first_name = name;
+    sagaProtagonist = name;
+    try{ localStorage.setItem('sunami-firstname', name); }catch(_){}
+    await saveProgress();
+  }
+  resumeOrStart();
+  greetReturning();
+};
 // Toast de bienvenue non-bloquant (piste E). Se retire tout seul, respecte reduced-motion.
 function showGreeting(title, sub){
   try{
@@ -1971,6 +2079,15 @@ function setMascotExpression(emo){
 function formatStory(s){ return escapeHtml(s).replace(/\*\*(.+?)\*\*/g, '<b class="vocab-hl">$1</b>').replace(/\n/g, '<br>'); }
 /* Rendu léger pour les résumés ("Previously on…") : gras markdown sans surlignage vocab */
 function formatRecap(s){ return escapeHtml(String(s||'')).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>'); }
+// Séparateur visuel "Maintenant" : marque la frontière entre le recap (ce qui s'est
+// passé avant) et la scène en cours (ce qui se passe maintenant).
+function appendNowDivider(log){
+  if(!log) return;
+  const d = document.createElement('div');
+  d.className = 'now-divider';
+  d.textContent = 'Maintenant';
+  log.appendChild(d);
+}
 
 /* ===== RPG / Webtoon : rendu immersif des messages ===== */
 function emotionToExpr(e){ return (e === 'surprised' || e === 'think' || e === 'happy') ? e : 'happy'; }

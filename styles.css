@@ -327,6 +327,10 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 .pick-card:hover{border-color:var(--wave); transform:translateY(-2px);}
 .pick-card small{display:block; font-size:11px; font-weight:700; color:var(--muted); margin-top:4px;}
 .pick-card.active{border-color:var(--wave); background:var(--surf); color:var(--wave-dim); box-shadow:0 3px 0 var(--wave); animation:cardPop .32s var(--ease);}
+.pick-card.active::after{content:'✓'; position:absolute; top:6px; right:8px; width:20px; height:20px; line-height:20px;
+  font-size:12px; font-weight:900; color:#fff; background:var(--wave); border-radius:50%; text-align:center;
+  animation:cardCheck .3s var(--ease) both;}
+@keyframes cardCheck{from{opacity:0; transform:scale(0);}to{opacity:1; transform:scale(1);}}
 @keyframes cardPop{0%{transform:scale(1);}40%{transform:scale(1.06);}70%{transform:scale(.98);}100%{transform:scale(1);}}
 .pick-card.active::after{content:"✓"; position:absolute; top:7px; right:10px; font-size:12px; color:var(--wave);}
 .pick-card.active small{color:var(--wave-dim);}
@@ -621,20 +625,25 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 .custom-universe:focus{ outline:none; border-color:var(--wave); box-shadow:0 0 0 4px color-mix(in srgb,var(--neon) 18%,transparent); }
 .custom-universe::placeholder{ color:var(--muted); }
 
-/* ---- Onboarding : révélation en cascade des sections + champs ---- */
-#pickScreen .pick-section, #pickScreen .pick-question,
-#pickScreen #firstName, #pickScreen #customUniverse, #pickScreen #startBtn{
-  opacity:0; animation:sectionIn .5s var(--ease) forwards;}
-#pickScreen .pick-section:nth-of-type(1){animation-delay:.02s;}
-#pickScreen #firstName{animation-delay:.06s;}
-#pickScreen .pick-section:nth-of-type(2){animation-delay:.10s;}
-#pickScreen .pick-section:nth-of-type(3){animation-delay:.16s;}
-#pickScreen .pick-section:nth-of-type(4){animation-delay:.22s;}
-#pickScreen .pick-question{animation-delay:.26s;}
-#pickScreen .pick-section:nth-of-type(5){animation-delay:.30s;}
+/* ---- Onboarding : stepper (une étape à la fois) ---- */
+.pick-steps{position:relative;}
+.pick-step{display:none;}
+.pick-step.active{display:block;}
+.pick-step.slide-in{animation:stepIn .42s var(--ease) both;}
+@keyframes stepIn{from{opacity:0; transform:translateX(22px);}to{opacity:1; transform:none;}}
 @keyframes sectionIn{from{opacity:0; transform:translateY(10px);}to{opacity:1; transform:none;}}
+.pick-hint{font-size:13px; color:var(--muted); font-weight:600; margin:9px 2px 0;}
+.pick-next{margin-top:20px;}
+.pick-back{display:none; margin:20px auto 0; background:none; border:none; cursor:pointer;
+  color:var(--muted); font-family:'Inter Tight',sans-serif; font-weight:700; font-size:14px; padding:6px 10px;}
+.pick-back:hover{color:var(--foam);}
+/* Points de progression */
+.pick-steps-dots{display:flex; justify-content:center; gap:8px; margin:4px 0 20px;}
+.pick-dot{width:9px; height:9px; border-radius:50%; background:var(--card-border); transition:all .3s var(--ease);}
+.pick-dot.done{background:var(--wave);}
+.pick-dot.current{background:var(--wave); transform:scale(1.5); box-shadow:0 0 0 4px color-mix(in srgb,var(--neon) 20%,transparent);}
 /* Bouton "Commencer" : pulse discret quand il devient actif */
-#startBtn:not(:disabled){animation:sectionIn .5s var(--ease) forwards, btnReady 2.6s var(--ease) .5s infinite;}
+#startBtn:not(:disabled){animation:btnReady 2.6s var(--ease) .5s infinite;}
 @keyframes btnReady{0%,88%,100%{box-shadow:0 4px 0 var(--wave-dim);}94%{box-shadow:0 4px 22px color-mix(in srgb,var(--neon) 55%,transparent);}}
 
 /* ---- Reveal onboarding : "Ta série est prête" ---- */
@@ -689,8 +698,18 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 .scene-avatar.emo-think .me-think{opacity:1;}
 
 /* Previously banner */
-.prev-banner{background:linear-gradient(120deg,rgba(20,184,166,.1),rgba(45,212,191,.06)); border:1px solid rgba(20,184,166,.2); border-radius:12px; padding:10px 14px; margin-bottom:14px; font-size:12px; font-weight:600; color:var(--muted); line-height:1.5; animation:msgIn .35s var(--ease) both;}
-.prev-banner .prev-label{font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--wave); margin-bottom:4px;}
+.prev-banner{position:relative; background:color-mix(in srgb,var(--muted) 8%,transparent);
+  border:1px dashed color-mix(in srgb,var(--wave) 35%,transparent); border-left:3px solid var(--wave);
+  border-radius:12px; padding:13px 16px; margin:2px 0 22px; font-size:12.5px; font-weight:600;
+  color:var(--muted); line-height:1.6; font-style:italic; animation:msgIn .35s var(--ease) both;}
+.prev-banner .prev-label{font-size:10px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--wave); margin-bottom:6px; font-style:normal; display:flex; align-items:center; gap:5px;}
+.prev-banner b{color:color-mix(in srgb,var(--foam) 80%,var(--muted)); font-style:normal;}
+/* Séparateur "Maintenant" entre le recap et la scène en cours (hiérarchie temporelle claire) */
+.now-divider{display:flex; align-items:center; gap:12px; margin:6px 2px 16px; color:var(--wave);
+  font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;}
+.now-divider::before, .now-divider::after{content:''; flex:1; height:1px;
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--wave) 40%,transparent),transparent);}
 
 /* accueil / empty-state du conteur */
 .story-welcome{display:flex; flex-direction:column; align-items:center; text-align:center;
@@ -782,6 +801,9 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 
 @media (prefers-reduced-motion: reduce){
   .pick-card{opacity:1 !important;}
+  .pick-step.slide-in{animation:none !important;}
+  .pick-card.active{animation:none !important;}
+  .pick-card.active::after{animation:none !important;}
   #pickScreen .pick-section, #pickScreen .pick-question,
   #pickScreen #firstName, #pickScreen #customUniverse, #pickScreen #startBtn,
   .reveal-kicker, .reveal-card h2, .reveal-chip, .reveal-note, .reveal-card .btn{
@@ -1420,7 +1442,7 @@ body:has(.landing-header) .theme-toggle{
   border:1px solid color-mix(in srgb,var(--neon) 30%,transparent); }
 .narrator-avatar svg{ width:100%; height:100%; }
 .npc-avatar{ color:#fff; box-shadow:0 6px 16px -6px rgba(0,0,0,.55); border:2px solid rgba(255,255,255,.18); }
-.story-bubble{ max-width:82%; padding:11px 14px; border-radius:16px; font-size:15px; line-height:1.55; }
+.story-bubble{ max-width:82%; padding:17px 20px; border-radius:16px; font-size:15px; line-height:1.65; }
 .narration-bubble{ background:var(--surf); color:var(--foam); border:1px solid var(--card-border); border-bottom-left-radius:5px; }
 .npc-bubble{ background:color-mix(in srgb, var(--wave) 14%, var(--card)); color:var(--foam);
   border:1px solid color-mix(in srgb,var(--wave) 38%,transparent); border-bottom-left-radius:5px; font-style:italic; }

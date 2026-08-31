@@ -43,12 +43,26 @@ function consumeLoginIntent(){ try{ const v = sessionStorage.getItem(LOGIN_INTEN
 function enterApp(){ window.location.replace('/app'); }
 
 function showWelcomeBack(session){
-  const run = ()=>{
+  const run = async ()=>{
     const wb = document.getElementById('welcomeBack');
     const cta = document.getElementById('signedOutCta');
     if(!wb){ enterApp(); return; } // filet de sécurité si l'UI d'accueil est absente
     const emailEl = document.getElementById('wbEmail');
-    if(emailEl && session && session.user && session.user.email) emailEl.textContent = session.user.email;
+    // On affiche le PRÉNOM de l'apprenant s'il est connu (personnalisation), sinon
+    // l'email en secours. On lit progress.first_name (RLS : l'utilisateur lit sa
+    // propre ligne). Jamais de blocage : l'accueil s'affiche même si la requête échoue.
+    if(emailEl && session && session.user){
+      const email = session.user.email || '';
+      emailEl.textContent = email; // fallback immédiat
+      const uid = session.user.id;
+      if(uid){
+        try{
+          const { data } = await supabase.from('progress').select('first_name').eq('user_id', uid).maybeSingle();
+          const name = data && data.first_name ? String(data.first_name).trim() : '';
+          if(name) emailEl.textContent = name;
+        }catch(e){ /* on garde l'email en secours */ }
+      }
+    }
     if(cta) cta.style.display = 'none';
     wb.style.display = 'flex';
     const navLogin = document.getElementById('navLoginLink');
