@@ -1108,6 +1108,12 @@ function renderPickers(){
     checkReady();
   };
   if(nameInput){
+    // Pré-remplissage intelligent pour un nouvel arrivant : prénom du profil Google
+    // si connu (jamais le préfixe email), sinon champ vide. Modifiable librement.
+    if(!pickedFirstName){
+      const suggested = deduceFirstName();
+      if(suggested){ pickedFirstName = suggested; try{ localStorage.setItem('sunami-firstname', suggested); }catch(_){} }
+    }
     nameInput.value = pickedFirstName || '';
     nameInput.oninput = ()=>{
       pickedFirstName = nameInput.value.trim();
@@ -1116,6 +1122,7 @@ function renderPickers(){
       syncNameUI();
     };
     nameInput.onkeydown = (e)=>{ if(e.key === 'Enter' && pickedFirstName){ pickStepNext(1); } };
+    syncNameUI(); // reflète le pré-remplissage (bouton Continuer, titre, etc.)
   }
   if(nextBtn){ nextBtn.disabled = !pickedFirstName; nextBtn.onclick = ()=> pickStepNext(1); }
   const langGrid = document.getElementById('langGrid');
@@ -1339,6 +1346,7 @@ function updateSceneMeta(){
 
 let userId = null;
 let userEmail = null;
+let authUser = null; // objet user Supabase (contient user_metadata du provider OAuth)
 let progress = { season: 1, episode: 1, streak: 0, last_active: null, language: null, level: null, plan: 'free' }; // plan: free | premium | pro
 
 async function loadProgress(uid){
@@ -1910,13 +1918,14 @@ function maybeOfferNotifications(){
 
 
 let appEntered = false;
-async function enterApp(email, uid){
+async function enterApp(email, uid, user){
   if(appEntered) return;
   appEntered = true;
   document.getElementById('appScreen').style.display = 'flex';
   document.getElementById('userLabel').textContent = email;
   userId = uid;
   userEmail = email;
+  authUser = user || null;
   try{ if(window.sunamiSetUser) window.sunamiSetUser(uid); }catch(e){}
   track('app_opened', {});
   await loadProgress(uid);
@@ -1961,13 +1970,35 @@ function greetReturning(){
   const langLabel = (LANGUAGES.find(l=>l.code===pickedLang)?.label) || '';
   showGreeting(`Content de te revoir, ${pickedFirstName} 👋`, langLabel ? `On reprend ton histoire en ${langLabel}.` : 'On reprend ton histoire.');
 }
+// Déduit un prénom depuis le profil OAuth (Google) SANS jamais retomber sur le
+// préfixe de l'email : c'est justement la valeur "nm8935042" qu'on veut éviter.
+// Retourne '' si aucun vrai prénom fiable n'est disponible → champ laissé vide.
+function deduceFirstName(){
+  const meta = (authUser && authUser.user_metadata) ? authUser.user_metadata : {};
+  let cand = meta.given_name || meta.first_name || meta.name || meta.full_name || '';
+  cand = String(cand).trim();
+  if(!cand) return '';
+  cand = cand.split(/\s+/)[0]; // on garde le premier mot (prénom)
+  const emailPrefix = userEmail ? String(userEmail.split('@')[0] || '').toLowerCase() : '';
+  // Filet : rejeter tout ce qui ressemble à un email, un identifiant technique, ou
+  // au préfixe de l'email (ex: nm8935042). On veut un prénom "humain".
+  if(cand.includes('@')) return '';
+  if(emailPrefix && cand.toLowerCase() === emailPrefix) return '';
+  if(/\d/.test(cand)) return ''; // un prénom ne contient pas de chiffres
+  if(cand.length < 2 || cand.length > 24) return '';
+  // Capitalise proprement (ahmed -> Ahmed).
+  return cand.charAt(0).toUpperCase() + cand.slice(1);
+}
 // Capture du prénom pour un compte existant qui n'en a pas encore.
 function showNameCapture(){
   const m = document.getElementById('nameModal');
   const inp = document.getElementById('nameModalInput');
   if(!m || !inp){ resumeOrStart(); return; } // filet : on ne bloque jamais l'accès
+  // Pré-remplissage intelligent : prénom du profil Google si dispo, sinon vide.
+  const suggested = deduceFirstName();
+  inp.value = suggested;
   m.classList.add('open'); m.setAttribute('aria-hidden','false');
-  setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 60);
+  setTimeout(()=>{ try{ inp.focus(); inp.select(); }catch(_){} }, 60); // sélectionné = 1 frappe pour corriger
   inp.onkeydown = (e)=>{ if(e.key === 'Enter') submitNameCapture(); };
 }
 window.submitNameCapture = async function(){
@@ -2002,7 +2033,7 @@ function showGreeting(title, sub){
 /* Garde d'accès : app réservée aux connectés */
 window.addEventListener('DOMContentLoaded', async ()=>{
   const { data } = await supabase.auth.getSession();
-  if(data.session){ enterApp(data.session.user.email, data.session.user.id); }
+  if(data.session){ enterApp(data.session.user.email, data.session.user.id, data.session.user); }
   else { window.location.replace('/'); }
 
   // Parrainage
@@ -2015,7 +2046,7 @@ window.addEventListener('DOMContentLoaded', async ()=>{
   }
 });
 supabase.auth.onAuthStateChange((event, session)=>{
-  if(session){ enterApp(session.user.email, session.user.id); }
+  if(session){ enterApp(session.user.email, session.user.id, session.user); }
   else if(event === 'SIGNED_OUT'){ window.location.replace('/'); }
 });
 
