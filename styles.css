@@ -326,7 +326,8 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
   cursor:pointer; font-weight:800; font-size:15px; transition:.2s var(--ease); border-radius:16px; box-shadow:0 3px 0 var(--line);}
 .pick-card:hover{border-color:var(--wave); transform:translateY(-2px);}
 .pick-card small{display:block; font-size:11px; font-weight:700; color:var(--muted); margin-top:4px;}
-.pick-card.active{border-color:var(--wave); background:var(--surf); color:var(--wave-dim); box-shadow:0 3px 0 var(--wave);}
+.pick-card.active{border-color:var(--wave); background:var(--surf); color:var(--wave-dim); box-shadow:0 3px 0 var(--wave); animation:cardPop .32s var(--ease);}
+@keyframes cardPop{0%{transform:scale(1);}40%{transform:scale(1.06);}70%{transform:scale(.98);}100%{transform:scale(1);}}
 .pick-card.active::after{content:"✓"; position:absolute; top:7px; right:10px; font-size:12px; color:var(--wave);}
 .pick-card.active small{color:var(--wave-dim);}
 
@@ -620,6 +621,48 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 .custom-universe:focus{ outline:none; border-color:var(--wave); box-shadow:0 0 0 4px color-mix(in srgb,var(--neon) 18%,transparent); }
 .custom-universe::placeholder{ color:var(--muted); }
 
+/* ---- Onboarding : révélation en cascade des sections + champs ---- */
+#pickScreen .pick-section, #pickScreen .pick-question,
+#pickScreen #firstName, #pickScreen #customUniverse, #pickScreen #startBtn{
+  opacity:0; animation:sectionIn .5s var(--ease) forwards;}
+#pickScreen .pick-section:nth-of-type(1){animation-delay:.02s;}
+#pickScreen #firstName{animation-delay:.06s;}
+#pickScreen .pick-section:nth-of-type(2){animation-delay:.10s;}
+#pickScreen .pick-section:nth-of-type(3){animation-delay:.16s;}
+#pickScreen .pick-section:nth-of-type(4){animation-delay:.22s;}
+#pickScreen .pick-question{animation-delay:.26s;}
+#pickScreen .pick-section:nth-of-type(5){animation-delay:.30s;}
+@keyframes sectionIn{from{opacity:0; transform:translateY(10px);}to{opacity:1; transform:none;}}
+/* Bouton "Commencer" : pulse discret quand il devient actif */
+#startBtn:not(:disabled){animation:sectionIn .5s var(--ease) forwards, btnReady 2.6s var(--ease) .5s infinite;}
+@keyframes btnReady{0%,88%,100%{box-shadow:0 4px 0 var(--wave-dim);}94%{box-shadow:0 4px 22px color-mix(in srgb,var(--neon) 55%,transparent);}}
+
+/* ---- Reveal onboarding : "Ta série est prête" ---- */
+.reveal-card{text-align:center;}
+.reveal-card .reveal-mascot{width:72px; height:84px; margin:0 auto 6px; animation:bob 1.5s ease-in-out infinite;}
+.reveal-kicker{font-size:11px; font-weight:900; letter-spacing:.14em; color:var(--wave);
+  opacity:0; animation:sectionIn .5s var(--ease) .1s forwards;}
+.reveal-card h2{font-size:24px; margin:6px 0 14px; opacity:0; animation:sectionIn .5s var(--ease) .2s forwards;}
+.reveal-chips{display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-bottom:14px;}
+.reveal-chip{opacity:0; animation:cardIn .45s var(--ease) forwards; font-size:13px; font-weight:800;
+  padding:8px 13px; border-radius:999px; border:1px solid var(--card-border); background:var(--card); color:var(--foam);}
+.reveal-chip:nth-child(1){animation-delay:.30s;}
+.reveal-chip:nth-child(2){animation-delay:.38s;}
+.reveal-chip:nth-child(3){animation-delay:.46s;}
+.reveal-note{font-size:13px; color:var(--muted); font-weight:600; max-width:330px; margin:0 auto 18px;
+  opacity:0; animation:sectionIn .5s var(--ease) .55s forwards;}
+.reveal-card .btn{opacity:0; animation:sectionIn .5s var(--ease) .66s forwards;}
+
+/* ---- Toast de reprise contextualisé (piste E) ---- */
+.greet-toast{position:fixed; left:50%; top:16px; z-index:300; transform:translate(-50%,-24px);
+  opacity:0; transition:opacity .4s var(--ease), transform .4s var(--ease); pointer-events:none;
+  max-width:min(420px,92vw); padding:12px 18px; border-radius:16px; text-align:center;
+  background:var(--card); border:1px solid var(--card-border); box-shadow:0 10px 30px rgba(8,20,18,.35);}
+.greet-toast.show{opacity:1; transform:translate(-50%,0);}
+.greet-toast .gt-title{font-weight:800; font-size:15px; color:var(--foam);}
+.greet-toast .gt-sub{font-weight:600; font-size:13px; color:var(--muted); margin-top:2px;}
+@media (prefers-reduced-motion: reduce){ .greet-toast{transition:opacity .2s linear;} }
+
 /* ---- Écran d'histoire ---- */
 .scene-avatar .mascot{transition:transform .3s var(--ease);}
 .scene-card.thinking .mascot{animation:think 1s ease-in-out infinite;}
@@ -739,6 +782,12 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 
 @media (prefers-reduced-motion: reduce){
   .pick-card{opacity:1 !important;}
+  #pickScreen .pick-section, #pickScreen .pick-question,
+  #pickScreen #firstName, #pickScreen #customUniverse, #pickScreen #startBtn,
+  .reveal-kicker, .reveal-card h2, .reveal-chip, .reveal-note, .reveal-card .btn{
+    opacity:1 !important; animation:none !important;}
+  #startBtn:not(:disabled){animation:none !important;}
+  .reveal-card .reveal-mascot{animation:none !important;}
   .xp-float{display:none !important;}
   .stream-cursor{animation:none !important;}
 }

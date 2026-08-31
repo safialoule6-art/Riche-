@@ -1208,9 +1208,15 @@ function updateMotivationLabel(){
 function checkReady(){
   document.getElementById('startBtn').disabled = !(pickedFirstName && pickedLang && pickedLevel && pickedMotivation);
 }
+// Libellé user-facing du thème dérivé de la motivation (pour l'écran "ta série est prête").
+// Personnalisation pédagogique uniquement — jamais un argument de vente.
+const MOTIVATION_THEME = {
+  travel: {emoji:'✈️', label:'aventures de voyage', note:'des aéroports, hôtels et rencontres sur la route'},
+  media: {emoji:'🎬', label:'dialogues façon série', note:'des scènes de la vie courante, pleines de répliques et de culture'},
+  work: {emoji:'💼', label:'situations pro', note:'des réunions, échanges et coulisses du travail'},
+  personal_challenge: {emoji:'🔥', label:'défis du quotidien', note:'des situations variées qui montent en difficulté à ton rythme'},
+};
 window.confirmPick = function(){
-  document.getElementById('pickScreen').style.display = 'none';
-  document.getElementById('chatScreen').style.display = 'flex';
   progress.language = pickedLang;
   progress.level = pickedLevel;
   progress.first_name = pickedFirstName || null;
@@ -1218,6 +1224,34 @@ window.confirmPick = function(){
   // Le prénom devient le protagoniste : l'IA s'adresse à l'apprenant par son prénom.
   if(pickedFirstName) sagaProtagonist = pickedFirstName;
   saveProgress();
+  showStoryReveal();
+};
+// Piste B — écran "ta série est prête" : renvoie les réponses en plan visible AVANT
+// de lancer la scène (pattern des meilleurs onboardings de la niche).
+function showStoryReveal(){
+  const langLabel = (LANGUAGES.find(l=>l.code===pickedLang)?.label) || pickedLang || '';
+  const levelLabel = (LEVELS.find(l=>l.code===pickedLevel)?.sub) || (LEVELS.find(l=>l.code===pickedLevel)?.label) || '';
+  const theme = MOTIVATION_THEME[pickedMotivation] || {emoji:'📖', label:'ton histoire', note:''};
+  const name = pickedFirstName ? pickedFirstName : '';
+  const set = (id, v)=>{ const el = document.getElementById(id); if(el) el.textContent = v; };
+  set('revealTitle', name ? `C'est parti, ${name} !` : 'C\u2019est parti !');
+  const chips = document.getElementById('revealChips');
+  if(chips){
+    chips.innerHTML = '';
+    [`🗣️ ${langLabel}`, `📊 ${levelLabel}`, `${theme.emoji} ${theme.label}`]
+      .forEach(t=>{ const c=document.createElement('span'); c.className='reveal-chip'; c.textContent=t; chips.appendChild(c); });
+  }
+  set('revealNote', name
+    ? `Le conteur va t'appeler ${name} et t'emmener vers ${theme.note}.`
+    : `Le conteur t'emmène vers ${theme.note}.`);
+  const m = document.getElementById('revealModal');
+  if(m){ m.classList.add('open'); m.setAttribute('aria-hidden','false'); }
+}
+window.launchSaga = function(){
+  const m = document.getElementById('revealModal');
+  if(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
+  document.getElementById('pickScreen').style.display = 'none';
+  document.getElementById('chatScreen').style.display = 'flex';
   updateSceneMeta();
   resumeOrStart();
 };
@@ -1834,9 +1868,27 @@ async function enterApp(email, uid){
     document.getElementById('chatScreen').style.display = 'flex';
     updateSceneMeta();
     resumeOrStart();
+    // Piste E — reprise contextualisée : salue l'apprenant par son prénom au retour.
+    if(pickedFirstName){
+      const langLabel = (LANGUAGES.find(l=>l.code===pickedLang)?.label) || '';
+      showGreeting(`Content de te revoir, ${pickedFirstName} 👋`, langLabel ? `On reprend ton histoire en ${langLabel}.` : 'On reprend ton histoire.');
+    }
   } else {
     renderPickers();
   }
+}
+// Toast de bienvenue non-bloquant (piste E). Se retire tout seul, respecte reduced-motion.
+function showGreeting(title, sub){
+  try{
+    const el = document.createElement('div');
+    el.className = 'greet-toast';
+    el.innerHTML = `<div class="gt-title"></div><div class="gt-sub"></div>`;
+    el.querySelector('.gt-title').textContent = title || '';
+    el.querySelector('.gt-sub').textContent = sub || '';
+    document.body.appendChild(el);
+    requestAnimationFrame(()=> el.classList.add('show'));
+    setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=> el.remove(), 450); }, 3600);
+  }catch(_){}
 }
 
 /* Garde d'accès : app réservée aux connectés */

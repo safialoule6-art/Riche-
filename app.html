@@ -410,6 +410,19 @@
   </div>
 </div>
 
+<!-- ============ REVEAL ONBOARDING : "Ta série est prête" ============ -->
+<div id="revealModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Ta série est prête">
+  <div class="modal-backdrop"></div>
+  <div class="modal-card reveal-card">
+    <svg class="mascot idle reveal-mascot" aria-hidden="true"><use href="#mascot"/></svg>
+    <div class="reveal-kicker">TA SÉRIE EST PRÊTE</div>
+    <h2 id="revealTitle">Bienvenue&nbsp;!</h2>
+    <div class="reveal-chips" id="revealChips"></div>
+    <p class="reveal-note" id="revealNote"></p>
+    <button class="btn" id="revealBtn" onclick="launchSaga()">Lancer la 1ʳᵉ scène ✨</button>
+  </div>
+</div>
+
 <!-- Bilan hebdomadaire (preuve de progrès) -->
 <div id="reportModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Bilan de la semaine">
   <div class="modal-backdrop" onclick="closeWeeklyReport()"></div>
