@@ -134,11 +134,16 @@
       <h2>Ta prochaine histoire commence ici</h2>
       <p>Choisis ta langue, ton niveau et l'ambiance — le conteur écrit la suite en direct.</p>
     </div>
-    <div class="eyebrow-left pick-section">1 · Choisis ta langue</div>
+    <div class="eyebrow-left pick-section">1 · Comment on t'appelle&nbsp;?</div>
+    <input id="firstName" class="custom-universe" maxlength="24" autocomplete="given-name" placeholder="Ton prénom (utilisé pour te parler pendant les scènes)">
+    <div class="eyebrow-left pick-section">2 · Choisis ta langue</div>
     <div class="pick-grid" id="langGrid"></div>
-    <div class="eyebrow-left pick-section">2 · Choisis ton niveau (CECR)</div>
+    <div class="eyebrow-left pick-section" id="motivationLabel">3 · Pourquoi tu apprends&nbsp;?</div>
+    <div class="pick-grid" id="motivationGrid"></div>
+    <div class="eyebrow-left pick-section">4 · On calibre ton niveau</div>
+    <p class="pick-question" id="levelQuestion">Tu arrives à faire une phrase simple tout seul, dans cette langue&nbsp;?</p>
     <div class="pick-grid" id="levelGrid"></div>
-    <div class="eyebrow-left pick-section">3 · Choisis ton univers</div>
+    <div class="eyebrow-left pick-section">5 · Choisis ton univers</div>
     <div class="pick-grid" id="themeGrid"></div>
     <input id="customUniverse" class="custom-universe" maxlength="120" autocomplete="off" placeholder="✨ Ou décris ton univers : cyberpunk à Tokyo, pirates des Caraïbes…">
     <button class="btn" style="margin-top:28px;" id="startBtn" onclick="confirmPick()" disabled>Commencer l'histoire ✨</button>

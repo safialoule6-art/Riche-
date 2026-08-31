@@ -33,6 +33,11 @@ create table if not exists public.progress (
   updated_at  timestamptz default now()
 );
 
+-- Onboarding : prénom (adresse perso dans les scènes) + motivation (thème des scénarios).
+-- Ces données servent UNIQUEMENT à personnaliser l'apprentissage, jamais à un paywall.
+alter table public.progress add column if not exists first_name text;
+alter table public.progress add column if not exists motivation text; -- travel | media | work | personal_challenge
+
 create table if not exists public.leads (
   id         bigint generated always as identity primary key,
   email      text,

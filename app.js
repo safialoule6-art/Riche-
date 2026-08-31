@@ -1064,9 +1064,21 @@ const LANGUAGES = [
   {code:'francais', label:'Français', flag:'🇫🇷'},
 ];
 const LEVELS = [
-  {code:'A1-A2 (débutant)', label:'Débutant', sub:'A1 · A2'},
-  {code:'B1-B2 (intermédiaire)', label:'Intermédiaire', sub:'B1 · B2'},
-  {code:'C1-C2 (avancé)', label:'Avancé', sub:'C1 · C2'},
+  // Calibrage CECR reformulé en langage concret (réponses à "Tu arrives à faire une
+  // phrase simple tout seul ?"). Le CODE reste un intervalle CECR : il alimente et
+  // RENFORCE le calibrage A1-C2 déjà en place côté prompt système, sans le remplacer.
+  {code:'A1-A2 (débutant)', label:'Pas encore', sub:'je découvre la langue'},
+  {code:'B1-B2 (intermédiaire)', label:'Un peu', sub:'phrases simples, quelques hésitations'},
+  {code:'C1-C2 (avancé)', label:'Oui, sans souci', sub:'je tiens déjà une conversation'},
+];
+// Motivation d'apprentissage — question à choix (pas de texte libre).
+// Sert UNIQUEMENT à personnaliser le thème des scènes générées (voir api/generate.js).
+// Ne doit JAMAIS déclencher de paywall ni de pression d'achat.
+const MOTIVATIONS = [
+  {code:'travel', label:'Un voyage prévu', emoji:'✈️'},
+  {code:'media', label:'Suivre des séries / films en VO', emoji:'🎬'},
+  {code:'work', label:'Le travail', emoji:'💼'},
+  {code:'personal_challenge', label:'Un défi personnel', emoji:'🔥'},
 ];
 const THEMES = [
   {code:'cyberpunk', label:'Cyberpunk · Tokyo', emoji:'🌃'},
@@ -1079,12 +1091,24 @@ const THEMES = [
   {code:'quotidien', label:'Quotidien · café', emoji:'☕'},
 ];
 let pickedLang = null, pickedLevel = null;
+let pickedFirstName = localStorage.getItem('sunami-firstname') || '';
+let pickedMotivation = localStorage.getItem('sunami-motivation') || null;
 let pickedTheme = localStorage.getItem('sunami-theme-ctx') || null;
 let pickedUniverse = localStorage.getItem('sunami-universe-ctx') || '';
 let chapter = 0;
 let episodeConsumed = false;
 
 function renderPickers(){
+  const nameInput = document.getElementById('firstName');
+  if(nameInput){
+    nameInput.value = pickedFirstName || '';
+    nameInput.oninput = ()=>{
+      pickedFirstName = nameInput.value.trim();
+      if(pickedFirstName) localStorage.setItem('sunami-firstname', pickedFirstName);
+      else localStorage.removeItem('sunami-firstname');
+      checkReady();
+    };
+  }
   const langGrid = document.getElementById('langGrid');
   langGrid.innerHTML = '';
   LANGUAGES.forEach(l=>{
@@ -1096,10 +1120,30 @@ function renderPickers(){
       document.querySelectorAll('#langGrid .pick-card').forEach(x=>x.classList.remove('active'));
       c.classList.add('active');
       pickedLang = l.code;
+      updateMotivationLabel();
       checkReady();
     };
     langGrid.appendChild(c);
   });
+  const motivationGrid = document.getElementById('motivationGrid');
+  if(motivationGrid){
+    motivationGrid.innerHTML = '';
+    MOTIVATIONS.forEach(m=>{
+      const c = document.createElement('div');
+      c.className = 'pick-card';
+      if(m.code === pickedMotivation) c.classList.add('active');
+      c.innerHTML = `<span class="emoji">${m.emoji}</span>${m.label}`;
+      c.onclick = ()=>{
+        document.querySelectorAll('#motivationGrid .pick-card').forEach(x=>x.classList.remove('active'));
+        c.classList.add('active');
+        pickedMotivation = m.code;
+        localStorage.setItem('sunami-motivation', m.code);
+        checkReady();
+      };
+      motivationGrid.appendChild(c);
+    });
+  }
+  updateMotivationLabel();
   const levelGrid = document.getElementById('levelGrid');
   levelGrid.innerHTML = '';
   LEVELS.forEach(lv=>{
@@ -1153,14 +1197,26 @@ function renderPickers(){
     };
   }
 }
+function updateMotivationLabel(){
+  const el = document.getElementById('motivationLabel');
+  if(!el) return;
+  const langLabel = (LANGUAGES.find(l=>l.code===pickedLang)?.label) || '';
+  el.innerHTML = langLabel
+    ? `3 · Pourquoi tu apprends ${langLabel.startsWith('A')||langLabel.startsWith('I')||langLabel.startsWith('É')||langLabel.startsWith('E')?'l\u2019':'le '}${langLabel}\u00a0?`
+    : '3 · Pourquoi tu apprends\u00a0?';
+}
 function checkReady(){
-  document.getElementById('startBtn').disabled = !(pickedLang && pickedLevel);
+  document.getElementById('startBtn').disabled = !(pickedFirstName && pickedLang && pickedLevel && pickedMotivation);
 }
 window.confirmPick = function(){
   document.getElementById('pickScreen').style.display = 'none';
   document.getElementById('chatScreen').style.display = 'flex';
   progress.language = pickedLang;
   progress.level = pickedLevel;
+  progress.first_name = pickedFirstName || null;
+  progress.motivation = pickedMotivation || null;
+  // Le prénom devient le protagoniste : l'IA s'adresse à l'apprenant par son prénom.
+  if(pickedFirstName) sagaProtagonist = pickedFirstName;
   saveProgress();
   updateSceneMeta();
   resumeOrStart();
@@ -1233,7 +1289,7 @@ async function touchStreak(){
 }
 
 async function saveProgress(){
-  await supabase.from('progress').upsert({
+  const base = {
     user_id: userId,
     season: progress.season,
     episode: progress.episode,
@@ -1242,7 +1298,14 @@ async function saveProgress(){
     language: progress.language,
     level: progress.level,
     plan: progress.plan || 'free'
-  });
+  };
+  // first_name / motivation : colonnes ajoutées par sql/setup.sql. Si la migration
+  // n'a pas encore été jouée, on retombe sur "base" (aucune régression).
+  const full = { ...base, first_name: progress.first_name || null, motivation: progress.motivation || null };
+  try{
+    const { error } = await supabase.from('progress').upsert(full);
+    if(error){ await supabase.from('progress').upsert(base); }
+  }catch(e){ try{ await supabase.from('progress').upsert(base); }catch(_){} }
 }
 
 /* ===================================================================
@@ -1760,6 +1823,10 @@ async function enterApp(email, uid){
   maybeOnboarding();
   setTimeout(maybeShowWeeklyReport, 2000);
 
+  // Hydrate le prénom / la motivation depuis le cloud si dispo (utilisateur qui revient).
+  if(progress.first_name && !pickedFirstName) pickedFirstName = progress.first_name;
+  if(progress.motivation && !pickedMotivation) pickedMotivation = progress.motivation;
+
   if (progress.language && progress.level){
     pickedLang = progress.language;
     pickedLevel = progress.level;
@@ -2253,6 +2320,7 @@ async function callAI(userReply, opts){
       body: JSON.stringify({
         history: chatHistory, userReply,
         language: pickedLang, level: pickedLevel, theme: pickedTheme, universe: pickedUniverse || '',
+        motivation: pickedMotivation || progress.motivation || null,
         vocabulary: getWordsForReview(5),
         recap: sagaRecap, characters, setting: sagaSetting,
         protagonist: sagaProtagonist, episode: progress.episode || 1, chapter,
@@ -2335,7 +2403,7 @@ async function callAI(userReply, opts){
     if(data.recap) sagaRecap = data.recap;
     if(data.sagaTitle && !sagaTitle) sagaTitle = data.sagaTitle;
     if(data.setting) sagaSetting = data.setting;
-    if(!sagaProtagonist && userEmail){ sagaProtagonist = userEmail.split('@')[0] || ''; }
+    if(!sagaProtagonist){ sagaProtagonist = pickedFirstName || progress.first_name || (userEmail ? (userEmail.split('@')[0] || '') : ''); }
     mergeStructuredVocab(data.vocab);
     mergeStructuredCharacters(data.characters);
     renderComprehension(data.quiz);
@@ -2401,7 +2469,7 @@ function startScene(){
   sagaTitle = '';
   sagaCover = '';
   coverSalt = 0;
-  sagaProtagonist = (userEmail && userEmail.split('@')[0]) || '';
+  sagaProtagonist = pickedFirstName || progress.first_name || (userEmail && userEmail.split('@')[0]) || '';
   if(!progress.episode) progress.episode = 1;
   track('story_start', { language: pickedLang, level: pickedLevel, theme: pickedTheme || 'aucun' });
   document.getElementById('chatLog').innerHTML = '';

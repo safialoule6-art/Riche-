@@ -50,6 +50,15 @@ const LANG_NAME = {
   italien: "Italian", arabe: "Arabic", portugais: "Portuguese", francais: "French",
 };
 
+// Motivation d'apprentissage (choisie à l'onboarding) → oriente le THÈME des scènes.
+// Personnalisation pédagogique uniquement : ne sert JAMAIS à une pression d'achat.
+const MOTIVATION_HINTS = {
+  travel: "The learner is preparing for a TRIP: favor practical travel situations (airport, hotel check-in, ordering at a restaurant, asking for directions, taxi, train station).",
+  media: "The learner wants to enjoy SERIES / MOVIES in original version: favor dialogue-driven, culture-rich everyday scenes with natural, idiomatic spoken exchanges (like a TV show).",
+  work: "The learner is learning for WORK: favor professional situations (meeting, e-mail, phone call, presentation, exchanges with colleagues or clients).",
+  personal_challenge: "The learner took on a PERSONAL CHALLENGE: favor varied, motivating everyday situations with a gentle, progressive rise in difficulty.",
+};
+
 const LEVEL_NAME = {
   "A1-A2 (débutant)": "A1-A2 (beginner)",
   "B1-B2 (intermédiaire)": "B1-B2 (intermediate)",
@@ -63,10 +72,18 @@ const LEVEL_GUIDE = {
 };
 
 function buildSystemPrompt(o) {
-  const { language, level, theme, universe, hasUserReply, vocabulary, recap, characters, setting, protagonist, episode, chapter } = o;
+  const { language, level, theme, universe, motivation, hasUserReply, vocabulary, recap, characters, setting, protagonist, episode, chapter } = o;
+  const hasExplicitContext = !!(universe || (theme && THEME_HINTS[theme]));
   const themeLine = universe
     ? `\nSTORY CONTEXT (user's custom universe — honor it): ${universe}.`
     : (theme && THEME_HINTS[theme] ? `\nSTORY CONTEXT: ${THEME_HINTS[theme]}` : "");
+  // La motivation oriente le THÈME. Sans univers/thème explicite, elle le fixe ;
+  // sinon elle colore les situations sans écraser le choix explicite de l'apprenant.
+  const motivationLine = (motivation && MOTIVATION_HINTS[motivation])
+    ? (hasExplicitContext
+        ? `\nLEARNER'S GOAL (personalization — weave it in naturally without overriding the STORY CONTEXT above): ${MOTIVATION_HINTS[motivation]}`
+        : `\nLEARNER'S GOAL (let it drive the theme of the scenes): ${MOTIVATION_HINTS[motivation]}`)
+    : "";
   const levelGuide = LEVEL_GUIDE[level] || "";
   const vocabLine = vocabulary && vocabulary.length
     ? `\nSPACED REPETITION: naturally reuse at least 2 of these known words: ${vocabulary.join(", ")}.` : "";
@@ -81,11 +98,12 @@ function buildSystemPrompt(o) {
 
   return `You are the storyteller of "Sunami", a language tutor who teaches through a SERIALIZED, ongoing STORY (like a TV show). The learner${protagonist ? ` (named ${protagonist})` : ""} is the protagonist.
 
-TARGET LANGUAGE: ${language}. LEARNER LEVEL: ${level}.${themeLine}
+TARGET LANGUAGE: ${language}. LEARNER LEVEL: ${level}.${themeLine}${motivationLine}
 
 ABSOLUTE RULES
 - The "story" field is written ONLY in ${language}. Every word of the story must be in ${language}. NEVER write the story (or the ending question) in French or English unless ${language} IS that language. This is the most common failure — do not let it happen. If unsure, still write in ${language}.
-- CONTINUITY IS SACRED: same protagonist, same characters, same places, one coherent plot that PROGRESSES. Never restart or contradict the recap. Never invent a new unrelated scene.
+- CONTINUITY IS SACRED: same protagonist, same characters, same places, one coherent plot that PROGRESSES. Never restart or contradict the recap. Never invent a new unrelated scene.${protagonist ? `
+- ADDRESS THE LEARNER BY NAME: characters call the protagonist "${protagonist}" out loud, naturally, in the ${language} dialogue (a greeting, a direct question…). Do it where it feels human — not in every single sentence.` : ""}
 - Difficulty for ${level}: ${levelGuide}${vocabLine}
 ${recapLine}${charLine}${settingLine}${arcLine}
 
@@ -164,20 +182,21 @@ export default async function handler(req) {
   let body;
   try { body = await req.json(); } catch { body = {}; }
   const {
-    history, userReply, language, level, theme, universe, vocabulary,
+    history, userReply, language, level, theme, universe, motivation, vocabulary,
     recap, characters, setting, protagonist, episode, chapter,
   } = body || {};
 
   const targetLanguage = LANG_NAME[language] || language || "English";
   const cefrLevel = LEVEL_NAME[level] || level || "A1-A2 (beginner)";
   const customUniverse = (typeof universe === "string" ? universe.trim() : "").slice(0, 160);
+  const learnerMotivation = (typeof motivation === "string" && MOTIVATION_HINTS[motivation]) ? motivation : null;
   const vocabList = Array.isArray(vocabulary) ? vocabulary.filter(v => typeof v === "string" && v) : [];
   const charList = Array.isArray(characters) ? characters.filter(c => c && c.name) : [];
   const trimmed = Array.isArray(history) ? history.slice(-8) : [];
   const hasUserReply = !!userReply;
 
   const system = buildSystemPrompt({
-    language: targetLanguage, level: cefrLevel, theme: theme || null, universe: customUniverse, hasUserReply,
+    language: targetLanguage, level: cefrLevel, theme: theme || null, universe: customUniverse, motivation: learnerMotivation, hasUserReply,
     vocabulary: vocabList, recap: recap || "", characters: charList,
     setting: setting || "", protagonist: protagonist || "", episode: episode || 1, chapter: chapter || 1,
   });
