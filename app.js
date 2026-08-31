@@ -1342,6 +1342,7 @@ function updateSceneMeta(){
   const setEl = document.getElementById('sceneSetting');
   if(setEl) setEl.textContent = sagaSetting ? sagaSetting.replace(/\*\*/g, '') : "l'histoire s'écrit en direct…";
   updateSceneBanner();
+  refreshChangeStoryLock();
 }
 
 let userId = null;
@@ -1430,6 +1431,7 @@ let sagaCoverStyle = 'cinematic';
 let coverSalt = 0;
 let sagaSetting = '';
 let sagaProtagonist = '';
+let sagaCount = 0; // nombre de sagas existantes (gate premium "nouvelle histoire")
 let sagaCliffhanger = localStorage.getItem('sunami-cliffhanger') || '';
 // Extrait un teaser de suspense (1-2 dernières phrases, nettoyé) pour la relance du lendemain
 function cliffhangerFrom(text){
@@ -1620,6 +1622,30 @@ function onEpisodeComplete(title){
 }
 
 /* Reprise exacte d'une saga sauvegardée */
+// Remplace un ancien nom (préfixe email / protagoniste périmé) par le vrai prénom
+// dans le récap ET l'historique de chat déjà stockés. Retourne true si un remplacement
+// a eu lieu. Word-boundary + insensible à la casse ; ne touche pas au reste du texte.
+function scrubStoredName(oldNames, newName){
+  if(!newName) return false;
+  const uniq = [...new Set((oldNames||[]).filter(n => n && n !== newName))];
+  if(!uniq.length) return false;
+  const esc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp('\\b(' + uniq.map(esc).join('|') + ')\\b', 'gi');
+  let changed = false;
+  const rec = sagaRecap.replace(re, newName);
+  if(rec !== sagaRecap){ sagaRecap = rec; changed = true; }
+  if(Array.isArray(chatHistory)){
+    chatHistory = chatHistory.map(m => {
+      if(m && typeof m.content === 'string'){
+        const nc = m.content.replace(re, newName);
+        if(nc !== m.content){ changed = true; return { ...m, content: nc }; }
+      }
+      return m;
+    });
+  }
+  return changed;
+}
+
 function resumeScene(s){
   chatHistory = Array.isArray(s.history) ? s.history.slice() : [];
   sagaRecap = s.recap || '';
@@ -1631,8 +1657,13 @@ function resumeScene(s){
   const _realName = pickedFirstName || progress.first_name || '';
   const _emailPrefix = userEmail ? (userEmail.split('@')[0] || '') : '';
   sagaProtagonist = _realName || _storedProto || _emailPrefix;
-  // Si on a corrigé un protagoniste périmé, on persiste la correction dans la saga.
-  if(_realName && _storedProto !== _realName) saveSaga();
+  // Sagas anciennes : le vieux nom (préfixe email, ex "nm8935042") est GRAVÉ dans le
+  // texte déjà généré (récap + historique). Corriger la variable ne suffit pas : on
+  // remplace aussi ce nom dans le contenu stocké, puis on persiste la correction.
+  if(_realName){
+    const scrubbed = scrubStoredName([_storedProto, _emailPrefix], _realName);
+    if(scrubbed || (_storedProto && _storedProto !== _realName)) saveSaga();
+  }
   sagaTitle = s.title || '';
   sagaCover = s.cover || '';
   sagaCoverStyle = s.cover_style || 'cinematic';
@@ -1665,6 +1696,30 @@ async function resumeOrStart(){
   const s = pickedLang ? await loadSaga(pickedLang) : null;
   if(s && Array.isArray(s.history) && s.history.length){ resumeScene(s); }
   else { startScene(); }
+}
+
+// "Changer d'histoire" = repartir sur une autre langue/niveau/univers à la demande.
+// Fonctionnalité Premium (variété à la demande), alignée sur les meilleures apps :
+// le gratuit garde son histoire en cours complète et illimitée ; seul le switch
+// libre entre plusieurs histoires est réservé au premium. Upsell honnête et
+// dismissable, jamais déclenché par une donnée personnelle.
+window.changeStory = function(){
+  if(isPremium()){ backToPicker(); return; }
+  const m = document.getElementById('premiumGate');
+  if(m){ m.classList.add('open'); m.setAttribute('aria-hidden','false'); }
+  else { backToPicker(); } // filet : jamais bloquer si le modal manque
+};
+window.closePremiumGate = function(){
+  const m = document.getElementById('premiumGate');
+  if(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
+};
+// Ajoute un cadenas 💎 sur le bouton pour les comptes gratuits (signal clair).
+function refreshChangeStoryLock(){
+  const btn = document.getElementById('changeStoryBtn');
+  if(!btn) return;
+  const premium = isPremium();
+  btn.innerHTML = premium ? "🔄 Changer d'histoire" : "🔄 Changer d'histoire 💎";
+  btn.classList.toggle('is-locked', !premium);
 }
 
 window.backToPicker = function(){
@@ -1803,7 +1858,16 @@ window.openSagas = async function(){
   if(!rows.length && pickedLang && chatHistory.length){
     rows = [{ language:pickedLang, level:pickedLevel, recap:sagaRecap, setting:sagaSetting, episode:progress.episode, chapter, history:chatHistory }];
   }
+  sagaCount = rows.length; // sert au gate premium de "nouvelle histoire"
+  const nb = document.getElementById('newStoryBtn');
+  if(nb) nb.innerHTML = (!isPremium() && sagaCount >= 1) ? "＋ Nouvelle histoire 💎" : "＋ Commencer une nouvelle histoire";
   renderSagas(rows);
+};
+// Depuis l'écran "Mes sagas" : créer une NOUVELLE histoire. La 1re est gratuite ;
+// au-delà, c'est Premium (variété à la demande). Cohérent avec changeStory().
+window.newStoryFromSagas = function(){
+  if(isPremium() || sagaCount < 1){ backToPicker(); return; }
+  window.changeStory();
 };
 
 function renderSagas(rows){

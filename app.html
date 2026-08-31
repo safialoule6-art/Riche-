@@ -193,7 +193,7 @@
       <button class="chip-btn" onclick="newEpisode()" title="Commencer un nouvel épisode de cette saga">✨ Nouvel épisode</button>
       <button class="chip-btn" onclick="openSagas()" title="Voir toutes tes histoires">📚 Mes sagas</button>
       <button class="chip-btn" onclick="openSagaMap()" title="Voir la carte de ta saga">🗺️ Carte</button>
-      <button class="chip-btn ghost" onclick="backToPicker()" title="Changer de langue ou de niveau">🔄 Changer d'histoire</button>
+      <button class="chip-btn ghost" id="changeStoryBtn" onclick="changeStory()" title="Changer de langue ou de niveau">🔄 Changer d'histoire</button>
     </div>
     <button class="chip-btn review-nudge" id="reviewNudge" onclick="openVocabReview(false)" style="display:none;"></button>
     <div id="chatLog"></div>
@@ -210,7 +210,7 @@
       <p>Chaque langue a sa propre histoire qui continue. Reprends là où tu t'es arrêté.</p>
     </div>
     <div id="sagasList"><div class="sagas-loading">Chargement de tes histoires…</div></div>
-    <button class="btn" style="margin-top:24px;" onclick="backToPicker()">＋ Commencer une nouvelle histoire</button>
+    <button class="btn" id="newStoryBtn" style="margin-top:24px;" onclick="newStoryFromSagas()">＋ Commencer une nouvelle histoire</button>
   </div>
 </div>
 
@@ -461,6 +461,23 @@
     <p class="reveal-note">Ton prénom sert au conteur pour te parler directement dans les scènes.</p>
     <input id="nameModalInput" class="custom-universe" maxlength="24" autocomplete="given-name" placeholder="Ton prénom" style="text-align:center;">
     <button class="btn" onclick="submitNameCapture()">C'est parti ✨</button>
+  </div>
+</div>
+
+<!-- ============ GATE PREMIUM : changer d'histoire / d'univers ============ -->
+<div id="premiumGate" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Fonctionnalité Premium">
+  <div class="modal-backdrop" onclick="closePremiumGate()"></div>
+  <div class="modal-card reveal-card">
+    <div class="reveal-kicker">💎 SUNAMI PREMIUM</div>
+    <h2>Explore plusieurs histoires</h2>
+    <p class="reveal-note">Changer de langue, de niveau ou d'univers quand tu veux fait partie de Premium. Ton histoire actuelle, elle, reste <b>gratuite et illimitée</b> — tu peux continuer autant que tu veux.</p>
+    <div class="reveal-chips" style="margin-bottom:18px;">
+      <span class="reveal-chip">🌍 Toutes les langues en parallèle</span>
+      <span class="reveal-chip">🎭 Univers illimités</span>
+      <span class="reveal-chip">∞ Épisodes par jour</span>
+    </div>
+    <a class="btn" href="/pricing" style="text-decoration:none; display:block;">Voir Premium</a>
+    <button class="pick-back" onclick="closePremiumGate()" style="display:block;">Continuer mon histoire</button>
   </div>
 </div>
 

@@ -1294,6 +1294,7 @@ footer b{ color:var(--foam); }
 .chip-btn:hover{ transform:translateY(-2px); border-color:var(--neon); background:color-mix(in srgb,var(--neon) 14%,transparent); }
 .chip-btn.ghost{ background:color-mix(in srgb,var(--foam) 4%,transparent); border-color:var(--line); color:var(--muted); }
 .chip-btn.ghost:hover{ color:var(--foam); border-color:color-mix(in srgb,var(--neon) 45%,transparent); }
+.chip-btn.is-locked{ opacity:.72; }
 
 /* Écran "Mes sagas" */
 .sagas-loading, .sagas-empty{ text-align:center; color:var(--muted); padding:28px 12px; font-weight:600; }
