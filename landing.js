@@ -49,18 +49,44 @@ function showWelcomeBack(session){
     if(!wb){ enterApp(); return; } // filet de sécurité si l'UI d'accueil est absente
     const emailEl = document.getElementById('wbEmail');
     // On affiche le PRÉNOM de l'apprenant s'il est connu (personnalisation), sinon
-    // l'email en secours. On lit progress.first_name (RLS : l'utilisateur lit sa
-    // propre ligne). Jamais de blocage : l'accueil s'affiche même si la requête échoue.
+    // l'email en secours. On combine 3 sources robustes, dans l'ordre, pour éviter
+    // que la landing affiche l'email brut alors que l'app connaît déjà le prénom :
+    //   1) localStorage (écrit par l'onboarding, dispo tout de suite, même appareil)
+    //   2) cloud progress.first_name (RLS : l'utilisateur lit sa propre ligne)
+    //   3) profil Google (user_metadata.given_name/name) — jamais le préfixe email
     if(emailEl && session && session.user){
       const email = session.user.email || '';
-      emailEl.textContent = email; // fallback immédiat
+      const emailPrefix = email ? String(email.split('@')[0] || '') : '';
+      const clean = (v)=>{
+        v = String(v || '').trim();
+        if(!v) return '';
+        v = v.split(/\s+/)[0];                 // premier mot = prénom
+        if(v.includes('@')) return '';         // pas un email
+        if(/\d/.test(v)) return '';            // un prénom n'a pas de chiffres (écarte nm8935042)
+        if(emailPrefix && v.toLowerCase() === emailPrefix.toLowerCase()) return '';
+        if(v.length < 2 || v.length > 24) return '';
+        return v.charAt(0).toUpperCase() + v.slice(1);
+      };
+      // 1) source immédiate : localStorage
+      let name = '';
+      try{ name = clean(localStorage.getItem('sunami-firstname')); }catch(_){}
+      // 3) source de secours immédiate : métadonnées OAuth (avant l'await réseau)
+      if(!name){
+        const meta = session.user.user_metadata || {};
+        name = clean(meta.given_name || meta.first_name || meta.name || meta.full_name);
+      }
+      emailEl.textContent = name || email; // affichage immédiat (prénom si trouvé, sinon email)
+      // 2) source cloud (asynchrone) : prioritaire si disponible, écrase le fallback
       const uid = session.user.id;
       if(uid){
         try{
           const { data } = await supabase.from('progress').select('first_name').eq('user_id', uid).maybeSingle();
-          const name = data && data.first_name ? String(data.first_name).trim() : '';
-          if(name) emailEl.textContent = name;
-        }catch(e){ /* on garde l'email en secours */ }
+          const cloudName = clean(data && data.first_name);
+          if(cloudName){
+            emailEl.textContent = cloudName;
+            try{ localStorage.setItem('sunami-firstname', cloudName); }catch(_){} // resync local
+          }
+        }catch(e){ /* on garde ce qu'on a déjà affiché */ }
       }
     }
     if(cta) cta.style.display = 'none';

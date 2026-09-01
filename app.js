@@ -1413,7 +1413,13 @@ async function saveProgress(){
   const full = { ...base, first_name: progress.first_name || null, motivation: progress.motivation || null };
   try{
     const { error } = await supabase.from('progress').upsert(full);
-    if(error){ await supabase.from('progress').upsert(base); }
+    if(error){
+      // La colonne first_name/motivation n'existe peut-être pas encore en base.
+      // On garde la progression (base), mais on le signale : sans ça, la landing
+      // ne verra jamais le prénom côté cloud et affichera l'email.
+      console.warn('[Sunami] progress.first_name non persisté en cloud (migration SQL ?):', error.message || error);
+      await supabase.from('progress').upsert(base);
+    }
   }catch(e){ try{ await supabase.from('progress').upsert(base); }catch(_){} }
 }
 
