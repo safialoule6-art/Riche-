@@ -29,6 +29,13 @@ alter table public.saga add column if not exists cover       text;
 alter table public.saga add column if not exists cover_style text;
 alter table public.saga add column if not exists cliffhanger text;
 
+-- Carnet de l'histoire (mémoire structurée, Phase 1) : faits personnels donnés par
+-- l'apprenant ("ma sœur s'appelle Sarah") + décisions marquantes prises via les choix.
+-- Sert à ce que "le monde se souvienne" de l'utilisateur et que ses choix aient des
+-- conséquences cohérentes sur des dizaines d'épisodes. Forme :
+--   { "facts": [{ "key","value","chapter" }], "decisions": [{ "summary","chapter" }] }
+alter table public.saga add column if not exists memory jsonb default '{}'::jsonb;
+
 alter table public.saga enable row level security;
 
 drop policy if exists "saga_select_own" on public.saga;

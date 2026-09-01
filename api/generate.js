@@ -71,8 +71,26 @@ const LEVEL_GUIDE = {
   "C1-C2 (advanced)": "All tenses, rich vocabulary, idioms, complex structures. Native-level prose.",
 };
 
+// Formate le carnet de l'histoire (faits perso + décisions) pour le prompt.
+// C'est ce qui donne l'impression que "le monde se souvient" de l'apprenant et
+// que ses choix ont des conséquences durables.
+function formatMemory(memory) {
+  if (!memory || typeof memory !== "object") return "";
+  const facts = Array.isArray(memory.facts) ? memory.facts.filter(f => f && f.value) : [];
+  const decisions = Array.isArray(memory.decisions) ? memory.decisions.filter(d => d && d.summary) : [];
+  let out = "";
+  if (facts.length) {
+    out += `\nWHAT YOU KNOW ABOUT THE LEARNER (personal facts they shared — reference them naturally when it fits, like a friend who remembers): ${facts.map(f => f.key ? `${f.key}: ${f.value}` : f.value).join("; ")}.`;
+  }
+  if (decisions.length) {
+    out += `\nPAST DECISIONS THE LEARNER MADE (their consequences are now part of the world — stay consistent with them, never contradict them): ${decisions.map(d => d.summary).join("; ")}.`;
+  }
+  return out;
+}
+
 function buildSystemPrompt(o) {
-  const { language, level, theme, universe, motivation, hasUserReply, vocabulary, recap, characters, setting, protagonist, episode, chapter } = o;
+  const { language, level, theme, universe, motivation, hasUserReply, vocabulary, recap, characters, setting, protagonist, episode, chapter, memory } = o;
+  const memoryLine = formatMemory(memory);
   const hasExplicitContext = !!(universe || (theme && THEME_HINTS[theme]));
   const themeLine = universe
     ? `\nSTORY CONTEXT (user's custom universe — honor it): ${universe}.`
@@ -105,7 +123,7 @@ ABSOLUTE RULES
 - CONTINUITY IS SACRED: same protagonist, same characters, same places, one coherent plot that PROGRESSES. Never restart or contradict the recap. Never invent a new unrelated scene.${protagonist ? `
 - ADDRESS THE LEARNER BY NAME: characters call the protagonist "${protagonist}" out loud, naturally, in the ${language} dialogue (a greeting, a direct question…). Do it where it feels human — not in every single sentence.` : ""}
 - Difficulty for ${level}: ${levelGuide}${vocabLine}
-${recapLine}${charLine}${settingLine}${arcLine}
+${recapLine}${memoryLine}${charLine}${settingLine}${arcLine}
 
 PEDAGOGY
 - In "story": 2 to 5 sentences. Highlight 1-3 key words/expressions with **double asterisks**, each immediately followed by its French translation in parentheses, e.g. **el bosque** (la forêt).
@@ -113,6 +131,12 @@ PEDAGOGY
 - Build directly on the learner's last reply.${hasUserReply ? `
 - "grammar": a SHORT friendly note in FRENCH about the learner's reply (max 2 sentences). Correct ONLY real errors and keep the learner's intended meaning. Do NOT invent mistakes: if the reply is already correct, simply confirm it is correct and encourage briefly — never fabricate an error just to have something to say.` : `
 - "grammar": empty string for the very first chapter.`}
+
+LIVING MEMORY (this is what makes Sunami feel alive — take it seriously)
+- If the learner reveals a PERSONAL fact (a name of a relative/friend/pet, a job, a hobby, a place they live, a preference, a fear…), capture it in "newFacts" as {key, value}. Keep values short. Only capture things a friend would remember — do NOT capture trivial one-off details.
+- The two "choices" you propose MUST be genuinely different DIRECTIONS, not rephrasings of the same answer. Each should plausibly send the story down a different path.
+- If the learner's reply is a real DECISION that should shape the story going forward (trusting someone, refusing help, taking a risk, revealing a secret…), record it in "newDecision" as one short FRENCH sentence. Otherwise set "newDecision" to "".
+- Always honor WHAT YOU KNOW ABOUT THE LEARNER and PAST DECISIONS above: reference known facts naturally, and never contradict past decisions.
 
 OUTPUT — return ONLY a valid minified JSON object, no markdown, with EXACTLY these keys:
 {
@@ -126,10 +150,12 @@ OUTPUT — return ONLY a valid minified JSON object, no markdown, with EXACTLY t
  "emotion": "happy|surprised|think|neutral",
  "episodeComplete": ${nearEnd ? "true" : "false"},
  "episodeTitle": "<short FR episode title when episodeComplete is true, else empty>",
- "choices": ["<short suggested reply in ${language}>","<another short suggested reply in ${language}>"],
+ "choices": ["<short suggested reply in ${language} — one clear direction>","<short suggested reply in ${language} — a genuinely different direction>"],
+ "newFacts": [{"key":"<short FR label, e.g. 'sœur'>","value":"<short FR value, e.g. 'Sarah'>"}],
+ "newDecision": "<one short FR sentence if the learner made a story-shaping decision, else empty>",
  "quiz": {"q":"<short FRENCH comprehension question about what just happened in the story, or empty string on the very first chapter>","options":["<French option>","<French option>","<French option>"],"answer":<0-based index of the correct option>}
 }
-The "vocab" array must list the words you highlighted in "story" with their French translation. The "recap" must be cumulative so a future episode stays consistent. The "quiz" is a quick comprehension check written in FRENCH about the latest story beat, with 3 plausible French options and the 0-based index of the correct one; include it from the 2nd chapter onward, and for the very first chapter set it to {"q":"","options":[],"answer":0}.`;
+The "vocab" array must list the words you highlighted in "story" with their French translation. The "recap" must be cumulative so a future episode stays consistent. "newFacts" is usually empty ([]) — only fill it when the learner genuinely shares something personal. The "quiz" is a quick comprehension check written in FRENCH about the latest story beat, with 3 plausible French options and the 0-based index of the correct one; include it from the 2nd chapter onward, and for the very first chapter set it to {"q":"","options":[],"answer":0}.`;
 }
 
 function jsonResponse(data, status) {
@@ -183,13 +209,18 @@ export default async function handler(req) {
   try { body = await req.json(); } catch { body = {}; }
   const {
     history, userReply, language, level, theme, universe, motivation, vocabulary,
-    recap, characters, setting, protagonist, episode, chapter,
+    recap, characters, setting, protagonist, episode, chapter, memory,
   } = body || {};
 
   const targetLanguage = LANG_NAME[language] || language || "English";
   const cefrLevel = LEVEL_NAME[level] || level || "A1-A2 (beginner)";
   const customUniverse = (typeof universe === "string" ? universe.trim() : "").slice(0, 160);
   const learnerMotivation = (typeof motivation === "string" && MOTIVATION_HINTS[motivation]) ? motivation : null;
+  // Carnet de l'histoire entrant : on borne la taille pour garder le prompt sain.
+  const safeMemory = (memory && typeof memory === "object") ? {
+    facts: Array.isArray(memory.facts) ? memory.facts.filter(f => f && f.value).slice(-20) : [],
+    decisions: Array.isArray(memory.decisions) ? memory.decisions.filter(d => d && d.summary).slice(-12) : [],
+  } : { facts: [], decisions: [] };
   const vocabList = Array.isArray(vocabulary) ? vocabulary.filter(v => typeof v === "string" && v) : [];
   const charList = Array.isArray(characters) ? characters.filter(c => c && c.name) : [];
   const trimmed = Array.isArray(history) ? history.slice(-8) : [];
@@ -199,6 +230,7 @@ export default async function handler(req) {
     language: targetLanguage, level: cefrLevel, theme: theme || null, universe: customUniverse, motivation: learnerMotivation, hasUserReply,
     vocabulary: vocabList, recap: recap || "", characters: charList,
     setting: setting || "", protagonist: protagonist || "", episode: episode || 1, chapter: chapter || 1,
+    memory: safeMemory,
   });
 
   const messages = [
@@ -254,6 +286,13 @@ export default async function handler(req) {
     episodeComplete: parsed.episodeComplete === true,
     episodeTitle: (parsed.episodeTitle && String(parsed.episodeTitle).trim()) || "",
     choices: Array.isArray(parsed.choices) ? parsed.choices.filter(c => typeof c === "string" && c).slice(0, 3) : [],
+    newFacts: Array.isArray(parsed.newFacts)
+      ? parsed.newFacts
+          .filter(f => f && typeof f.value === "string" && f.value.trim())
+          .map(f => ({ key: (f.key && String(f.key).trim()) || "", value: String(f.value).trim().slice(0, 80) }))
+          .slice(0, 5)
+      : [],
+    newDecision: (parsed.newDecision && String(parsed.newDecision).trim()) || "",
     quiz: (parsed.quiz && typeof parsed.quiz.q === "string" && parsed.quiz.q.trim() && Array.isArray(parsed.quiz.options) && parsed.quiz.options.length >= 2)
       ? { q: parsed.quiz.q.trim(), options: parsed.quiz.options.filter(o => typeof o === "string" && o).slice(0, 4), answer: Number.isInteger(parsed.quiz.answer) ? parsed.quiz.answer : 0 }
       : null,

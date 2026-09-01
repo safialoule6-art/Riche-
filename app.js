@@ -121,6 +121,7 @@ window.resetProgress = async function(){
   characters = []; storyLocations = []; unlockedAchievements = []; sagaEpisodes = [];
   localStorage.removeItem('sunami-characters'); localStorage.removeItem('sunami-locations'); localStorage.removeItem('sunami-achievements'); localStorage.removeItem('sunami-saga-episodes');
   sagaRecap = ''; sagaSetting = ''; chatHistory = [];
+  sagaMemory = { facts: [], decisions: [] }; localStorage.removeItem('sunami-memory');
   try{ await saveProgress(); }catch(e){}
   // Efface aussi la persistance cloud (sinon elle reviendrait au rechargement)
   try{ if(userId){ await supabase.from('user_state').delete().eq('user_id', userId); await supabase.from('saga').delete().eq('user_id', userId); } }catch(e){}
@@ -1438,6 +1439,10 @@ let coverSalt = 0;
 let sagaSetting = '';
 let sagaProtagonist = '';
 let sagaCount = 0; // nombre de sagas existantes (gate premium "nouvelle histoire")
+// Carnet de l'histoire : faits perso donnés par l'apprenant + décisions marquantes.
+// Persisté dans saga.memory ; rejoué dans le prompt pour que "le monde se souvienne".
+let sagaMemory = { facts: [], decisions: [] };
+try{ const m = JSON.parse(localStorage.getItem('sunami-memory') || '{}'); sagaMemory = { facts: Array.isArray(m.facts)?m.facts:[], decisions: Array.isArray(m.decisions)?m.decisions:[] }; }catch(e){}
 let sagaCliffhanger = localStorage.getItem('sunami-cliffhanger') || '';
 // Extrait un teaser de suspense (1-2 dernières phrases, nettoyé) pour la relance du lendemain
 function cliffhangerFrom(text){
@@ -1508,7 +1513,7 @@ function saveSaga(){
       history: (chatHistory || []).slice(-24),
       updated_at: new Date().toISOString(),
     };
-    const full = { ...base, title: sagaTitle || null, cover: sagaCover || null, cover_style: sagaCoverStyle || null, cliffhanger: sagaCliffhanger || null };
+    const full = { ...base, title: sagaTitle || null, cover: sagaCover || null, cover_style: sagaCoverStyle || null, cliffhanger: sagaCliffhanger || null, memory: sagaMemory || { facts: [], decisions: [] } };
     try{
       const { error } = await supabase.from('saga').upsert(full);
       if(error){ await supabase.from('saga').upsert(base); } // colonnes title/cover pas encore migrées
@@ -1542,6 +1547,50 @@ function mergeStructuredCharacters(chars){
   });
   if(characters.length > 14) characters = characters.slice(-14);
   localStorage.setItem('sunami-characters', JSON.stringify(characters));
+}
+
+/* Carnet de l'histoire : intègre les faits perso + décisions renvoyés par le moteur.
+   C'est ce qui fait que "le monde se souvient" de l'apprenant et que ses choix
+   comptent. Déduplique par clé/valeur, borne la taille, persiste en local. */
+function mergeMemory(newFacts, newDecision){
+  let changed = false;
+  const ch = stats.chapters || 0;
+  if(Array.isArray(newFacts)){
+    newFacts.forEach(f=>{
+      if(!f || !f.value) return;
+      const val = String(f.value).trim().slice(0, 80);
+      const key = (f.key ? String(f.key).trim() : '').slice(0, 40);
+      if(!val) return;
+      const norm = s => (s||'').toLowerCase();
+      const dup = sagaMemory.facts.find(x => (key && norm(x.key) === norm(key)) || norm(x.value) === norm(val));
+      if(dup){ if(key) dup.key = key; dup.value = val; }
+      else { sagaMemory.facts.push({ key, value: val, chapter: ch }); }
+      changed = true;
+    });
+  }
+  if(newDecision && String(newDecision).trim()){
+    const summary = String(newDecision).trim().slice(0, 160);
+    const dup = sagaMemory.decisions.find(x => (x.summary||'').toLowerCase() === summary.toLowerCase());
+    if(!dup){ sagaMemory.decisions.push({ summary, chapter: ch }); changed = true; }
+  }
+  if(sagaMemory.facts.length > 30) sagaMemory.facts = sagaMemory.facts.slice(-30);
+  if(sagaMemory.decisions.length > 20) sagaMemory.decisions = sagaMemory.decisions.slice(-20);
+  if(changed){
+    try{ localStorage.setItem('sunami-memory', JSON.stringify(sagaMemory)); }catch(e){}
+    renderMemoryChips();
+  }
+}
+// Affichage discret du carnet : montre à l'utilisateur que Sunami se souvient de lui.
+// Non intrusif : ne fait rien s'il n'y a pas de conteneur dédié dans le DOM.
+function renderMemoryChips(){
+  const el = document.getElementById('memoryList');
+  if(!el) return;
+  const facts = (sagaMemory.facts || []).slice(-8);
+  if(!facts.length){ el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="mem-title">🧠 Ce que Sunami retient de toi</div>' +
+    '<div class="mem-chips">' + facts.map(f =>
+      '<span class="mem-chip">' + (f.key ? '<b>'+escapeHtml(f.key)+'</b> ' : '') + escapeHtml(f.value) + '</span>'
+    ).join('') + '</div>';
 }
 
 /* Suggestions de réponse cliquables (réduit la page blanche) */
@@ -1674,6 +1723,11 @@ function resumeScene(s){
   sagaCover = s.cover || '';
   sagaCoverStyle = s.cover_style || 'cinematic';
   coverSalt = 0;
+  // Recharge le carnet de l'histoire (faits perso + décisions) depuis le cloud.
+  if(s.memory && typeof s.memory === 'object'){
+    sagaMemory = { facts: Array.isArray(s.memory.facts)?s.memory.facts:[], decisions: Array.isArray(s.memory.decisions)?s.memory.decisions:[] };
+    try{ localStorage.setItem('sunami-memory', JSON.stringify(sagaMemory)); }catch(e){}
+  }
   if(Array.isArray(s.characters) && s.characters.length) characters = s.characters;
   chapter = s.chapter || 0;
   progress.episode = s.episode || progress.episode || 1;
@@ -2594,6 +2648,7 @@ async function callAI(userReply, opts){
         vocabulary: getWordsForReview(5),
         recap: sagaRecap, characters, setting: sagaSetting,
         protagonist: sagaProtagonist, episode: progress.episode || 1, chapter,
+        memory: sagaMemory,
         newEpisode: !!opts.newEpisode,
       }),
       signal: clientCtrl.signal,
@@ -2676,6 +2731,7 @@ async function callAI(userReply, opts){
     if(!sagaProtagonist){ sagaProtagonist = pickedFirstName || progress.first_name || (userEmail ? (userEmail.split('@')[0] || '') : ''); }
     mergeStructuredVocab(data.vocab);
     mergeStructuredCharacters(data.characters);
+    mergeMemory(data.newFacts, data.newDecision);
     renderComprehension(data.quiz);
     renderChoices(data.choices);
     if(data.episodeComplete){
