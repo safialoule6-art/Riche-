@@ -65,6 +65,7 @@ window.openSettings = function(){
   updateStatsPanel();
   renderAchievements();
   renderCharacters();
+  renderMemoryChips();
   renderStoryMap();
   loadReferralStats().then(()=>renderReferral());
   const em = document.getElementById('setEmail');
