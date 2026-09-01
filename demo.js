@@ -13,7 +13,7 @@
   const sendBtn = el("dlSend");
   const wall = el("dlWall");
   const inputBar = el("dlInputBar");
-  if (!chooseBox || !chat) return; // section absente → on ne fait rien
+  if (!chooseBox || !chat || !chatWrap || !input || !wall || !inputBar) return; // section absente/incomplète → on ne fait rien
 
   let history = [];
   let turns = 0;

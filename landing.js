@@ -230,6 +230,7 @@ window.resetPassword = async function(){
 window.submitLead = async function(){
   const emailEl = document.getElementById('leadEmail');
   const msgEl = document.getElementById('leadMsg');
+  if(!emailEl || !msgEl) return; // formulaire absent → on ne touche à rien (évite "set properties of null")
   const email = emailEl.value.trim();
   msgEl.textContent = '';
   msgEl.style.color = '';
