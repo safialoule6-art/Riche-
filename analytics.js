@@ -57,7 +57,18 @@
   var _sid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   var _uid = null;
   // L'app appelle ceci une fois l'utilisateur connu (pour relier visiteur -> compte).
-  window.sunamiSetUser = function (id) { _uid = id || null; };
+  window.sunamiSetUser = function (id) {
+    _uid = id || null;
+    // Clarity : relie la session au compte (user id Supabase opaque, PAS d'email/PII).
+    // Permet de retrouver le replay d'un utilisateur donné dans le dashboard Clarity.
+    try { if (id && window.clarity) window.clarity('identify', String(id)); } catch (e) {}
+  };
+
+  // Pose une étiquette filtrable dans Clarity (segmenter les sessions : plan, langue…).
+  // Gratuit et sans PII. Ex : sunamiTag('plan','free'), sunamiTag('langue','es').
+  window.sunamiTag = function (key, value) {
+    try { if (key && window.clarity) window.clarity('set', String(key), String(value)); } catch (e) {}
+  };
 
   /* ── Puits "first-party" : envoie l'evenement a /api/track (Supabase) ── */
   function firstPartySink(event, params) {
@@ -81,10 +92,34 @@
     firstPartySink(event, params); // toujours actif (analytics maison, sans IDs externes)
     try { if (gaOn) window.gtag('event', event, params); } catch (e) {}
     try { if (ttOn && window.ttq) window.ttq.track(event, params); } catch (e) {}
+    // Clarity : chaque événement métier devient un "smart event" filtrable dans le
+    // dashboard (gratuit). On retrouve ainsi "sessions bloquées au login",
+    // "a atteint l'histoire", etc. sans deviner.
+    try { if (window.clarity) window.clarity('event', event); } catch (e) {}
     if (!gaOn && !ttOn && window.console && console.debug) {
       console.debug('[sunami-track]', event, params);
     }
   };
+
+  // Capture globale des erreurs JS -> tag + event Clarity. Objectif : retrouver
+  // instantanément toutes les sessions qui ont planté (ex : le "Cannot set
+  // properties of null" vu en session). Non bloquant, silencieux pour l'utilisateur.
+  try {
+    window.addEventListener('error', function (e) {
+      try {
+        var msg = (e && e.message ? String(e.message) : 'error').slice(0, 120);
+        if (window.clarity) { window.clarity('set', 'js_error', msg); window.clarity('event', 'js_error'); }
+        window.sunamiTrack('js_error', { message: msg, source: (e && e.filename) || '', line: (e && e.lineno) || 0 });
+      } catch (_) {}
+    });
+    window.addEventListener('unhandledrejection', function (e) {
+      try {
+        var r = e && e.reason; var msg = (r && r.message ? String(r.message) : String(r || 'rejection')).slice(0, 120);
+        if (window.clarity) { window.clarity('set', 'js_error', msg); window.clarity('event', 'js_promise_rejection'); }
+        window.sunamiTrack('js_promise_rejection', { message: msg });
+      } catch (_) {}
+    });
+  } catch (e) {}
 
   // Vue de page automatique (funnel d'acquisition).
   try { window.sunamiTrack('page_view', { title: document.title }); } catch (e) {}

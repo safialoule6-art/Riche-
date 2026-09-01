@@ -1345,6 +1345,14 @@ function updateSceneMeta(){
   if(setEl) setEl.textContent = sagaSetting ? sagaSetting.replace(/\*\*/g, '') : "l'histoire s'écrit en direct…";
   updateSceneBanner();
   refreshChangeStoryLock();
+  // Clarity : étiquettes de segmentation (gratuit, sans PII) pour filtrer les sessions.
+  try{
+    if(window.sunamiTag){
+      sunamiTag('plan', progress.plan || 'free');
+      if(pickedLang) sunamiTag('langue', pickedLang);
+      if(pickedLevel) sunamiTag('niveau', pickedLevel);
+    }
+  }catch(e){}
 }
 
 let userId = null;
