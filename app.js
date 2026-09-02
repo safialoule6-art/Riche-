@@ -1371,6 +1371,7 @@ async function touchStreak(){
   let increased = false;
   let restDay = false;
   if (progress.last_active !== today){
+    const prevActive = progress.last_active; // avant écrasement : sert à mesurer le retour
     const y = new Date(); y.setDate(y.getDate()-1);
     const yesterday = y.toISOString().slice(0,10);
     const y2 = new Date(); y2.setDate(y2.getDate()-2);
@@ -1386,6 +1387,20 @@ async function touchStreak(){
     }
     progress.last_active = today;
     increased = true;
+    // Signal de RÉTENTION (le vrai "je veux la suite") : mesure l'écart en jours
+    // depuis la dernière visite. C'est la métrique clé avant toute monétisation.
+    try{
+      let daysSince = null;
+      if(prevActive){ daysSince = Math.round((new Date(today) - new Date(prevActive)) / 86400000); }
+      track('day_return', {
+        status: prevActive ? 'returning' : 'first_day',
+        days_since_last: daysSince,
+        d1: daysSince === 1,          // retour le lendemain = signal fort
+        streak: progress.streak,
+        episode: progress.episode || 1,
+      });
+      if(window.sunamiTag && daysSince === 1) sunamiTag('returned_d1', 'true');
+    }catch(e){}
   }
   const chip = document.getElementById('streakChip');
   chip.style.display = 'inline-flex';
@@ -1671,6 +1686,12 @@ function onEpisodeComplete(title){
   chapter = 0;
   saveProgress(); saveSaga();
   track('episode_complete', { episode: finishedEp, language: pickedLang });
+  // Le cliffhanger est LE moment "je veux la suite". On trace s'il y en a un, pour
+  // corréler ensuite avec le retour J+1 (cliffhanger vu -> revient-il le lendemain ?).
+  if(sagaCliffhanger){
+    track('cliffhanger_seen', { episode: finishedEp, language: pickedLang });
+    try{ if(window.sunamiTag) sunamiTag('saw_cliffhanger', 'true'); }catch(e){}
+  }
   if(window.SFX) SFX.play('complete');
   playEpisodeTransition({ label: 'Fin de l\'épisode ' + finishedEp, title: title || 'À suivre…', cover: sagaCover }).then(() => {
     const teaser = sagaCliffhanger ? ('« ' + sagaCliffhanger + ' »') : '';
