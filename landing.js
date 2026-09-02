@@ -42,6 +42,35 @@ function markLoginIntent(){ try{ sessionStorage.setItem(LOGIN_INTENT_KEY, '1'); 
 function consumeLoginIntent(){ try{ const v = sessionStorage.getItem(LOGIN_INTENT_KEY); sessionStorage.removeItem(LOGIN_INTENT_KEY); return !!v; }catch(e){ return false; } }
 function enterApp(){ window.location.replace('/app'); }
 
+/* ===== Échec de connexion OAuth (ex : bad_oauth_state — "OAuth state not found
+   or expired") =====
+   Sans ça, l'utilisateur revient sur '/' avec ?error=... dans l'URL, sans aucun
+   message : il croit que rien ne s'est passé et re-clique / rafraîchit en boucle
+   (comportement réellement observé en session). On intercepte l'erreur, on
+   l'explique, on nettoie l'URL, on purge l'intention de login périmée et on trace. */
+(function handleOAuthError(){
+  try{
+    const qs = new URLSearchParams(window.location.search);
+    const hs = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+    const code = qs.get('error_code') || hs.get('error_code') || qs.get('error') || hs.get('error');
+    if(!code) return;
+    consumeLoginIntent(); // l'intention est périmée : on évite une redirection fantôme
+    try{ if(window.sunamiTrack) window.sunamiTrack('oauth_error', { code: String(code).slice(0,60) }); }catch(e){}
+    try{ if(window.clarity){ window.clarity('set','oauth_error',String(code).slice(0,60)); window.clarity('event','oauth_error'); } }catch(e){}
+    const friendly = (String(code).indexOf('state') !== -1)
+      ? "La connexion a expiré avant de revenir. Réessaie — ça marche en général du premier coup."
+      : "La connexion Google n'a pas abouti. Réessaie, s'il te plaît.";
+    const show = ()=>{
+      const errEl = document.getElementById('authError');
+      if(errEl){ errEl.textContent = friendly; errEl.style.display = 'block'; }
+      else { const cta = document.getElementById('signedOutCta'); if(cta){ const p = document.createElement('p'); p.className='error-msg'; p.textContent = friendly; cta.prepend(p); } }
+    };
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show); else show();
+    // Nettoie l'URL pour que l'erreur ne persiste pas au rafraîchissement.
+    try{ history.replaceState({}, '', window.location.pathname); }catch(e){}
+  }catch(e){}
+})();
+
 function showWelcomeBack(session){
   const run = async ()=>{
     const wb = document.getElementById('welcomeBack');
