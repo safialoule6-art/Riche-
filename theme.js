@@ -1,7 +1,10 @@
 /* Sunami — thème clair/sombre (partagé landing + app) */
 (function(){
+  // Défaut = CLAIR pour un nouvel utilisateur sans préférence. On ne suit pas la
+  // préférence système. Un choix explicite ('dark' ou 'light') est respecté.
+  // Script synchrone dans le <head> : data-theme posé avant le rendu -> pas de flash.
   var saved = localStorage.getItem('sunami-theme');
-  var theme = saved || 'dark';
+  var theme = (saved === 'dark' || saved === 'light') ? saved : 'light';
   document.documentElement.setAttribute('data-theme', theme);
   document.addEventListener('DOMContentLoaded', function(){
     var t = document.getElementById('themeToggle');

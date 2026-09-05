@@ -912,6 +912,10 @@ window.logout = async function(){
   window.closeSettings && window.closeSettings();
   appEntered = false;
   if('speechSynthesis' in window) window.speechSynthesis.cancel();
+  // Purge les données propres au compte pour ne rien laisser fuiter au prochain
+  // utilisateur de cet appareil (identité, histoire, stats). Préférences d'appareil
+  // (thème, audio) conservées.
+  try{ resetLocalUserData(); localStorage.removeItem('sunami-uid'); }catch(e){}
   await supabase.auth.signOut();
   window.location.replace('/');
 };
@@ -1105,17 +1109,14 @@ function renderPickers(){
   const nameInput = document.getElementById('firstName');
   const nextBtn = document.querySelector('.pick-next[data-next="1"]');
   const syncNameUI = ()=>{
-    if(nextBtn) nextBtn.disabled = !pickedFirstName;
+    if(nextBtn) nextBtn.disabled = false; // prénom facultatif : jamais exigé
     updatePickHeadings();
     checkReady();
   };
   if(nameInput){
-    // Pré-remplissage intelligent pour un nouvel arrivant : prénom du profil Google
-    // si connu (jamais le préfixe email), sinon champ vide. Modifiable librement.
-    if(!pickedFirstName){
-      const suggested = deduceFirstName();
-      if(suggested){ pickedFirstName = suggested; try{ localStorage.setItem('sunami-firstname', suggested); }catch(_){} }
-    }
+    // Le prénom est FACULTATIF et n'est JAMAIS déduit automatiquement (ni du profil
+    // Google, ni de l'email) : Sunami ne doit jamais inventer/hériter un nom. Le champ
+    // reste vide tant que l'apprenant ne saisit rien ; l'histoire reste alors neutre.
     nameInput.value = pickedFirstName || '';
     nameInput.oninput = ()=>{
       pickedFirstName = nameInput.value.trim();
@@ -1123,10 +1124,10 @@ function renderPickers(){
       else localStorage.removeItem('sunami-firstname');
       syncNameUI();
     };
-    nameInput.onkeydown = (e)=>{ if(e.key === 'Enter' && pickedFirstName){ pickStepNext(1); } };
-    syncNameUI(); // reflète le pré-remplissage (bouton Continuer, titre, etc.)
+    nameInput.onkeydown = (e)=>{ if(e.key === 'Enter'){ pickStepNext(1); } };
+    syncNameUI();
   }
-  if(nextBtn){ nextBtn.disabled = !pickedFirstName; nextBtn.onclick = ()=> pickStepNext(1); }
+  if(nextBtn){ nextBtn.disabled = false; nextBtn.onclick = ()=> pickStepNext(1); } // prénom optionnel
   const langGrid = document.getElementById('langGrid');
   langGrid.innerHTML = '';
   LANGUAGES.forEach(l=>{
@@ -1279,7 +1280,7 @@ function pickAdvance(target){
 }
 function checkReady(){
   const btn = document.getElementById('startBtn');
-  if(btn) btn.disabled = !(pickedFirstName && pickedLang && pickedLevel && pickedMotivation);
+  if(btn) btn.disabled = !(pickedLang && pickedLevel && pickedMotivation); // prénom facultatif
 }
 // Libellé user-facing du thème dérivé de la motivation (pour l'écran "ta série est prête").
 // Personnalisation pédagogique uniquement — jamais un argument de vente.
@@ -1741,7 +1742,9 @@ function resumeScene(s){
   const _storedProto = s.protagonist || '';
   const _realName = pickedFirstName || progress.first_name || '';
   const _emailPrefix = userEmail ? (userEmail.split('@')[0] || '') : '';
-  sagaProtagonist = _realName || _storedProto || _emailPrefix;
+  // Prénom explicite d'abord ; sinon on garde le protagoniste déjà gravé dans cette
+  // saga (continuité). JAMAIS de repli sur le préfixe email : pas de nom arbitraire.
+  sagaProtagonist = _realName || _storedProto || '';
   // Sagas anciennes : le vieux nom (préfixe email, ex "nm8935042") est GRAVÉ dans le
   // texte déjà généré (récap + historique). Corriger la variable ne suffit pas : on
   // remplace aussi ce nom dans le contenu stocké, puis on persiste la correction.
@@ -2072,8 +2075,36 @@ function maybeOfferNotifications(){
 
 
 let appEntered = false;
+// Données propres à un utilisateur, stockées en localStorage (par APPAREIL, pas par
+// compte). Doivent être purgées quand un AUTRE utilisateur se connecte sur le même
+// appareil — sinon fuite d'identité/d'histoire entre comptes (cause du bug "Leister" :
+// un prénom/protagoniste d'un utilisateur précédent hérité par le suivant).
+// NB : on NE touche PAS aux préférences d'appareil (thème, réglages audio, notif).
+const USER_SCOPED_KEYS = [
+  'sunami-firstname', 'sunami-motivation', 'sunami-characters', 'sunami-locations',
+  'sunami-memory', 'sunami-cliffhanger', 'sunami-saga-episodes', 'sunami-stats',
+  'sunami-xp', 'sunami-achievements', 'sunami-theme-ctx', 'sunami-universe-ctx',
+  'sunami_prev', 'sunami-weekly-shown'
+];
+function resetLocalUserData(){
+  try{ USER_SCOPED_KEYS.forEach(k => localStorage.removeItem(k)); }catch(e){}
+}
+
 async function enterApp(email, uid, user){
   if(appEntered) return;
+  // Changement d'utilisateur sur le même appareil : on purge les données locales du
+  // compte précédent AVANT de charger celles du nouveau, puis on recharge une fois
+  // pour repartir d'un état propre (évite tout héritage de prénom/histoire).
+  try{
+    const prevUid = localStorage.getItem('sunami-uid');
+    if(prevUid && uid && prevUid !== uid){
+      resetLocalUserData();
+      localStorage.setItem('sunami-uid', uid);
+      location.reload();
+      return;
+    }
+    if(!prevUid && uid) localStorage.setItem('sunami-uid', uid);
+  }catch(e){}
   appEntered = true;
   document.getElementById('appScreen').style.display = 'flex';
   document.getElementById('userLabel').textContent = email;
@@ -2124,35 +2155,16 @@ function greetReturning(){
   const langLabel = (LANGUAGES.find(l=>l.code===pickedLang)?.label) || '';
   showGreeting(`Content de te revoir, ${pickedFirstName} 👋`, langLabel ? `On reprend ton histoire en ${langLabel}.` : 'On reprend ton histoire.');
 }
-// Déduit un prénom depuis le profil OAuth (Google) SANS jamais retomber sur le
-// préfixe de l'email : c'est justement la valeur "nm8935042" qu'on veut éviter.
-// Retourne '' si aucun vrai prénom fiable n'est disponible → champ laissé vide.
-function deduceFirstName(){
-  const meta = (authUser && authUser.user_metadata) ? authUser.user_metadata : {};
-  let cand = meta.given_name || meta.first_name || meta.name || meta.full_name || '';
-  cand = String(cand).trim();
-  if(!cand) return '';
-  cand = cand.split(/\s+/)[0]; // on garde le premier mot (prénom)
-  const emailPrefix = userEmail ? String(userEmail.split('@')[0] || '').toLowerCase() : '';
-  // Filet : rejeter tout ce qui ressemble à un email, un identifiant technique, ou
-  // au préfixe de l'email (ex: nm8935042). On veut un prénom "humain".
-  if(cand.includes('@')) return '';
-  if(emailPrefix && cand.toLowerCase() === emailPrefix) return '';
-  if(/\d/.test(cand)) return ''; // un prénom ne contient pas de chiffres
-  if(cand.length < 2 || cand.length > 24) return '';
-  // Capitalise proprement (ahmed -> Ahmed).
-  return cand.charAt(0).toUpperCase() + cand.slice(1);
-}
 // Capture du prénom pour un compte existant qui n'en a pas encore.
+// Champ TOUJOURS vide : on ne déduit jamais un prénom (ni Google, ni email).
+// Facultatif : l'apprenant peut valider sans rien saisir (histoire neutre).
 function showNameCapture(){
   const m = document.getElementById('nameModal');
   const inp = document.getElementById('nameModalInput');
   if(!m || !inp){ resumeOrStart(); return; } // filet : on ne bloque jamais l'accès
-  // Pré-remplissage intelligent : prénom du profil Google si dispo, sinon vide.
-  const suggested = deduceFirstName();
-  inp.value = suggested;
+  inp.value = '';
   m.classList.add('open'); m.setAttribute('aria-hidden','false');
-  setTimeout(()=>{ try{ inp.focus(); inp.select(); }catch(_){} }, 60); // sélectionné = 1 frappe pour corriger
+  setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 60);
   inp.onkeydown = (e)=>{ if(e.key === 'Enter') submitNameCapture(); };
 }
 window.submitNameCapture = async function(){
@@ -2758,7 +2770,7 @@ async function callAI(userReply, opts){
     if(data.recap) sagaRecap = data.recap;
     if(data.sagaTitle && !sagaTitle) sagaTitle = data.sagaTitle;
     if(data.setting) sagaSetting = data.setting;
-    if(!sagaProtagonist){ sagaProtagonist = pickedFirstName || progress.first_name || (userEmail ? (userEmail.split('@')[0] || '') : ''); }
+    if(!sagaProtagonist){ sagaProtagonist = pickedFirstName || progress.first_name || ''; } // jamais de nom déduit de l'email
     mergeStructuredVocab(data.vocab);
     mergeStructuredCharacters(data.characters);
     mergeMemory(data.newFacts, data.newDecision);
@@ -2825,7 +2837,7 @@ function startScene(){
   sagaTitle = '';
   sagaCover = '';
   coverSalt = 0;
-  sagaProtagonist = pickedFirstName || progress.first_name || (userEmail && userEmail.split('@')[0]) || '';
+  sagaProtagonist = pickedFirstName || progress.first_name || ''; // jamais de nom déduit de l'email
   if(!progress.episode) progress.episode = 1;
   track('story_start', { language: pickedLang, level: pickedLevel, theme: pickedTheme || 'aucun' });
   document.getElementById('chatLog').innerHTML = '';
