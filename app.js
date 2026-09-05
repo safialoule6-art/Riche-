@@ -2103,7 +2103,21 @@ async function enterApp(email, uid, user){
       location.reload();
       return;
     }
-    if(!prevUid && uid) localStorage.setItem('sunami-uid', uid);
+    // Appareil jamais "tamponné" avec un uid : d'éventuelles données locales (prénom,
+    // histoire, personnages…) datent d'AVANT le suivi sunami-uid, ou d'un compte
+    // antérieur. On ne peut PAS les attribuer de façon fiable à CE compte → on repart
+    // propre, puis le cloud (par compte) réhydrate le vrai prénom. C'est la vraie cause
+    // du bug "Leister" : un prénom orphelin en localStorage hérité par le compte suivant
+    // (le garde ci-dessus ne se déclenchait pas car aucun prevUid n'existait encore).
+    if(!prevUid && uid){
+      const hasOrphan = USER_SCOPED_KEYS.some(k => localStorage.getItem(k) != null);
+      localStorage.setItem('sunami-uid', uid);
+      if(hasOrphan){
+        resetLocalUserData();
+        location.reload();
+        return;
+      }
+    }
   }catch(e){}
   appEntered = true;
   document.getElementById('appScreen').style.display = 'flex';
