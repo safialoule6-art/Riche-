@@ -133,7 +133,7 @@
         <p class="hero-sub" data-i18n="hero_sub">Les autres apps te font traduire « le chat mange ». Sunami te plonge dans une histoire dont tu veux connaître la suite — et tu apprends une langue sans t'en rendre compte.</p>
         <!-- Accueil "bon retour" pour un utilisateur déjà connecté (affiché par landing.js) -->
         <div id="welcomeBack" class="welcome-back" style="display:none;flex-direction:column;gap:14px;align-items:stretch;">
-          <p class="hero-sub" style="margin:0;"><span data-i18n="wb_title">Content de te revoir</span> <span aria-hidden="true">👋</span><br><b id="wbEmail" style="color:var(--foam);"></b></p>
+          <p class="hero-sub" style="margin:0;display:flex;align-items:center;gap:10px;"><svg class="mascot emo-happy" aria-hidden="true" viewBox="0 0 120 140" style="width:38px;height:44px;flex:none;"><use href="#mascot"/></svg><span><span data-i18n="wb_title">Content de te revoir</span> <span aria-hidden="true">👋</span><br><b id="wbEmail" style="color:var(--foam);"></b></span></p>
           <button class="btn" type="button" onclick="enterApp()" data-i18n="wb_continue">Reprendre mon histoire</button>
           <button class="text-link small" type="button" onclick="logoutFromLanding()" data-i18n="wb_logout">Ce n'est pas toi ? Se déconnecter</button>
         </div>

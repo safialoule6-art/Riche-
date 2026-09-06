@@ -2201,7 +2201,7 @@ function showGreeting(title, sub){
   try{
     const el = document.createElement('div');
     el.className = 'greet-toast';
-    el.innerHTML = `<div class="gt-title"></div><div class="gt-sub"></div>`;
+    el.innerHTML = `<svg class="mascot gt-mascot emo-happy" aria-hidden="true" viewBox="0 0 120 140"><use href="#mascot"/></svg><div><div class="gt-title"></div><div class="gt-sub"></div></div>`;
     el.querySelector('.gt-title').textContent = title || '';
     el.querySelector('.gt-sub').textContent = sub || '';
     document.body.appendChild(el);

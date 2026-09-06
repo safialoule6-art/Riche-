@@ -666,12 +666,14 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 /* ---- Toast de reprise contextualisé (piste E) ---- */
 .greet-toast{position:fixed; left:50%; top:16px; z-index:300; transform:translate(-50%,-24px);
   opacity:0; transition:opacity .4s var(--ease), transform .4s var(--ease); pointer-events:none;
-  max-width:min(420px,92vw); padding:12px 18px; border-radius:16px; text-align:center;
+  max-width:min(420px,92vw); padding:12px 18px; border-radius:16px; text-align:left;
+  display:flex; align-items:center; gap:12px;
   background:var(--card); border:1px solid var(--card-border); box-shadow:0 10px 30px rgba(8,20,18,.35);}
 .greet-toast.show{opacity:1; transform:translate(-50%,0);}
+.greet-toast .gt-mascot{width:40px; height:46px; flex:none; animation:bob 1.6s ease-in-out infinite;}
 .greet-toast .gt-title{font-weight:800; font-size:15px; color:var(--foam);}
 .greet-toast .gt-sub{font-weight:600; font-size:13px; color:var(--muted); margin-top:2px;}
-@media (prefers-reduced-motion: reduce){ .greet-toast{transition:opacity .2s linear;} }
+@media (prefers-reduced-motion: reduce){ .greet-toast{transition:opacity .2s linear;} .greet-toast .gt-mascot{animation:none;} }
 
 /* ---- Écran d'histoire ---- */
 .scene-avatar .mascot{transition:transform .3s var(--ease);}
@@ -697,6 +699,9 @@ header{display:flex; justify-content:space-between; align-items:center; padding:
 /* thinking */
 .scene-avatar.emo-think .me-smile{opacity:0;}
 .scene-avatar.emo-think .me-think{opacity:1;}
+/* Expression heureuse réutilisable hors scène (accueil de retour, welcome-back) */
+.mascot.emo-happy .me-normal, .mascot.emo-happy .me-smile{opacity:0;}
+.mascot.emo-happy .me-happy, .mascot.emo-happy .me-bigsmile{opacity:1;}
 
 /* Previously banner */
 .prev-banner{position:relative; background:color-mix(in srgb,var(--muted) 8%,transparent);
