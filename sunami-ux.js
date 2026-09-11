@@ -18,9 +18,37 @@
       @keyframes sunamiTap{50%{transform:scale(.97)}}
       .sunami-loading{pointer-events:none;opacity:.78!important}
       .sunami-loading::after{content:'  •••';letter-spacing:2px}
+
+      /* Reader: le rappel de révision reste au-dessus du décor immersif et lisible. */
+      #chatScreen.sunami-immersive .scene-actions,
+      #chatScreen.sunami-immersive .review-nudge{position:relative!important;z-index:20!important;}
+      #chatScreen.sunami-immersive .review-nudge{
+        background:rgba(6,15,17,.92)!important;
+        color:#b8ff70!important;
+        border-color:rgba(124,255,87,.72)!important;
+        text-shadow:0 1px 4px rgba(0,0,0,.8);
+        box-shadow:0 8px 24px rgba(0,0,0,.28);
+        backdrop-filter:blur(8px);
+      }
+      #chatScreen.sunami-immersive .scene-banner{z-index:0!important;pointer-events:none;}
+      #chatScreen.sunami-immersive .scene-banner-bg{z-index:0;}
+
       @media(prefers-reduced-motion:reduce){.sunami-journey-fill{transition:none}.sunami-tap{animation:none}}
     `;
     document.head.appendChild(s);
+  }
+
+  function installLanguageGuard(){
+    if(window.__sunamiLanguageGuard) return;
+    window.__sunamiLanguageGuard = true;
+    var nativeFetch = window.fetch.bind(window);
+    window.fetch = function(input, init){
+      var url = typeof input === 'string' ? input : (input && input.url) || '';
+      if(url.endsWith('/api/generate') && (!init || !init.method || String(init.method).toUpperCase()==='POST')){
+        if(typeof input === 'string') return nativeFetch(url.replace('/api/generate','/api/generate-safe'), init);
+      }
+      return nativeFetch(input, init);
+    };
   }
 
   function addOnboardingUX(){
@@ -104,7 +132,7 @@
     document.head.appendChild(script);
   }
 
-  function boot(){css();addOnboardingUX();polishLanding();loadNarrative();}
+  function boot(){css();installLanguageGuard();addOnboardingUX();polishLanding();loadNarrative();}
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();
   new MutationObserver(function(){addOnboardingUX();polishLanding();}).observe(document.documentElement,{childList:true,subtree:true});
 })();
