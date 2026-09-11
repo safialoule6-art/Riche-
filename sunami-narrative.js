@@ -1,4 +1,4 @@
-/* Sunami — progression narrative légère + hardening client.
+/* Sunami — progression narrative légère.
    Pas de pièces, pas de classement : la progression sert l'histoire.
 */
 (function () {
@@ -13,13 +13,6 @@
       var raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : fallback;
     } catch (_) { return fallback; }
-  }
-
-  function localDateKey() {
-    var d = new Date();
-    var m = String(d.getMonth() + 1).padStart(2, '0');
-    var day = String(d.getDate()).padStart(2, '0');
-    return d.getFullYear() + '-' + m + '-' + day;
   }
 
   function getState() {
@@ -99,46 +92,20 @@
     panel.classList.add('visible');
   }
 
-  function patchVocabBug() {
-    if (typeof window.openVocabLibrary !== 'function' || window.__sunamiVocabPatched) return;
-    var original = window.openVocabLibrary;
-    window.openVocabLibrary = function () {
-      // Anciennes entrées de vocabulaire : nextReview peut être absent.
-      // On les normalise avant le rendu existant afin d'éviter un crash.
-      try {
-        var stats = safeJson('sunami-stats', null);
-        if (stats && Array.isArray(stats.words)) {
-          var changed = false;
-          var today = localDateKey();
-          stats.words.forEach(function (w) {
-            if (w && !w.nextReview) { w.nextReview = w.lastSeen || today; changed = true; }
-          });
-          if (changed) localStorage.setItem('sunami-stats', JSON.stringify(stats));
-        }
-      } catch (_) {}
-      return original.apply(this, arguments);
-    };
-    window.__sunamiVocabPatched = true;
-  }
-
   function boot() {
     injectStyle();
-    patchVocabBug();
     render();
 
     var root = document.getElementById('appScreen') || document.body;
     if (root && !window.__sunamiNarrativeObserver) {
-      var observer = new MutationObserver(function () {
-        patchVocabBug();
-        render();
-      });
+      var observer = new MutationObserver(function () { render(); });
       // childList suffit ici ; le timer gère les changements de visibilité/texte
       // et évite une boucle d'observation provoquée par notre propre innerHTML.
       observer.observe(root, { childList: true, subtree: true });
       window.__sunamiNarrativeObserver = observer;
     }
     if (!window.__sunamiNarrativeTimer) {
-      window.__sunamiNarrativeTimer = setInterval(function () { patchVocabBug(); render(); }, 1500);
+      window.__sunamiNarrativeTimer = setInterval(render, 1500);
     }
   }
 
