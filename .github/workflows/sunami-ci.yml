@@ -1,0 +1,99 @@
+name: Sunami CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check merge-conflict markers
+        shell: bash
+        run: |
+          if git grep -n -E '^(<<<<<<<|=======|>>>>>>>)' -- . ':!.git'; then
+            echo 'Merge-conflict markers found.'
+            exit 1
+          fi
+
+      - name: Check required app files
+        shell: bash
+        run: |
+          files=(app.html app.js theme.js analytics.js sunami-ux.js sunami-narrative.js)
+          for file in "${files[@]}"; do
+            test -f "$file" || { echo "Missing required file: $file"; exit 1; }
+          done
+
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          set -e
+          found=0
+          while IFS= read -r -d '' file; do
+            found=1
+            echo "Checking $file"
+            node --check "$file"
+          done < <(find . -type f -name '*.js' -not -path './.git/*' -not -path './node_modules/*' -print0)
+          test "$found" -eq 1 || { echo 'No JavaScript files found.'; exit 1; }
+
+      - name: Validate JSON
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for path in Path('.').rglob('*.json'):
+              if '.git' in path.parts or 'node_modules' in path.parts:
+                  continue
+              print(f'Checking {path}')
+              with path.open(encoding='utf-8') as f:
+                  json.load(f)
+          PY
+
+      - name: Validate local HTML script references
+        shell: bash
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          html_files = list(Path('.').rglob('*.html'))
+          for html in html_files:
+              if '.git' in html.parts or 'node_modules' in html.parts:
+                  continue
+              text = html.read_text(encoding='utf-8', errors='replace')
+              for src in re.findall(r'<script[^>]+src=[\"\']([^\"\']+)[\"\']', text, re.I):
+                  if re.match(r'^(?:[a-z][a-z0-9+.-]*:|//|/)', src, re.I):
+                      continue
+                  local = (html.parent / src.split('?', 1)[0].split('#', 1)[0]).resolve()
+                  if not local.is_file():
+                      raise SystemExit(f'{html}: missing local script {src}')
+                  print(f'{html}: OK {src}')
+          PY
+
+      - name: Basic app smoke check
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('app.html').read_text(encoding='utf-8', errors='replace')
+          required = ['<!DOCTYPE html', '<html', '<body', '</html>']
+          missing = [x for x in required if x.lower() not in text.lower()]
+          if missing:
+              raise SystemExit('app.html is missing: ' + ', '.join(missing))
+          print('app.html basic structure: OK')
+          PY
