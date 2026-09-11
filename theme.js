@@ -8,6 +8,30 @@
     if(t) t.textContent = theme === 'dark' ? '☀️' : '🌙';
   });
 })();
+
+/* ===== Données locales : migration défensive =====
+   Les anciennes versions de Sunami peuvent contenir des mots sans
+   nextReview. On normalise AVANT que app.js ne lise sunami-stats,
+   afin que la bibliothèque vocabulaire ne puisse pas planter sur
+   un historique créé par une version précédente. */
+(function(){
+  try {
+    var raw = localStorage.getItem('sunami-stats');
+    if(raw){
+      var stats = JSON.parse(raw);
+      if(stats && Array.isArray(stats.words)){
+        var changed = false;
+        var d = new Date();
+        var today = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        stats.words.forEach(function(w){
+          if(w && !w.nextReview){ w.nextReview = w.lastSeen || today; changed = true; }
+        });
+        if(changed) localStorage.setItem('sunami-stats', JSON.stringify(stats));
+      }
+    }
+  } catch(e) {}
+})();
+
 window.toggleTheme = function(){
   var cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
   var next = cur === 'dark' ? 'light' : 'dark';
@@ -17,7 +41,7 @@ window.toggleTheme = function(){
   if(t) t.textContent = next === 'dark' ? '☀️' : '🌙';
 };
 
-/* ===== Sunami UX fixes =====
+/* ===== Sunami UX fixes
    1) free CTA must never silently reuse the browser's active Google account
    2) returning-user greeting uses progress.first_name, then Google metadata
    3) story reader becomes immersive / visual-novel-like while keeping the mic
