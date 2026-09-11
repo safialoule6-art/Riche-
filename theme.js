@@ -76,7 +76,6 @@ window.toggleTheme = function(){
       var anon = null;
       try { anon = await c.auth.signInAnonymously(); } catch(e) {}
       if(anon && !anon.error) return;
-      /* If anonymous auth is disabled in Supabase, explicitly ask Google which account to use. */
       try {
         var oauth = await c.auth.signInWithOAuth({
           provider:'google',
@@ -139,11 +138,15 @@ window.toggleTheme = function(){
 
   function boot(){
     setupFreeCta();
-    refreshWelcomeName();
+    var welcomeNameLoaded = !!document.getElementById('welcomeBack');
+    if(welcomeNameLoaded) refreshWelcomeName();
     if(document.getElementById('appScreen')) setupReader();
     var obs = new MutationObserver(function(){
       setupFreeCta();
-      if(document.getElementById('welcomeBack')) refreshWelcomeName();
+      if(!welcomeNameLoaded && document.getElementById('welcomeBack')){
+        welcomeNameLoaded = true;
+        refreshWelcomeName();
+      }
       if(document.getElementById('chatScreen')) setupReader();
     });
     obs.observe(document.documentElement,{subtree:true,childList:true});
