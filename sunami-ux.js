@@ -95,7 +95,16 @@
     }
   }
 
-  function boot(){css();addOnboardingUX();polishLanding();}
+  function loadNarrative(){
+    if(document.querySelector('script[data-sunami-narrative]')) return;
+    var script=document.createElement('script');
+    script.src='/sunami-narrative.js';
+    script.defer=true;
+    script.dataset.sunamiNarrative='1';
+    document.head.appendChild(script);
+  }
+
+  function boot(){css();addOnboardingUX();polishLanding();loadNarrative();}
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();
   new MutationObserver(function(){addOnboardingUX();polishLanding();}).observe(document.documentElement,{childList:true,subtree:true});
 })();
