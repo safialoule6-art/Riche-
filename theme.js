@@ -9,11 +9,7 @@
   });
 })();
 
-/* ===== Données locales : migration défensive =====
-   Les anciennes versions de Sunami peuvent contenir des mots sans
-   nextReview. On normalise AVANT que app.js ne lise sunami-stats,
-   afin que la bibliothèque vocabulaire ne puisse pas planter sur
-   un historique créé par une version précédente. */
+/* ===== Données locales : migrations défensives ===== */
 (function(){
   try {
     var raw = localStorage.getItem('sunami-stats');
@@ -30,6 +26,23 @@
       }
     }
   } catch(e) {}
+
+  /* Un réglage local corrompu ne doit pas faire planter openSettings(). */
+  try {
+    var settingsRaw = localStorage.getItem('sunami-settings');
+    if(settingsRaw){
+      var settings = JSON.parse(settingsRaw);
+      if(!settings || typeof settings !== 'object') throw new Error('invalid settings');
+      var rate = Number(settings.rate);
+      if(!Number.isFinite(rate)) rate = 1;
+      settings.rate = Math.min(2, Math.max(0.5, rate));
+      settings.autoplay = settings.autoplay !== false;
+      settings.font = ['s','m','l'].indexOf(settings.font) !== -1 ? settings.font : 'm';
+      localStorage.setItem('sunami-settings', JSON.stringify(settings));
+    }
+  } catch(e) {
+    try { localStorage.removeItem('sunami-settings'); } catch(_) {}
+  }
 })();
 
 window.toggleTheme = function(){
