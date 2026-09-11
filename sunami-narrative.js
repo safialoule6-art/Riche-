@@ -6,13 +6,20 @@
 
   var STYLE_ID = 'sunami-narrative-style';
   var PANEL_ID = 'sunamiNarrativePanel';
-  var STORAGE_KEY = 'sunami-narrative-v1';
+  var lastSignature = '';
 
   function safeJson(key, fallback) {
     try {
       var raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : fallback;
     } catch (_) { return fallback; }
+  }
+
+  function localDateKey() {
+    var d = new Date();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return d.getFullYear() + '-' + m + '-' + day;
   }
 
   function getState() {
@@ -62,14 +69,22 @@
     var panel = ensurePanel();
     if (!panel) return;
     var chat = document.getElementById('chatScreen');
-    var visible = chat && getComputedStyle(chat).display !== 'none';
-    if (!visible) { panel.classList.remove('visible'); return; }
+    var visible = !!(chat && getComputedStyle(chat).display !== 'none');
+    if (!visible) {
+      if (panel.classList.contains('visible')) panel.classList.remove('visible');
+      lastSignature = 'hidden';
+      return;
+    }
 
     var state = getState();
     var chapters = state.chapters;
     var act = Math.min(4, Math.floor(chapters / 3) + 1);
     var inAct = chapters % 3;
     var percent = Math.round((inAct / 3) * 100);
+    var signature = [chapters, state.words, act, inAct].join('|');
+    if (signature === lastSignature && panel.classList.contains('visible')) return;
+    lastSignature = signature;
+
     var labels = [
       'Le premier pas',
       'Les liens se créent',
@@ -89,13 +104,12 @@
     var original = window.openVocabLibrary;
     window.openVocabLibrary = function () {
       // Anciennes entrées de vocabulaire : nextReview peut être absent.
-      // On les normalise avant d'exécuter le rendu existant afin d'éviter
-      // "Cannot read properties of undefined (reading 'split')".
+      // On les normalise avant le rendu existant afin d'éviter un crash.
       try {
         var stats = safeJson('sunami-stats', null);
         if (stats && Array.isArray(stats.words)) {
           var changed = false;
-          var today = new Date().toISOString().slice(0, 10);
+          var today = localDateKey();
           stats.words.forEach(function (w) {
             if (w && !w.nextReview) { w.nextReview = w.lastSeen || today; changed = true; }
           });
@@ -118,7 +132,9 @@
         patchVocabBug();
         render();
       });
-      observer.observe(root, { childList: true, subtree: true, characterData: true });
+      // childList suffit ici ; le timer gère les changements de visibilité/texte
+      // et évite une boucle d'observation provoquée par notre propre innerHTML.
+      observer.observe(root, { childList: true, subtree: true });
       window.__sunamiNarrativeObserver = observer;
     }
     if (!window.__sunamiNarrativeTimer) {
