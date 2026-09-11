@@ -44,8 +44,11 @@
     var nativeFetch = window.fetch.bind(window);
     window.fetch = function(input, init){
       var url = typeof input === 'string' ? input : (input && input.url) || '';
-      if(url.endsWith('/api/generate') && (!init || !init.method || String(init.method).toUpperCase()==='POST')){
-        if(typeof input === 'string') return nativeFetch(url.replace('/api/generate','/api/generate-safe'), init);
+      var method = init && init.method ? String(init.method).toUpperCase() : (input && input.method ? String(input.method).toUpperCase() : 'GET');
+      if(url.endsWith('/api/generate') && method === 'POST'){
+        var safeUrl = url.replace('/api/generate','/api/generate-safe');
+        if(typeof input === 'string') return nativeFetch(safeUrl, init);
+        if(input instanceof Request) return nativeFetch(new Request(safeUrl, input), init);
       }
       return nativeFetch(input, init);
     };
