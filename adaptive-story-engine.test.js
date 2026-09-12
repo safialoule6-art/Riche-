@@ -20,7 +20,7 @@ assert.equal(words.find((w) => w.word === "hello").translation, "bonjour");
 const profile = buildVocabularyProfile(words);
 assert.equal(profile.total, 3);
 assert.deepEqual(profile.counts, { struggling: 1, review: 1, known: 1, mastered: 0 });
-assert.equal(profile.priority[0].word, "hello");
+assert.equal(profile.priority[0], "hello");
 
 assert.equal(getAdaptiveDifficulty("A1-A2 (débutant)", { counts: { struggling: 5, review: 0 } }).mode, "supportive");
 assert.equal(getAdaptiveDifficulty("A1-A2 (débutant)", { counts: { struggling: 0, review: 8 } }).mode, "recycling");
@@ -34,7 +34,7 @@ const context = buildAdaptiveStoryContext({
 });
 assert.equal(context.profile.total, 3);
 assert.equal(context.difficulty.mode, "progressive");
-assert.match(context.instructions, /Milo/);
-assert.match(context.instructions, /travel/);
+assert.match(context.instructions.join(" "), /Milo/);
+assert.match(context.instructions.join(" "), /travel/);
 
 console.log("adaptive-story-engine: all tests passed");
