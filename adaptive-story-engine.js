@@ -2,7 +2,6 @@
  * Sunami — Adaptive Story Engine
  *
  * Pure, dependency-free helpers used to prepare adaptive story prompts.
- * This module deliberately does not modify application state or call APIs.
  */
 
 const STATUS_ORDER = ['struggling', 'review', 'known', 'mastered'];
@@ -21,15 +20,12 @@ function normalizeWord(entry) {
     const word = entry.trim();
     return word ? { word, status: 'known', score: 0 } : null;
   }
-
   if (!entry || typeof entry !== 'object') return null;
-
   const word = String(entry.word || entry.term || entry.text || '').trim();
   if (!word) return null;
-
   return {
     word,
-    translation: String(entry.translation || entry.meaning || '').trim(),
+    translation: String(entry.translation || entry.fr || entry.meaning || '').trim(),
     status: normalizeStatus(entry.status),
     score: asFiniteNumber(entry.score, 0),
     attempts: Math.max(0, Math.floor(asFiniteNumber(entry.attempts, 0))),
@@ -38,76 +34,54 @@ function normalizeWord(entry) {
   };
 }
 
-/**
- * Converts legacy string vocabulary and newer object vocabulary into one shape.
- */
 export function normalizeVocabulary(words) {
   if (!Array.isArray(words)) return [];
-
   const unique = new Map();
   for (const raw of words) {
     const item = normalizeWord(raw);
     if (!item) continue;
-
     const key = item.word.toLocaleLowerCase();
     const previous = unique.get(key);
-    unique.set(key, previous ? { ...previous, ...item } : item);
+    if (!previous) {
+      unique.set(key, item);
+      continue;
+    }
+    unique.set(key, {
+      ...previous,
+      ...item,
+      translation: item.translation || previous.translation || '',
+      status: item.status !== 'known' || previous.status === 'known' ? item.status : previous.status,
+      score: item.score || previous.score || 0,
+      attempts: item.attempts || previous.attempts || 0,
+      correct: item.correct || previous.correct || 0,
+      lastSeen: item.lastSeen || previous.lastSeen || null,
+    });
   }
-
   return [...unique.values()];
 }
 
-/**
- * Creates a compact, bounded vocabulary profile for the story generator.
- * The output is intentionally small so it can safely be included in prompts.
- */
 export function buildVocabularyProfile(words, options = {}) {
   const limit = Math.max(1, Math.min(100, Math.floor(asFiniteNumber(options.limit, 40))));
   const vocabulary = normalizeVocabulary(words);
-
-  const groups = {
-    struggling: vocabulary.filter(item => item.status === 'struggling'),
-    review: vocabulary.filter(item => item.status === 'review'),
-    known: vocabulary.filter(item => item.status === 'known'),
-    mastered: vocabulary.filter(item => item.status === 'mastered'),
-  };
-
-  const selected = [
-    ...groups.struggling,
-    ...groups.review,
-    ...groups.known,
-    ...groups.mastered,
-  ].slice(0, limit);
-
+  const groups = Object.fromEntries(STATUS_ORDER.map(status => [status, vocabulary.filter(item => item.status === status)]));
+  const selected = STATUS_ORDER.flatMap(status => groups[status]).slice(0, limit);
   return {
     total: vocabulary.length,
     counts: Object.fromEntries(STATUS_ORDER.map(status => [status, groups[status].length])),
     priority: selected.filter(item => item.status === 'struggling' || item.status === 'review').map(item => item.word),
-    words: selected.map(item => ({
-      word: item.word,
-      translation: item.translation || undefined,
-      status: item.status,
-      score: item.score,
-    })),
+    words: selected.map(item => ({ word: item.word, translation: item.translation || undefined, status: item.status, score: item.score })),
   };
 }
 
-/**
- * Selects a difficulty band without assuming the user's exact CEFR level.
- */
 export function getAdaptiveDifficulty(level, profile = {}) {
   const normalizedLevel = String(level || 'A1').toUpperCase();
   const struggling = asFiniteNumber(profile.counts?.struggling, 0);
   const review = asFiniteNumber(profile.counts?.review, 0);
-
   if (struggling >= 5) return { level: normalizedLevel, mode: 'supportive', newWords: 1, sentenceLength: 'short' };
   if (review >= 8) return { level: normalizedLevel, mode: 'recycling', newWords: 2, sentenceLength: 'short-to-medium' };
   return { level: normalizedLevel, mode: 'progressive', newWords: 3, sentenceLength: 'level-appropriate' };
 }
 
-/**
- * Builds structured instructions consumed by the existing API layer.
- */
 export function buildAdaptiveStoryContext({ level, theme, vocabulary, memory } = {}) {
   const profile = buildVocabularyProfile(vocabulary);
   const difficulty = getAdaptiveDifficulty(level, profile);
@@ -115,7 +89,6 @@ export function buildAdaptiveStoryContext({ level, theme, vocabulary, memory } =
     facts: Array.isArray(memory.facts) ? memory.facts.slice(-20) : [],
     decisions: Array.isArray(memory.decisions) ? memory.decisions.slice(-12) : [],
   } : { facts: [], decisions: [] };
-
   return {
     theme: String(theme || 'daily life'),
     profile,
@@ -126,14 +99,10 @@ export function buildAdaptiveStoryContext({ level, theme, vocabulary, memory } =
       `Introduce at most ${difficulty.newWords} new target words.`,
       `Recycle priority words naturally: ${profile.priority.join(', ') || 'none'}.`,
       `Keep sentence length ${difficulty.sentenceLength}.`,
+      `Maintain continuity with Saga memory: ${safeMemory.facts.map(item => `${item.key || 'fact'}=${item.value || ''}`).join('; ') || 'none'}.`,
       'Do not force vocabulary that would make the story unnatural.',
     ],
   };
 }
 
-export default {
-  normalizeVocabulary,
-  buildVocabularyProfile,
-  getAdaptiveDifficulty,
-  buildAdaptiveStoryContext,
-};
+export default { normalizeVocabulary, buildVocabularyProfile, getAdaptiveDifficulty, buildAdaptiveStoryContext };
