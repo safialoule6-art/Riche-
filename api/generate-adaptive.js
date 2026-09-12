@@ -22,10 +22,22 @@ export default async function handler(req) {
     memory: body.memory,
   });
 
+  // The legacy endpoint accepts vocabulary strings and a custom universe.
+  // Encode the adaptive guidance through those existing fields so the prompt
+  // receives it without changing backward-compatible generate.js behavior.
+  const adaptiveWords = adaptiveData.adaptiveContext?.profile?.words || [];
+  const vocabulary = adaptiveWords
+    .map((item) => item.word)
+    .filter((word) => typeof word === "string" && word.trim());
+  const adaptiveInstructions = adaptiveData.instructionsLine || "";
+  const adaptiveUniverse = adaptiveInstructions
+    ? `${body.universe || ""}${body.universe ? "\n" : ""}ADAPTIVE STORY GUIDANCE: ${adaptiveInstructions}`
+    : body.universe;
+
   const enrichedBody = {
     ...body,
-    vocabulary: adaptiveData.adaptiveContext?.profile?.words || body.vocabulary || [],
-    adaptiveContext: adaptiveData.adaptiveContext,
+    vocabulary,
+    universe: adaptiveUniverse,
   };
 
   const enrichedRequest = new Request(req.url, {
