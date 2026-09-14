@@ -74,6 +74,8 @@ function jsonResponse(data, status) {
 
 export default async function handler(req) {
   if (req.method !== "POST") return jsonResponse({ error: "POST only" }, 405);
+  const rl = rateLimit(req, "support", 30, 60 * 60 * 1000);
+  if (!rl.allowed) return rateLimitResponse(rl);
 
   let body;
   try { body = await req.json(); } catch { body = {}; }
