@@ -2,6 +2,8 @@
 // SECURITE : l'email est derive du JWT Supabase, jamais du corps (anti-usurpation).
 export const config = { runtime: "edge" };
 
+import { rateLimit, rateLimitResponse } from "./_lib/rate-limit.js";
+
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://cdtabuyomtkfasvugtck.supabase.co";
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || "";
 
@@ -26,6 +28,8 @@ async function getAuthUser(req) {
 
 export default async function handler(req) {
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
+  const rl = rateLimit(req, "refund", 5, 60 * 60 * 1000);
+  if (!rl.allowed) return rateLimitResponse(rl);
   if (!SUPABASE_KEY) return json({ error: "Cle service manquante" }, 500);
 
   const user = await getAuthUser(req);
