@@ -189,6 +189,27 @@ create table if not exists public.payout_requests (
 );
 create index if not exists payout_requests_user_id_idx on public.payout_requests (user_id);
 create index if not exists payout_requests_status_idx  on public.payout_requests (status);
+-- Defensive database constraints: amounts are never negative and status is finite.
+do $
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'payout_requests_amount_nonnegative'
+      and conrelid = 'public.payout_requests'::regclass
+  ) then
+    alter table public.payout_requests
+      add constraint payout_requests_amount_nonnegative check (amount >= 0) not valid;
+  end if;
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'payout_requests_status_allowed'
+      and conrelid = 'public.payout_requests'::regclass
+  ) then
+    alter table public.payout_requests
+      add constraint payout_requests_status_allowed
+      check (status in ('requested', 'approved', 'paid', 'rejected')) not valid;
+  end if;
+end $;
 
 alter table public.referral_clicks enable row level security;
 alter table public.payout_requests enable row level security;
@@ -201,9 +222,9 @@ drop policy if exists "payouts_select_own" on public.payout_requests;
 create policy "payouts_select_own" on public.payout_requests
   for select using (auth.uid() = user_id);
 
+-- Payout creation is server-only. Do not expose INSERT to browser clients:
+-- the API must calculate the user's withdrawable balance from a trusted ledger.
 drop policy if exists "payouts_insert_own" on public.payout_requests;
-create policy "payouts_insert_own" on public.payout_requests
-  for insert with check (auth.uid() = user_id);
 
 create or replace view public.affiliate_summary as
 select

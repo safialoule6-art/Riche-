@@ -17,10 +17,10 @@ export default async function handler(req, res) {
   const SUPA_URL = process.env.SUPABASE_URL || "https://cdtabuyomtkfasvugtck.supabase.co";
   const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
 
-  const isVercelCron = !!(req.headers && req.headers["x-vercel-cron"]);
-  const url = new URL(req.url, "http://localhost");
-  const keyOk = CRON_SECRET ? url.searchParams.get("key") === CRON_SECRET : true;
-  if (!isVercelCron && !keyOk) { res.statusCode = 401; return res.end(JSON.stringify({ error: "unauthorized" })); }
+  // Require Vercel's CRON_SECRET bearer token. Never accept secrets in query strings.
+  const authorization = req.headers && req.headers.authorization;
+  const keyOk = Boolean(CRON_SECRET && authorization === `Bearer ${CRON_SECRET}`);
+  if (!keyOk) { res.statusCode = 401; return res.end(JSON.stringify({ error: "unauthorized" })); }
 
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY || !SERVICE) {
     res.statusCode = 200; return res.end(JSON.stringify({ skipped: "push non configuré (VAPID / service key manquants)" }));

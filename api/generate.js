@@ -27,6 +27,9 @@
 
 export const config = { runtime: "edge" };
 
+import { requireAuth } from "./_lib/auth.js";
+import { rateLimit, rateLimitResponse } from "./_lib/rate-limit.js";
+
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "openai/gpt-oss-120b";
 const GROQ_TIMEOUT_MS = 25000;
@@ -200,6 +203,12 @@ async function callGroq(apiKey, messages, signal) {
 export default async function handler(req) {
   if (req.method !== "POST") return jsonResponse({ error: "Méthode non autorisée" }, 405);
 
+  const user = await requireAuth(req);
+  if (user instanceof Response) return user;
+
+  const rl = rateLimit(req, `generate:${user.id}`, 12, 60 * 60 * 1000);
+  if (!rl.allowed) return rateLimitResponse(rl);
+
   const apiKey = process.env.GROQ_API_KEY;
   const apiKey2 = process.env.GROQ_API_KEY_2;
   if (!apiKey && !apiKey2) return jsonResponse({ error: "GROQ_API_KEY manquante sur le serveur" }, 500);
@@ -211,6 +220,10 @@ export default async function handler(req) {
     history, userReply, language, level, theme, universe, motivation, vocabulary,
     recap, characters, setting, protagonist, episode, chapter, memory,
   } = body || {};
+
+  if (typeof userReply === "string" && userReply.length > 4000) {
+    return jsonResponse({ error: "Réponse trop longue" }, 413);
+  }
 
   const targetLanguage = LANG_NAME[language] || language || "English";
   const cefrLevel = LEVEL_NAME[level] || level || "A1-A2 (beginner)";
