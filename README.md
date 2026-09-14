@@ -6,7 +6,7 @@ App d'apprentissage de langue par **épisodes narratifs interactifs** avec un tu
 
 ## Concept
 
-Au lieu d'exercices répétitifs, un **conteur IA** raconte une histoire immersive **dans la langue cible**, adaptée au niveau CECR de l'apprenant (A1 → C2). Le vocabulaire clé est mis en valeur (avec une traduction en français) et le conteur pose une question à chaque chapitre pour faire répondre et progresser l'apprenant. **100% gratuit.**
+Au lieu d'exercices répétitifs, un **conteur IA** raconte une histoire immersive **dans la langue cible**, adaptée au niveau CECR de l'apprenant (A1 → C2). Le vocabulaire clé est mis en valeur (avec une traduction en français) et le conteur pose une question à chaque chapitre pour faire répondre et progresser l'apprenant. **Gratuit pour commencer, avec une offre premium optionnelle.**
 
 **6 langues** : 🇬🇧 Anglais · 🇪🇸 Espagnol · 🇩🇪 Allemand · 🇮🇹 Italien · 🇸🇦 Arabe · 🇵🇹 Portugais
 
@@ -101,5 +101,5 @@ https://sunami-rho.vercel.app
 - [ ] i18n : EN/ES/DE landing pages pour marché international
 - [ ] Plus de thèmes d'histoires (voyage, boulot, romance, polar…)
 - [ ] Partage social d'extraits d'histoire
-- [ ] Paiements (plus tard) : Payoneer / Dodo Payments
+- [ ] Paiements récurrents : finaliser et documenter le fournisseur de paiement
 - [ ] App native iOS/Android (React Native ou Capacitor)
