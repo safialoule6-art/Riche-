@@ -191,7 +191,7 @@ create table if not exists public.payout_requests (
 create index if not exists payout_requests_user_id_idx on public.payout_requests (user_id);
 create index if not exists payout_requests_status_idx  on public.payout_requests (status);
 -- Defensive database constraints: amounts are never negative and status is finite.
-do $
+do $$
 begin
   if not exists (
     select 1 from pg_constraint
@@ -210,7 +210,7 @@ begin
       add constraint payout_requests_status_allowed
       check (status in ('requested', 'approved', 'paid', 'rejected')) not valid;
   end if;
-end $;
+end $$;
 
 alter table public.referral_clicks enable row level security;
 alter table public.payout_requests enable row level security;
@@ -266,7 +266,7 @@ create or replace function public.prevent_client_plan_change()
 returns trigger
 language plpgsql
 security invoker
-as $
+as $$
 begin
   if auth.role() <> 'service_role' then
     new.plan := old.plan;
@@ -276,7 +276,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists progress_plan_server_only on public.progress;
 create trigger progress_plan_server_only
