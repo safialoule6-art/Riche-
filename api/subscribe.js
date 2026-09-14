@@ -5,6 +5,16 @@ export const config = { runtime: "edge" };
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://cdtabuyomtkfasvugtck.supabase.co";
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || "";
 
+const WINDOW_MS = 60 * 60 * 1000;
+const buckets = new Map();
+function limited(key, limit = 10) {
+  const now = Date.now();
+  const b = buckets.get(key);
+  if (!b || now - b.start >= WINDOW_MS) { buckets.set(key, { start: now, count: 1 }); return false; }
+  b.count += 1;
+  return b.count > limit;
+}
+
 function json(data, status) {
   return new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
 }
@@ -30,11 +40,14 @@ export default async function handler(req) {
 
   const user = await getAuthUser(req);
   if (!user) return json({ error: "Non authentifie" }, 401);
+  if (limited(user.id)) return json({ error: "Trop de requetes" }, 429);
 
   let body;
   try { body = await req.json(); } catch { return json({ error: "corps invalide" }, 400); }
   const { subscription } = body || {};
-  if (!subscription || !subscription.endpoint) return json({ error: "abonnement manquant" }, 400);
+  if (!subscription || typeof subscription !== "object" || typeof subscription.endpoint !== "string") return json({ error: "abonnement manquant" }, 400);
+  if (subscription.endpoint.length > 2048) return json({ error: "endpoint invalide" }, 400);
+  if (JSON.stringify(subscription).length > 12000) return json({ error: "abonnement trop volumineux" }, 413);
 
   const row = { user_id: user.id, endpoint: subscription.endpoint, subscription };
 
