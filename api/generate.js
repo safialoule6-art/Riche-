@@ -35,6 +35,17 @@ const MODEL = "openai/gpt-oss-120b";
 const GROQ_TIMEOUT_MS = 25000;
 const CHAPTERS_PER_EPISODE = 5; // un épisode = ~5 chapitres puis cliffhanger
 
+const MAX_BODY_BYTES = 50000;
+
+async function readJsonBody(req) {
+  const length = Number(req.headers.get("content-length") || 0);
+  if (length > MAX_BODY_BYTES) throw new Error("PAYLOAD_TOO_LARGE");
+  const text = await req.text();
+  if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) throw new Error("PAYLOAD_TOO_LARGE");
+  return text ? JSON.parse(text) : {};
+}
+
+
 const THEME_HINTS = {
   cyberpunk: "CYBERPUNK in a neon-lit Tokyo: rain, holograms, hackers, megacorps, gritty futuristic streets.",
   polar: "DETECTIVE INVESTIGATION in London: clues, suspects, foggy streets, suspense, a mystery to solve.",
