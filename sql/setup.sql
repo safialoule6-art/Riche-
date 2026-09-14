@@ -257,6 +257,31 @@ create policy "referrals_select_own" on public.referrals
 -- affiliate_summary : la vue respecte la RLS de l'appelant
 alter view public.affiliate_summary set (security_invoker = on);
 
+-- SECURITY: subscription tier is server-authoritative.
+-- Authenticated clients may update their own progress, but cannot promote/downgrade
+-- the plan or extend its expiry. The service_role used by trusted backend jobs is
+-- allowed to change these fields.
+create or replace function public.prevent_client_plan_change()
+returns trigger
+language plpgsql
+security invoker
+as $
+begin
+  if auth.role() <> 'service_role' then
+    new.plan := old.plan;
+    if to_jsonb(old) ? 'planExpires' then
+      new."planExpires" := old."planExpires";
+    end if;
+  end if;
+  return new;
+end;
+$;
+
+drop trigger if exists progress_plan_server_only on public.progress;
+create trigger progress_plan_server_only
+before update on public.progress
+for each row execute function public.prevent_client_plan_change();
+
 -- progress : chaque utilisateur n'accède qu'à SA ligne
 alter table public.progress enable row level security;
 drop policy if exists "progress_select_own" on public.progress;
