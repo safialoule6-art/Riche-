@@ -3,6 +3,8 @@
 
 export const config = { runtime: "edge" };
 
+import { rateLimit, rateLimitResponse } from "./_lib/rate-limit.js";
+
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "openai/gpt-oss-120b";
 
@@ -74,6 +76,8 @@ function jsonResponse(data, status) {
 
 export default async function handler(req) {
   if (req.method !== "POST") return jsonResponse({ error: "POST only" }, 405);
+  const rl = rateLimit(req, "support", 30, 60 * 60 * 1000);
+  if (!rl.allowed) return rateLimitResponse(rl);
 
   let body;
   try { body = await req.json(); } catch { body = {}; }
