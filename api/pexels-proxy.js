@@ -4,7 +4,17 @@ export const config = { runtime: 'edge' };
 
 const ALLOWED_HOSTS = new Set(['videos.pexels.com', 'player.vimeo.com']);
 
+const buckets = new Map();
+function limited(req, limit = 60) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const now = Date.now(), key = 'video:' + ip, b = buckets.get(key);
+  if (!b || now - b.start >= 3600000) { buckets.set(key, { start: now, count: 1 }); return false; }
+  b.count += 1; return b.count > limit;
+}
+
+
 export default async function handler(req) {
+  if (limited(req)) return new Response('Too many requests', { status: 429 });
   const requestUrl = new URL(req.url);
   const target = requestUrl.searchParams.get('url');
   if (!target) return new Response('Missing url', { status: 400 });
