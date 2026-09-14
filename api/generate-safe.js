@@ -55,10 +55,9 @@ export default async function handler(req) {
 
   const retryBody = {
     ...body,
-    history: [
-      ...(Array.isArray(body.history) ? body.history : []).slice(-7),
-      { role: 'system', content: repairPrompt(body.language) }
-    ]
+    // generate.js rejects client-supplied system messages; keep repair guidance
+    // in the sanitized universe/context instead.
+    universe: String(body.universe || '') + '\n' + repairPrompt(body.language)
   };
 
   const retryReq = new Request(req.url, {
