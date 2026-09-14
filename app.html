@@ -199,7 +199,7 @@
     <div id="chatLog"></div>
     <div class="input-row">
       <button class="mic-btn" id="micBtn" onclick="toggleVoiceInput()" title="Répondre à l'oral" aria-label="Répondre à l'oral">🎤</button>
-      <input id="userInput" placeholder="Réponds dans la langue cible..." onkeydown="if(event.key==='Enter')sendReply()">
+      <input id="userInput" maxlength="2000" autocomplete="off" placeholder="Réponds dans la langue cible..." aria-label="Ta réponse dans la langue cible" onkeydown="if(event.key==='Enter')sendReply()">
       <button class="btn" id="sendBtn" onclick="sendReply()">Envoyer</button>
     </div>
   </div>
