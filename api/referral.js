@@ -3,6 +3,8 @@
 // jamais du corps de la requete. La service key contourne la RLS cote serveur.
 export const config = { runtime: "edge" };
 
+import { rateLimit, rateLimitResponse } from "./_lib/rate-limit.js";
+
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://cdtabuyomtkfasvugtck.supabase.co";
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || "";
 
@@ -34,6 +36,9 @@ export default async function handler(req) {
 
   // "click" : clic anonyme sur un lien d'affiliation (pas d'auth requise).
   if (action === "click") {
+    const rl = rateLimit(req, "referral-click", 30, 60 * 60 * 1000);
+    if (!rl.allowed) return rateLimitResponse(rl);
+    if (typeof referralCode !== "string" || referralCode.length > 64) return json({ error: "Code invalide" }, 400);
     if (!referralCode) return json({ error: "referralCode requis" }, 400);
     if (!SUPABASE_KEY) return json({ ok: false });
     try {
@@ -58,6 +63,9 @@ export default async function handler(req) {
   const userId = user.id; // <-- derive du token, jamais du corps
 
   if (action === "claim") {
+    const rl = rateLimit(req, `referral-claim:${userId}`, 5, 60 * 60 * 1000);
+    if (!rl.allowed) return rateLimitResponse(rl);
+    if (typeof referralCode !== "string" || referralCode.length > 64) return json({ error: "Code invalide" }, 400);
     if (!referralCode) return json({ error: "referralCode requis" }, 400);
     const parrainRes = await fetch(`${SUPABASE_URL}/rest/v1/referrals?select=user_id&code=eq.${encodeURIComponent(referralCode)}&limit=1`, {
       headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}` }
@@ -81,12 +89,15 @@ export default async function handler(req) {
   }
 
   if (action === "generate") {
+    const rl = rateLimit(req, `referral-generate:${userId}`, 5, 24 * 60 * 60 * 1000);
+    if (!rl.allowed) return rateLimitResponse(rl);
     const existingRes = await fetch(`${SUPABASE_URL}/rest/v1/referrals?select=code&user_id=eq.${encodeURIComponent(userId)}&limit=1`, {
       headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}` }
     });
     const existing = await existingRes.json();
     if (existing && existing.length > 0 && existing[0].code) return json({ code: existing[0].code });
-    const code = userId.slice(0, 8) + '-' + Math.random().toString(36).slice(2, 6);
+    const random = crypto.randomUUID().replace(/-/g, "").slice(0, 10);
+    const code = userId.slice(0, 8) + "-" + random;
     const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/referrals`, {
       method: "POST",
       headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`, "content-type": "application/json", prefer: "return=minimal" },
@@ -97,6 +108,8 @@ export default async function handler(req) {
   }
 
   if (action === "stats") {
+    const rl = rateLimit(req, `referral-stats:${userId}`, 30, 60 * 60 * 1000);
+    if (!rl.allowed) return rateLimitResponse(rl);
     const statsRes = await fetch(`${SUPABASE_URL}/rest/v1/referrals?select=id,referred_user_id,status,created_at&user_id=eq.${encodeURIComponent(userId)}`, {
       headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}` }
     });
@@ -116,21 +129,12 @@ export default async function handler(req) {
   }
 
   if (action === "withdraw") {
-    let amount = Number(body.amount);
-    if (!Number.isFinite(amount) || amount <= 0) return json({ error: "Montant invalide" }, 400);
-    amount = Math.min(amount, 100000); // garde-fou ; le paiement reste valide manuellement
-    try {
-      const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/payout_requests`, {
-        method: "POST",
-        headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}`, "content-type": "application/json", prefer: "return=minimal" },
-        body: JSON.stringify({ user_id: userId, amount, status: "requested", created_at: new Date().toISOString() })
-      });
-      if (!insertRes.ok) return json({ ok: false, error: "Demande enregistree. Le support te contactera." });
-      return json({ ok: true });
-    } catch (e) {
-      return json({ ok: false, error: "Demande enregistree. Le support te contactera." });
-    }
-  }
+    // Never trust a payout amount supplied by the browser. Payout creation must
+    // be performed by a server-side ledger/payment workflow that calculates the
+    // user's actual withdrawable balance atomically.
+    const rl = rateLimit(req, `referral-withdraw:${userId}`, 2, 24 * 60 * 60 * 1000);
+    if (!rl.allowed) return rateLimitResponse(rl);
+    return json({ ok: false, error: "Les retraits sont temporairement traités par le support." }, 409);
 
   return json({ error: "Action inconnue" }, 400);
 }
