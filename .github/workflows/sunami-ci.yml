@@ -84,6 +84,15 @@ jobs:
                   print(f'{html}: OK {src}')
           PY
 
+      - name: Run Node tests
+        shell: bash
+        run: |
+          if [ -f package.json ] && grep -q '"test"' package.json; then
+            npm test -- --runInBand
+          else
+            echo 'No package test script; skipping.'
+          fi
+
       - name: Basic app smoke check
         shell: bash
         run: |
