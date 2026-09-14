@@ -234,15 +234,34 @@ export default async function handler(req) {
     facts: Array.isArray(memory.facts) ? memory.facts.filter(f => f && f.value).slice(-20) : [],
     decisions: Array.isArray(memory.decisions) ? memory.decisions.filter(d => d && d.summary).slice(-12) : [],
   } : { facts: [], decisions: [] };
-  const vocabList = Array.isArray(vocabulary) ? vocabulary.filter(v => typeof v === "string" && v) : [];
-  const charList = Array.isArray(characters) ? characters.filter(c => c && c.name) : [];
-  const trimmed = Array.isArray(history) ? history.slice(-8) : [];
-  const hasUserReply = !!userReply;
+  const vocabList = Array.isArray(vocabulary)
+    ? vocabulary.filter(v => typeof v === "string" && v.trim()).map(v => v.trim().slice(0, 80)).slice(0, 40)
+    : [];
+  const charList = Array.isArray(characters)
+    ? characters
+        .filter(c => c && typeof c.name === "string" && c.name.trim())
+        .map(c => ({ name: c.name.trim().slice(0, 80), role: typeof c.role === "string" ? c.role.trim().slice(0, 120) : "" }))
+        .slice(0, 12)
+    : [];
+  // Never trust client-supplied message roles: only the two conversational roles
+  // are accepted. Otherwise a caller could inject a fake "system" message.
+  const trimmed = Array.isArray(history)
+    ? history
+        .filter(m => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+        .slice(-8)
+        .map(m => ({ role: m.role, content: m.content.slice(0, 4000) }))
+    : [];
+  const safeRecap = typeof recap === "string" ? recap.trim().slice(0, 5000) : "";
+  const safeSetting = typeof setting === "string" ? setting.trim().slice(0, 240) : "";
+  const safeProtagonist = typeof protagonist === "string" ? protagonist.trim().slice(0, 100) : "";
+  const safeEpisode = Number.isFinite(Number(episode)) ? Math.max(1, Math.min(999, Number(episode))) : 1;
+  const safeChapter = Number.isFinite(Number(chapter)) ? Math.max(1, Math.min(99, Number(chapter))) : 1;
+  const hasUserReply = typeof userReply === "string" && userReply.trim().length > 0;
 
   const system = buildSystemPrompt({
     language: targetLanguage, level: cefrLevel, theme: theme || null, universe: customUniverse, motivation: learnerMotivation, hasUserReply,
-    vocabulary: vocabList, recap: recap || "", characters: charList,
-    setting: setting || "", protagonist: protagonist || "", episode: episode || 1, chapter: chapter || 1,
+    vocabulary: vocabList, recap: safeRecap, characters: charList,
+    setting: safeSetting, protagonist: safeProtagonist, episode: safeEpisode, chapter: safeChapter,
     memory: safeMemory,
   });
 
