@@ -148,6 +148,7 @@ export default async function handler(req) {
     const rl = rateLimit(req, `referral-withdraw:${userId}`, 2, 24 * 60 * 60 * 1000);
     if (!rl.allowed) return rateLimitResponse(rl);
     return json({ ok: false, error: "Les retraits sont temporairement traités par le support." }, 409);
+  }
 
   return json({ error: "Action inconnue" }, 400);
 }
