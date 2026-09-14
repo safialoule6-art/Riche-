@@ -59,9 +59,9 @@ export default async function handler(req) {
 
   // Toutes les autres actions exigent une identite verifiee.
   if (!SUPABASE_KEY) return json({ error: "Cle service manquante" }, 500);
-  const user = await getAuthUser(req);
-  if (!user) return json({ error: "Non authentifie" }, 401);
-  const userId = user.id; // <-- derive du token, jamais du corps
+  const authUser = await requireAuth(req);
+  if (authUser instanceof Response) return authUser;
+  const userId = authUser.id; // derive du token, jamais du corps
 
   if (action === "claim") {
     const user = await requireAuth(req);
