@@ -88,7 +88,7 @@ jobs:
         shell: bash
         run: |
           if [ -f package.json ] && grep -q '"test"' package.json; then
-            npm test -- --runInBand
+            npm test
           else
             echo 'No package test script; skipping.'
           fi
