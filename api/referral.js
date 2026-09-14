@@ -4,6 +4,7 @@
 export const config = { runtime: "edge" };
 
 import { rateLimit, rateLimitResponse } from "./_lib/rate-limit.js";
+import { requireAuth } from "./_lib/auth.js";
 
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://cdtabuyomtkfasvugtck.supabase.co";
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || "";
@@ -63,6 +64,9 @@ export default async function handler(req) {
   const userId = user.id; // <-- derive du token, jamais du corps
 
   if (action === "claim") {
+    const user = await requireAuth(req);
+    if (user instanceof Response) return user;
+    const userId = user.id;
     const rl = rateLimit(req, `referral-claim:${userId}`, 5, 60 * 60 * 1000);
     if (!rl.allowed) return rateLimitResponse(rl);
     if (typeof referralCode !== "string" || referralCode.length > 64) return json({ error: "Code invalide" }, 400);
@@ -89,6 +93,9 @@ export default async function handler(req) {
   }
 
   if (action === "generate") {
+    const user = await requireAuth(req);
+    if (user instanceof Response) return user;
+    const userId = user.id;
     const rl = rateLimit(req, `referral-generate:${userId}`, 5, 24 * 60 * 60 * 1000);
     if (!rl.allowed) return rateLimitResponse(rl);
     const existingRes = await fetch(`${SUPABASE_URL}/rest/v1/referrals?select=code&user_id=eq.${encodeURIComponent(userId)}&limit=1`, {
@@ -108,6 +115,9 @@ export default async function handler(req) {
   }
 
   if (action === "stats") {
+    const user = await requireAuth(req);
+    if (user instanceof Response) return user;
+    const userId = user.id;
     const rl = rateLimit(req, `referral-stats:${userId}`, 30, 60 * 60 * 1000);
     if (!rl.allowed) return rateLimitResponse(rl);
     const statsRes = await fetch(`${SUPABASE_URL}/rest/v1/referrals?select=id,referred_user_id,status,created_at&user_id=eq.${encodeURIComponent(userId)}`, {
@@ -129,6 +139,9 @@ export default async function handler(req) {
   }
 
   if (action === "withdraw") {
+    const user = await requireAuth(req);
+    if (user instanceof Response) return user;
+    const userId = user.id;
     // Never trust a payout amount supplied by the browser. Payout creation must
     // be performed by a server-side ledger/payment workflow that calculates the
     // user's actual withdrawable balance atomically.
