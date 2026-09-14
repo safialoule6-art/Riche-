@@ -49,6 +49,9 @@ export function normalizeVocabulary(words) {
     unique.set(key, {
       ...previous,
       ...item,
+      // Keep the first-seen spelling stable while allowing richer metadata
+      // from later duplicate entries to upgrade the record.
+      word: previous.word,
       translation: item.translation || previous.translation || '',
       status: item.status !== 'known' || previous.status === 'known' ? item.status : previous.status,
       score: item.score || previous.score || 0,
