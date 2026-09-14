@@ -81,7 +81,7 @@ export default async function handler(req) {
 
   let body;
   try { body = await req.json(); } catch { body = {}; }
-  const message = (body.message || "").trim();
+  const message = (typeof body.message === "string" ? body.message : "").trim().slice(0, 2000);
   if (!message) return jsonResponse({ reply: "Dis-moi ce que je peux faire pour toi !" }, 200);
 
   // 1. Vérifier la FAQ locale (0 token)
