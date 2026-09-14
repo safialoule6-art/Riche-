@@ -6,6 +6,15 @@ export const config = { runtime: "edge" };
 
 const PEXELS_URL = "https://api.pexels.com/videos/search";
 
+const buckets = new Map();
+function rateLimited(req, limit = 30) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const now = Date.now(), key = `pexels:${ip}`;
+  const b = buckets.get(key);
+  if (!b || now - b.start >= 60 * 60 * 1000) { buckets.set(key, { start: now, count: 1 }); return false; }
+  b.count += 1; return b.count > limit;
+}
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -53,6 +62,7 @@ function pickFiles(video) {
 }
 
 export default async function handler(req) {
+  if (rateLimited(req)) return json({ error: "Trop de requetes" }, 429);
   if (req.method !== "GET" && req.method !== "POST") {
     return json({ error: "Méthode non autorisée" }, 405);
   }
