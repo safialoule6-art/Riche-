@@ -2745,7 +2745,7 @@ async function callAI(userReply, opts){
 
     if(userReply){
       chatHistory.push({ role:'user', content:userReply });
-      const gained = 8 + Math.floor(Math.random()*7);
+      const gained = 10; // XP fixe : progression lisible et prévisible pour l'apprenant
       addXp(gained);
       popXp(gained);
       mascotReact();
