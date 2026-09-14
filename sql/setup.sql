@@ -37,6 +37,7 @@ create table if not exists public.progress (
 -- Ces données servent UNIQUEMENT à personnaliser l'apprentissage, jamais à un paywall.
 alter table public.progress add column if not exists first_name text;
 alter table public.progress add column if not exists motivation text; -- travel | media | work | personal_challenge
+alter table public.progress add column if not exists "planExpires" timestamptz;
 
 create table if not exists public.leads (
   id         bigint generated always as identity primary key,
