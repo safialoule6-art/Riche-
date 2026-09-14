@@ -3,6 +3,7 @@
 export const config = { runtime: "edge" };
 
 import { rateLimit, rateLimitResponse } from "./_lib/rate-limit.js";
+import { requireAuth } from "./_lib/auth.js";
 
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://cdtabuyomtkfasvugtck.supabase.co";
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || "";
