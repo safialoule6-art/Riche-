@@ -4,6 +4,7 @@
 export const config = { runtime: "edge" };
 
 import { rateLimit, rateLimitResponse } from "./_lib/rate-limit.js";
+import { requireAuth } from "./_lib/auth.js";
 
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://cdtabuyomtkfasvugtck.supabase.co";
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || "";
@@ -46,11 +47,21 @@ export default async function handler(req) {
     JSON.parse(propsStr); // s'assure que le clamp n'a pas casse le JSON
   } catch { propsStr = "{}"; }
 
+  let authenticatedUserId = null;
+  const authHeader = req.headers.get("authorization") || "";
+  if (authHeader.startsWith("Bearer ")) {
+    try {
+      const user = await requireAuth(req);
+      if (!(user instanceof Response)) authenticatedUserId = user.id;
+    } catch (_) {}
+  }
+
   const row = {
     event,
     visitor_id: clamp(b.visitor_id, 64),
     session_id: clamp(b.session_id, 64),
-    user_id: (typeof b.user_id === "string" && UUID_RE.test(b.user_id)) ? b.user_id : null,
+    // Never trust an arbitrary user_id supplied by the browser.
+    user_id: authenticatedUserId,
     path: clamp(b.path, 256),
     referrer: clamp(b.referrer, 256),
     props: JSON.parse(propsStr),
