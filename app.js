@@ -184,9 +184,20 @@ function markWordForgotten(word){
 }
 function dueWordsCount(){ const t = todayKey(); return stats.words.filter(w => (w.nextReview||t) <= t).length; }
 // Affiche/masque le rappel "N mots à réviser" sur l'écran d'histoire
+function renderSkillMission(){
+  const el = document.getElementById('skillMission');
+  if(!el || typeof getDailySkillMission !== 'function') return;
+  const m = getDailySkillMission();
+  const words = (m.words || []).slice(0,3);
+  const icon = m.type === 'repair' ? '🛠️' : (m.type === 'recycle' ? '🔁' : '🌱');
+  el.innerHTML = '<div><b>' + icon + ' ' + escapeHtml(m.title) + '</b><small>' + escapeHtml(m.text) + (words.length ? ' <span class="mission-words">(' + words.map(escapeHtml).join(' · ') + ')</span>' : '') + '</small></div>' +
+    (words.length ? '<button class="btn ghost" onclick="openVocabReview(true)">Pratiquer</button>' : '');
+  el.style.display = 'flex';
+}
 function updateReviewNudge(){
   const el = document.getElementById('reviewNudge'); if(!el) return;
   const n = dueWordsCount();
+  renderSkillMission();
   if(n > 0){ el.textContent = '🔁 ' + n + ' mot' + (n>1?'s':'') + ' à réviser'; el.style.display = 'inline-flex'; }
   else { el.style.display = 'none'; }
 }
