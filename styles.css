@@ -1570,3 +1570,5 @@ body:has(.landing-header) .theme-toggle{
 .hm-animate .hm-msg, .hm-animate .hm-input{ opacity:0; transform:translateY(10px);
   transition:opacity .5s var(--ease), transform .5s var(--ease); }
 .hm-animate .hm-msg.hm-show, .hm-animate .hm-input.hm-show{ opacity:1; transform:none; }
+
+.skill-mission{margin:10px auto 4px;max-width:720px;padding:12px 14px;border:1px solid var(--border);border-radius:14px;background:var(--card);display:flex;align-items:center;justify-content:space-between;gap:12px}.skill-mission b{display:block;margin-bottom:3px}.skill-mission small{color:var(--muted)}.skill-mission .mission-words{font-weight:700}@media(max-width:600px){.skill-mission{margin-left:12px;margin-right:12px}}
