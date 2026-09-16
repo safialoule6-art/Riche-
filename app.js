@@ -180,7 +180,7 @@ window.closeVocabLibrary = function(){
 function markWordForgotten(word){
   const today = todayKey();
   const entry = stats.words.find(w => w.word === word);
-  if(entry){ entry.lastSeen = today; entry.reviewCount = 1; entry.nextReview = shiftDay(today, 1); saveStats(); }
+  if(entry){ entry.lastSeen = today; entry.reviewCount = 0; entry.attempts = (entry.attempts || 0) + 1; entry.correct = entry.correct || 0; entry.status = 'struggling'; entry.score = Math.max(0, (entry.score || 0) - 1); entry.nextReview = shiftDay(today, 1); saveStats(); }
 }
 function dueWordsCount(){ const t = todayKey(); return stats.words.filter(w => (w.nextReview||t) <= t).length; }
 // Affiche/masque le rappel "N mots à réviser" sur l'écran d'histoire
@@ -416,7 +416,7 @@ function getWordsForReview(maxWords = 5){
     .filter(w => w.nextReview <= today)
     .sort((a,b) => a.reviewCount - b.reviewCount) // prioritize less-reviewed words
     .slice(0, maxWords);
-  return due.map(w => w.word);
+  return due.map(w => ({ word: w.word, translation: w.fr || '', status: w.status || 'review', score: w.score || 0, attempts: w.attempts || 0, correct: w.correct || 0 }));
 }
 
 // Spaced repetition: update review schedule after a word is used
@@ -424,10 +424,14 @@ function markWordReviewed(word){
   const today = todayKey();
   const entry = stats.words.find(w => w.word === word);
   if(!entry){
-    stats.words.push({ word, firstSeen: today, lastSeen: today, reviewCount: 1, nextReview: shiftDay(today, 1) });
+    stats.words.push({ word, firstSeen: today, lastSeen: today, reviewCount: 1, nextReview: shiftDay(today, 1), attempts:1, correct:1, score:1, status:'review' });
   } else {
     entry.lastSeen = today;
+    entry.attempts = (entry.attempts || 0) + 1;
+    entry.correct = (entry.correct || 0) + 1;
     entry.reviewCount = (entry.reviewCount || 0) + 1;
+    entry.score = Math.min(5, (entry.score || 0) + 1);
+    entry.status = entry.score >= 4 ? 'mastered' : (entry.score >= 2 ? 'known' : 'review');
     // Spaced intervals: 1, 3, 7, 14, 30 days
     const intervals = [1, 3, 7, 14, 30];
     const idx = Math.min(entry.reviewCount - 1, intervals.length - 1);
