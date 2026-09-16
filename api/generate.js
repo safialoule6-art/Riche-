@@ -29,6 +29,7 @@ export const config = { runtime: "edge" };
 
 import { requireAuth } from "./_lib/auth.js";
 import { rateLimit, rateLimitResponse } from "./_lib/rate-limit.js";
+import { buildAdaptiveStoryContext } from "../adaptive-story-engine.js";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "openai/gpt-oss-120b";
@@ -117,6 +118,8 @@ function buildSystemPrompt(o) {
         : `\nLEARNER'S GOAL (let it drive the theme of the scenes): ${MOTIVATION_HINTS[motivation]}`)
     : "";
   const levelGuide = LEVEL_GUIDE[level] || "";
+  const adaptive = buildAdaptiveStoryContext({ level, theme, vocabulary, memory });
+  const adaptiveLine = `\nADAPTIVE PEDAGOGY: mode=${adaptive.difficulty.mode}; new target words max=${adaptive.difficulty.newWords}; sentence length=${adaptive.difficulty.sentenceLength}. Prioritize these review words when natural: ${adaptive.profile.priority.join(", ") || "none"}.`;
   const vocabLine = vocabulary && vocabulary.length
     ? `\nSPACED REPETITION: naturally reuse at least 2 of these known words: ${vocabulary.join(", ")}.` : "";
   const charLine = characters && characters.length
@@ -137,7 +140,7 @@ ABSOLUTE RULES
 - CONTINUITY IS SACRED: same protagonist, same characters, same places, one coherent plot that PROGRESSES. Never restart or contradict the recap. Never invent a new unrelated scene.${protagonist ? `
 - ADDRESS THE LEARNER BY NAME: characters call the protagonist "${protagonist}" out loud, naturally, in the ${language} dialogue (a greeting, a direct question…). Do it where it feels human — not in every single sentence.` : ""}
 - Difficulty for ${level}: ${levelGuide}${vocabLine}
-${recapLine}${memoryLine}${charLine}${settingLine}${arcLine}
+${recapLine}${memoryLine}${charLine}${settingLine}${arcLine}${adaptiveLine}
 
 PEDAGOGY
 - In "story": 2 to 5 sentences. Highlight 1-3 key words/expressions with **double asterisks**, each immediately followed by its French translation in parentheses, e.g. **el bosque** (la forêt).
