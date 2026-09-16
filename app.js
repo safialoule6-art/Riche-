@@ -1602,10 +1602,11 @@ function mergeStructuredVocab(vocab){
   saveStats(); updateProgressChips();
 }
 function getMasterySummary(limit = 5){
-  return stats.words
+  const words = Array.isArray(stats.words) ? stats.words : [];
+  return words
     .filter(w => w && w.status !== 'mastered')
     .sort((a,b) => (a.score||0) - (b.score||0) || (a.reviewCount||0) - (b.reviewCount||0))
-    .slice(0, limit)
+    .slice(0, Math.max(1, Math.min(20, limit)))
     .map(w => w.word);
 }
 
