@@ -1559,11 +1559,53 @@ function mergeStructuredVocab(vocab){
     const w = String(v.word).replace(/\*/g,'').trim().toLowerCase();
     if(!w || w.length > 40) return;
     const existing = stats.words.find(x=>x.word === w);
-    if(!existing){ stats.words.push({ word:w, fr: v.fr||'', firstSeen:today, lastSeen:today, reviewCount:0, nextReview:today }); }
-    else if(v.fr && !existing.fr){ existing.fr = v.fr; }
+    if(!existing){
+      stats.words.push({
+        word:w, fr: v.fr||'', firstSeen:today, lastSeen:today,
+        reviewCount:0, nextReview:today, attempts:0, correct:0,
+        score:0, status:'review'
+      });
+    } else {
+      if(v.fr && !existing.fr) existing.fr = v.fr;
+      existing.attempts = existing.attempts || 0;
+      existing.correct = existing.correct || 0;
+      existing.score = existing.score || 0;
+      existing.status = existing.status || 'review';
+    }
   });
   saveStats(); updateProgressChips();
 }
+function getMasterySummary(limit = 5){
+  return stats.words
+    .filter(w => w && w.status !== 'mastered')
+    .sort((a,b) => (a.score||0) - (b.score||0) || (a.reviewCount||0) - (b.reviewCount||0))
+    .slice(0, limit)
+    .map(w => w.word);
+}
+
+function getDailySkillMission(){
+  const struggling = stats.words.filter(w => w.status === 'struggling').slice(0, 3);
+  if(struggling.length) return {
+    type:'repair',
+    title:'Mission réparation',
+    words:struggling.map(w=>w.word),
+    text:'Réutilise naturellement ces mots dans ta prochaine réponse.'
+  };
+  const review = getMasterySummary(3);
+  if(review.length) return {
+    type:'recycle',
+    title:'Mission rappel',
+    words:review,
+    text:'Essaie de replacer au moins un de ces mots dans la prochaine scène.'
+  };
+  return {
+    type:'explore',
+    title:'Mission découverte',
+    words:[],
+    text:'Utilise un mot nouveau appris dans ta prochaine réponse.'
+  };
+}
+
 function mergeStructuredCharacters(chars){
   if(!Array.isArray(chars)) return;
   chars.forEach(c=>{
