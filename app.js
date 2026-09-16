@@ -337,7 +337,21 @@ function floatXp(n){
 function addXp(n){
   const before = levelOf(xp);
   xp += n; localStorage.setItem('sunami-xp', String(xp)); updateXpChip();
-  if(typeof syncCloud === 'function') syncCloud();
+
+  // Authenticated XP is committed by the database function, not by a client upsert.
+  // The local increment is optimistic; the server result becomes the source of truth.
+  if(userId && (n === 3 || n === 5 || n === 6 || n === 10)){
+    supabase.rpc('award_xp', { p_amount: n }).then(({ data, error }) => {
+      if(!error && Number.isFinite(Number(data))){
+        xp = Number(data);
+        localStorage.setItem('sunami-xp', String(xp));
+        updateXpChip();
+        updateProgressChips();
+      }
+    }).catch(() => {});
+  } else if(typeof syncCloud === 'function') {
+    syncCloud();
+  }
   const chip = document.getElementById('xpChip');
   if(chip){ chip.classList.remove('pop'); void chip.offsetWidth; chip.classList.add('pop'); }
   floatXp(n);
@@ -1486,7 +1500,7 @@ async function pullCloud(){
   try{
     const { data, error } = await supabase.from('user_state').select('*').eq('user_id', userId).maybeSingle();
     if(error || !data) return; // table absente / RLS / vide : on garde le cache local
-    if(typeof data.xp === 'number' && data.xp >= xp){ xp = data.xp; localStorage.setItem('sunami-xp', String(xp)); }
+    if(typeof data.xp === 'number'){ xp = data.xp; localStorage.setItem('sunami-xp', String(xp)); }
     if(Array.isArray(data.words) && data.words.length >= (stats.words||[]).length){ stats.words = data.words; }
     if(Array.isArray(data.characters) && data.characters.length){ characters = data.characters; localStorage.setItem('sunami-characters', JSON.stringify(characters)); }
     if(Array.isArray(data.locations) && data.locations.length){ storyLocations = data.locations; localStorage.setItem('sunami-locations', JSON.stringify(storyLocations)); }
@@ -1503,7 +1517,8 @@ function syncCloud(){
   _syncTimer = setTimeout(async ()=>{
     try{
       await supabase.from('user_state').upsert({
-        user_id: userId, xp,
+        user_id: userId,
+        // XP is server-authoritative; never overwrite it from browser state.
         words: stats.words || [],
         characters: characters || [],
         locations: storyLocations || [],
