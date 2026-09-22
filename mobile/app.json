@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Sunami",
+    "slug": "sunami",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "sunami",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sunami.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#B8F43B"
+      },
+      "package": "com.sunami.app"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
