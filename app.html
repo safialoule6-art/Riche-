@@ -140,6 +140,8 @@
       <a class="sidebar-item" onclick="toggleSidebar();openVocabLibrary()"><span class="si-icon">📚</span> Mon vocabulaire</a>
       <a class="sidebar-item" onclick="toggleSidebar();openVocabReview(false)"><span class="si-icon">🔁</span> Réviser mes mots</a>
       <a class="sidebar-item" onclick="toggleSidebar();openWeeklyReport()"><span class="si-icon">📈</span> Ma progression</a>
+      <a class="sidebar-item" onclick="toggleSidebar();openProfilePanel()"><span class="si-icon">👤</span> Mon profil</a>
+      <a class="sidebar-item" onclick="toggleSidebar();openFriendsPanel()"><span class="si-icon">👥</span> Mes amis</a>
       <div class="sidebar-divider"></div>
       <a class="sidebar-item" onclick="toggleSidebar();openSettings()"><span class="si-icon">🏆</span> Succès & Stats</a>
       <a class="sidebar-item" onclick="toggleSidebar();openSettings()"><span class="si-icon">👤</span> Personnages</a>
@@ -260,6 +262,38 @@
     </div>
     <div id="sagasList"><div class="sagas-loading">Chargement de tes histoires…</div></div>
     <button class="btn" id="newStoryBtn" style="margin-top:24px;" onclick="newStoryFromSagas()">＋ Commencer une nouvelle histoire</button>
+  </div>
+
+  <div class="chat-wrap social-screen" id="profileScreen" style="display:none;">
+    <div class="social-backdrop" aria-hidden="true"><img id="profileSceneBg" alt=""><div class="social-backdrop-shade"></div></div>
+    <button class="social-back" onclick="closeImmersivePanel()">← Retour</button>
+    <div class="profile-hero glass-panel">
+      <div class="profile-orbit"><span></span><span></span><span></span><svg class="mascot pose-celebrate" viewBox="0 0 120 140"><use href="#mascot"/></svg></div>
+      <div class="eyebrow-left">TON CARNET DE ROUTE</div>
+      <h2 id="profileName">Mon profil</h2>
+      <p>Chaque histoire laisse une trace. Chaque mot te rend plus libre.</p>
+      <div class="profile-level"><span>NIVEAU <b id="profileLevel">1</b></span><span id="profileXpLabel">0 XP</span></div>
+      <div class="profile-track"><span id="profileXpFill"></span></div>
+    </div>
+    <div class="profile-stats" aria-label="Statistiques de progression">
+      <div class="profile-stat glass-panel"><span>🔥</span><b id="profileStreak">0</b><small>jours de série</small></div>
+      <div class="profile-stat glass-panel"><span>📚</span><b id="profileWords">0</b><small>mots apprivoisés</small></div>
+      <div class="profile-stat glass-panel"><span>✨</span><b id="profileChapters">0</b><small>chapitres vécus</small></div>
+    </div>
+    <div class="profile-quest glass-panel"><div class="quest-spark">✦</div><div><b>Mission du jour</b><span>Continue ton histoire 10 minutes pour gagner +15 XP.</span></div><button class="btn small" onclick="scrollToChat()">Jouer</button></div>
+  </div>
+
+  <div class="chat-wrap social-screen" id="friendsScreen" style="display:none;">
+    <div class="social-backdrop" aria-hidden="true"><img id="friendsSceneBg" alt=""><div class="social-backdrop-shade"></div></div>
+    <button class="social-back" onclick="closeImmersivePanel()">← Retour</button>
+    <div class="friends-heading glass-panel"><div class="eyebrow-left">LE CAMP DE BASE</div><h2>Ton équipage.</h2><p>Apprends ensemble, partage tes petites victoires et garde la flamme.</p><button class="btn small" id="inviteFriendBtn">＋ Inviter un ami</button></div>
+    <div class="friends-tabs"><button class="active">Activité</button><button>Classement</button><button>Défis</button></div>
+    <div class="friends-list" id="friendsList">
+      <article class="friend-card glass-panel"><div class="friend-avatar coral">L</div><div class="friend-copy"><b>Lou</b><span>vient de terminer un chapitre en anglais</span><div class="friend-progress"><i style="width:78%"></i></div></div><strong>+24 XP</strong></article>
+      <article class="friend-card glass-panel"><div class="friend-avatar gold">M</div><div class="friend-copy"><b>Marco</b><span>garde une série de 12 jours</span><div class="friend-progress"><i style="width:61%"></i></div></div><strong>🔥 12</strong></article>
+      <article class="friend-card glass-panel"><div class="friend-avatar violet">S</div><div class="friend-copy"><b>Sarah</b><span>a débloqué le badge « Première scène »</span><div class="friend-progress"><i style="width:44%"></i></div></div><strong>🏆</strong></article>
+    </div>
+    <div class="friends-empty glass-panel"><svg class="mascot pose-wave" viewBox="0 0 120 140"><use href="#mascot"/></svg><div><b>La prochaine place est pour toi.</b><span>Invite ton premier ami pour créer un défi à deux.</span></div></div>
   </div>
 </div>
 

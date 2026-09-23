@@ -60,3 +60,54 @@
 @keyframes encouragePulse{50%{transform:translateY(-4px) rotate(-4deg)}}
 @media(max-width:600px){#pickScreen,#chatScreen{min-height:calc(100vh - 84px);border-radius:22px;padding-left:14px;padding-right:14px}.sunny-sheet{margin-left:-2px;margin-right:-2px}.sunny-pose .mascot{width:37px;height:44px}#chatScreen .scene-banner{height:190px}.story-backdrop{inset:50px 0 0}}
 @media(prefers-reduced-motion:reduce){.pose-layer{transition:none}#chatScreen .scene-avatar.pose-encourage{animation:none}}
+
+/* Procedural motion layer: zero-cost, deterministic, and available without video APIs. */
+#pickScreen::before,#chatScreen::before,.social-screen::before{content:"";position:absolute;inset:-25%;z-index:0;pointer-events:none;background:radial-gradient(circle at 20% 20%,rgba(184,244,59,.18),transparent 24%),radial-gradient(circle at 80% 12%,rgba(45,212,191,.2),transparent 26%),radial-gradient(circle at 62% 90%,rgba(255,138,143,.12),transparent 28%);filter:blur(12px);animation:worldDrift 16s ease-in-out infinite alternate}
+#pickScreen .pick-hero>.mascot{animation:sunnyFloat 4.2s ease-in-out infinite,sunnyTilt 8s ease-in-out infinite;transform-origin:50% 90%}
+.sunny-pose{transition:transform .35s var(--ease),filter .35s var(--ease)}
+.sunny-pose:hover{transform:translateY(-6px) scale(1.08);filter:drop-shadow(0 8px 10px rgba(184,244,59,.28))}
+.sunny-pose:nth-child(2){animation:poseBreathe 3.4s ease-in-out .3s infinite}.sunny-pose:nth-child(4){animation:poseBreathe 4s ease-in-out .8s infinite}
+.sunny-pose .pose-celebrate .pose-celebrate{animation:starPulse 1.8s ease-in-out infinite}
+.sunny-speech{animation:speechIn .7s var(--ease) both}
+#chatScreen .scene-banner::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.12) 48%,transparent 70%);background-size:220% 100%;animation:lightSweep 7s ease-in-out infinite}
+#chatScreen .scene-banner-content{z-index:3}
+#chatScreen .story-row{animation:storyLanding .6s var(--ease) both}
+#chatScreen .story-row:nth-child(2n){animation-delay:.08s}
+#chatScreen .story-row:nth-child(3n){animation-delay:.16s}
+#chatScreen .scene-avatar.pose-celebrate{animation:celebrateHop .9s var(--ease)}
+#chatScreen .scene-avatar.pose-think{animation:thinkingSway 1.8s ease-in-out infinite}
+.social-screen{position:relative;isolation:isolate;max-width:820px;min-height:calc(100vh - 108px);overflow:hidden;border-radius:28px;background:#102d2a;color:#fff}
+.social-screen>*:not(.social-backdrop){position:relative;z-index:1}
+.social-backdrop{position:absolute;inset:0;z-index:0;overflow:hidden;background:radial-gradient(circle at 78% 18%,#9fbe7d 0,transparent 30%),linear-gradient(145deg,#1d5750,#0b211f)}
+.social-backdrop img{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s ease;filter:saturate(1.12)}
+.social-backdrop img.loaded{opacity:1}
+.social-backdrop-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,27,24,.18),rgba(6,27,24,.74) 50%,rgba(6,27,24,.98))}
+.social-back{display:block;border:0;background:rgba(3,20,17,.46);backdrop-filter:blur(12px);border-radius:999px;color:rgba(255,255,255,.84);padding:8px 12px;font-weight:800;font-size:12px;cursor:pointer;margin-bottom:10px}
+.glass-panel{border:1px solid rgba(255,255,255,.2);background:rgba(3,20,17,.48);backdrop-filter:blur(18px);box-shadow:0 20px 45px -30px #000}
+.profile-hero{text-align:center;border-radius:28px;padding:18px 22px 22px;overflow:hidden}
+.profile-orbit{width:140px;height:126px;position:relative;margin:0 auto 3px}
+.profile-orbit .mascot{width:102px;height:118px;position:absolute;left:19px;top:-4px;z-index:1;filter:drop-shadow(0 16px 16px rgba(0,0,0,.34));animation:sunnyFloat 4s ease-in-out infinite,sunnyTilt 7s ease-in-out infinite}
+.profile-orbit span{position:absolute;display:block;border:1px solid rgba(184,244,59,.7);border-radius:50%;animation:orbitPulse 3.5s ease-in-out infinite}
+.profile-orbit span:nth-child(1){inset:17px 10px 8px;transform:rotate(-23deg)}.profile-orbit span:nth-child(2){inset:7px 26px 17px;transform:rotate(57deg);animation-delay:.6s}.profile-orbit span:nth-child(3){width:6px;height:6px;background:#b8f43b;border:0;top:19px;right:14px;animation:orbitDot 4s linear infinite}
+.profile-hero .eyebrow-left{margin-bottom:8px;color:#b8f43b}.profile-hero h2{font-family:'Instrument Serif',Georgia,serif;font-size:42px;font-weight:400;line-height:1;margin-bottom:6px}.profile-hero p{color:rgba(255,255,255,.74);font-size:13px;margin-bottom:17px}
+.profile-level{display:flex;justify-content:space-between;color:rgba(255,255,255,.74);font-size:10px;font-weight:900;letter-spacing:.1em}.profile-level b,.profile-level span:last-child{color:#b8f43b}.profile-track{height:8px;border-radius:999px;background:rgba(255,255,255,.16);overflow:hidden;margin-top:7px}.profile-track span{display:block;height:100%;width:32%;border-radius:inherit;background:linear-gradient(90deg,#2dd4bf,#b8f43b);transition:width .7s var(--ease)}
+.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:10px 0}.profile-stat{border-radius:18px;padding:13px 8px;text-align:center}.profile-stat span{display:block;font-size:19px;margin-bottom:2px}.profile-stat b{display:block;font-size:22px;color:#fff}.profile-stat small{display:block;color:rgba(255,255,255,.65);font-size:9px;font-weight:800}
+.profile-quest{display:flex;align-items:center;gap:10px;padding:11px;border-radius:18px}.quest-spark{width:35px;height:35px;display:grid;place-items:center;border-radius:12px;background:#b8f43b;color:#12322e;font-size:18px;flex:none}.profile-quest div:nth-child(2){flex:1}.profile-quest b,.profile-quest span{display:block}.profile-quest b{font-size:12px}.profile-quest span{font-size:10px;color:rgba(255,255,255,.66);margin-top:2px}.profile-quest .btn{flex:none}
+.friends-heading{border-radius:24px;padding:20px}.friends-heading h2{font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:48px;line-height:.92;margin:7px 0 8px}.friends-heading p{color:rgba(255,255,255,.74);max-width:420px;font-size:13px;margin-bottom:14px}.friends-heading .btn{width:auto}
+.friends-tabs{display:flex;gap:6px;margin:10px 0}.friends-tabs button{flex:1;padding:9px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(3,20,17,.4);color:rgba(255,255,255,.64);font-size:11px;font-weight:800;cursor:pointer}.friends-tabs button.active{background:#b8f43b;border-color:#b8f43b;color:#12322e}
+.friends-list{display:flex;flex-direction:column;gap:8px}.friend-card{display:flex;align-items:center;gap:10px;border-radius:18px;padding:10px 12px}.friend-avatar{width:38px;height:38px;border-radius:14px;display:grid;place-items:center;color:#fff;font-size:15px;font-weight:900;flex:none}.friend-avatar.coral{background:#e57874}.friend-avatar.gold{background:#dfa332}.friend-avatar.violet{background:#8c72cb}.friend-copy{flex:1;min-width:0}.friend-copy b,.friend-copy span{display:block}.friend-copy b{font-size:12px}.friend-copy span{font-size:10px;color:rgba(255,255,255,.64);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.friend-card>strong{font-size:11px;color:#b8f43b;white-space:nowrap}.friend-progress{height:4px;border-radius:99px;background:rgba(255,255,255,.13);margin-top:6px;overflow:hidden}.friend-progress i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#2dd4bf,#b8f43b)}
+.friends-empty{display:flex;align-items:center;gap:12px;border-radius:18px;margin-top:10px;padding:9px 12px}.friends-empty .mascot{width:45px;height:52px;flex:none}.friends-empty b,.friends-empty span{display:block}.friends-empty b{font-size:12px}.friends-empty span{font-size:10px;color:rgba(255,255,255,.66);margin-top:2px}
+@keyframes worldDrift{0%{transform:translate3d(-2%,1%,0) scale(1)}100%{transform:translate3d(3%,-2%,0) scale(1.08)}}
+@keyframes sunnyFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-9px) rotate(2deg)}}
+@keyframes sunnyTilt{0%,100%{filter:drop-shadow(0 14px 20px rgba(0,0,0,.28))}50%{filter:drop-shadow(0 18px 24px rgba(184,244,59,.24))}}
+@keyframes poseBreathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes starPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.14)}}
+@keyframes speechIn{from{opacity:0;transform:translateY(7px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes lightSweep{0%,35%{background-position:180% 0}65%,100%{background-position:-80% 0}}
+@keyframes storyLanding{from{opacity:0;transform:translateY(15px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes celebrateHop{0%,100%{transform:translateY(0) rotate(0)}30%{transform:translateY(-10px) rotate(-5deg)}60%{transform:translateY(0) rotate(5deg)}}
+@keyframes thinkingSway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg) translateY(-3px)}}
+@keyframes orbitPulse{0%,100%{opacity:.25;transform:scale(.9) rotate(-20deg)}50%{opacity:.8;transform:scale(1.05) rotate(20deg)}}
+@keyframes orbitDot{to{transform:rotate(360deg) translateX(58px) rotate(-360deg)}}
+@media(max-width:600px){.social-screen{min-height:calc(100vh - 84px);border-radius:22px;padding-left:14px;padding-right:14px}.profile-stats{gap:6px}.profile-stat{padding:10px 4px}.friends-heading h2{font-size:42px}.friend-copy span{max-width:185px}}
+@media(prefers-reduced-motion:reduce){#pickScreen::before,#chatScreen::before,.social-screen::before,#pickScreen .pick-hero>.mascot,.sunny-speech,.sunny-pose,.profile-orbit .mascot,.profile-orbit span,#chatScreen .scene-banner::after,#chatScreen .story-row,#chatScreen .scene-avatar.pose-celebrate,#chatScreen .scene-avatar.pose-think{animation:none!important}.sunny-pose,.profile-orbit span{transition:none}}

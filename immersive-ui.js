@@ -47,6 +47,46 @@ function updateStoryScene() {
   if (bg.dataset.src !== url) { bg.dataset.src = url; bg.src = url; }
 }
 
+function updateSocialScene(id, prompt) {
+  const bg = document.getElementById(id);
+  if (!bg) return;
+  bindImage(bg);
+  const url = sceneImage(prompt, 768, 1024, sceneSeed(id));
+  if (bg.dataset.src !== url) { bg.dataset.src = url; bg.src = url; }
+}
+
+function setImmersiveScreen(id) {
+  ['pickScreen', 'chatScreen', 'sagasScreen', 'profileScreen', 'friendsScreen'].forEach(screenId => {
+    const screen = document.getElementById(screenId);
+    if (screen) screen.style.display = screenId === id ? 'flex' : 'none';
+  });
+  document.getElementById(id)?.scrollIntoView({ block: 'start' });
+}
+
+window.openProfilePanel = function() {
+  setImmersiveScreen('profileScreen');
+  updateSocialScene('profileSceneBg', 'editorial storybook illustration of a calm seaside reading nook at golden hour, teal lime and coral palette, no people, no text, no words');
+  const value = id => document.getElementById(id)?.textContent?.trim() || '0';
+  const user = document.getElementById('userLabel')?.textContent?.trim();
+  const name = document.getElementById('profileName');
+  if (name && user) name.textContent = user.replace(/^@/, '');
+  const pairs = [['profileLevel', 'lvlNum'], ['profileXpLabel', 'xpCount'], ['profileStreak', 'streakCount'], ['profileWords', 'wordsCount'], ['profileChapters', 'statChapters']];
+  pairs.forEach(([target, source]) => { const el = document.getElementById(target); if (el) el.textContent = value(source) + (target === 'profileXpLabel' ? ' XP' : ''); });
+  const xp = parseInt(value('xpCount'), 10) || 0;
+  const fill = document.getElementById('profileXpFill');
+  if (fill) fill.style.width = `${Math.min(100, Math.max(8, xp % 100))}%`;
+};
+
+window.openFriendsPanel = function() {
+  setImmersiveScreen('friendsScreen');
+  updateSocialScene('friendsSceneBg', 'warm illustrated rooftop community garden at sunset, language learning friends gathering, teal lime and coral palette, no readable text, no logos');
+};
+
+window.closeImmersivePanel = function() {
+  setImmersiveScreen('chatScreen');
+  document.getElementById('chatLog')?.scrollIntoView({ block: 'end' });
+};
+
 function restoreReaderPoses() {
   const avatar = document.getElementById('sceneAvatar');
   const banner = document.getElementById('sceneBanner');
@@ -61,6 +101,8 @@ function bindImmersiveLayer() {
   bindImage(document.getElementById('homeSceneBg'));
   bindImage(document.getElementById('storyBackdropBg'));
   bindImage(document.getElementById('sceneBannerBg'));
+  bindImage(document.getElementById('profileSceneBg'));
+  bindImage(document.getElementById('friendsSceneBg'));
   updateHomeScene();
   restoreReaderPoses();
 
@@ -69,6 +111,19 @@ function bindImmersiveLayer() {
     if (event.target.closest('.pick-card')) setTimeout(updateHomeScene, 280);
   });
   document.getElementById('customUniverse')?.addEventListener('input', updateHomeScene);
+
+  document.querySelectorAll('.friends-tabs button').forEach(button => {
+    button.addEventListener('click', () => {
+      document.querySelectorAll('.friends-tabs button').forEach(tab => tab.classList.remove('active'));
+      button.classList.add('active');
+    });
+  });
+  document.getElementById('inviteFriendBtn')?.addEventListener('click', async () => {
+    const text = 'Rejoins-moi sur Sunami : on apprend une langue en vivant une histoire.';
+    try { await navigator.clipboard.writeText(text); } catch (_) {}
+    const button = document.getElementById('inviteFriendBtn');
+    if (button) { button.textContent = 'Lien prêt à partager ✓'; setTimeout(() => { button.textContent = '＋ Inviter un ami'; }, 1800); }
+  });
 
   const sceneBanner = document.getElementById('sceneBanner');
   const sceneObserver = new MutationObserver(() => {
