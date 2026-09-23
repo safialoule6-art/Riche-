@@ -1,10 +1,17 @@
 // Shared server-side authentication for API routes.
 // The browser may send the Supabase access token, but the server remains the source of truth.
 
-const SUPABASE_URL = process.env.SUPABASE_URL || "";
+const SUPABASE_URL =
+  process.env.SUPABASE_URL ||
+  "https://cdtabuyomtkfasvugtck.supabase.co";
 const SUPABASE_PUBLIC_KEY =
   process.env.SUPABASE_PUBLISHABLE_KEY ||
   process.env.SUPABASE_ANON_KEY ||
+  // Some Vercel environments only have the server-side key configured.
+  // It is safe here: it stays in the Edge function and is only sent to
+  // Supabase's /auth/v1/user endpoint over HTTPS.
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_SERVICE_KEY ||
   "";
 
 export async function getAuthUser(req) {
