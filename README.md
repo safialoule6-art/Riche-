@@ -27,7 +27,7 @@ Au lieu d'exercices répétitifs, un **conteur IA** raconte une histoire immersi
 | Variable | Description |
 |---|---|
 | `GROQ_API_KEY` | Clé API Groq. Utilisée côté serveur dans `api/generate.js` et `api/support.js`. |
-| `GROQ_MODEL` | *(optionnel)* Modèle Groq du conteur. Par défaut : `llama-3.3-70b-versatile`. |
+| `GROQ_MODEL` | *(optionnel)* Modèle Groq du conteur. Par défaut : `openai/gpt-oss-120b`. |
 | `GROQ_API_KEY_2` | *(optionnel)* Seconde clé Groq : bascule automatique en cas de rate-limit 429. |
 | `SUPABASE_URL` | URL du projet Supabase (ex : `https://xxxx.supabase.co`). |
 | `SUPABASE_SERVICE_ROLE_KEY` | Clé **service role** Supabase, utilisée côté serveur uniquement (`api/refund.js`, `api/referral.js`, `api/subscribe.js`, `api/send-reminders.js`). Contourne la RLS. **Ne jamais** l'exposer côté client. |

@@ -34,7 +34,14 @@ import { rateLimit, rateLimitResponse } from "./_lib/rate-limit.js";
 import { buildAdaptiveStoryContext } from "../adaptive-story-engine.js";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+const DEFAULT_MODEL = "openai/gpt-oss-120b";
+const configuredModel = process.env.GROQ_MODEL?.trim();
+const MODEL = configuredModel === "llama-3.3-70b-versatile"
+  ? DEFAULT_MODEL
+  : (configuredModel || DEFAULT_MODEL);
+if (configuredModel === "llama-3.3-70b-versatile") {
+  console.warn("[conteur] GROQ_MODEL obsolète, utilisation de", DEFAULT_MODEL);
+}
 const GROQ_TIMEOUT_MS = 25000;
 const CHAPTERS_PER_EPISODE = 5; // un épisode = ~5 chapitres puis cliffhanger
 

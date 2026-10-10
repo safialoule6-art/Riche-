@@ -30,7 +30,7 @@ function installFetchStub(options = {}) {
       groqCallCount += 1;
       assert.equal(init.headers.Authorization, "Bearer groq-test-key");
       const requestBody = JSON.parse(init.body);
-      assert.equal(requestBody.model, "llama-3.3-70b-versatile");
+      assert.equal(requestBody.model, "openai/gpt-oss-120b");
       assert.deepEqual(requestBody.response_format, { type: "json_object" });
       assert.equal(requestBody.messages[0].role, "system");
       assert.match(requestBody.messages[0].content, new RegExp(`MOTHER LANGUAGE: ${expectedMotherLanguage}`));
