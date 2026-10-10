@@ -160,16 +160,28 @@
 
   <div id="pickScreen" class="chat-wrap">
     <div class="home-backdrop" aria-hidden="true">
-      <img id="homeSceneBg" src="https://image.pollinations.ai/prompt/whimsical%20illustrated%20language%20learning%20adventure%20harbor%20at%20dawn%2C%20teal%20lime%20and%20coral%20palette%2C%20no%20people%2C%20no%20text?width=768&height=1024&nologo=true&seed=4812" alt="">
+      <img id="homeSceneBg" src="/assets/sunami-lagoon-higgsfield.webp" alt="">
       <div class="home-backdrop-shade"></div>
+      <div class="motion-atmosphere" aria-hidden="true">
+        <span class="motion-orb motion-orb-a"></span>
+        <span class="motion-orb motion-orb-b"></span>
+        <span class="motion-orbit motion-orbit-a"></span>
+        <span class="motion-orbit motion-orbit-b"></span>
+        <span class="motion-spark motion-spark-a">✦</span>
+        <span class="motion-spark motion-spark-b">·</span>
+      </div>
     </div>
     <div class="pick-hero">
       <div class="home-kicker">TON PROCHAIN CHAPITRE</div>
       <svg class="mascot idle pose-wave" aria-hidden="true"><use href="#mascot"/></svg>
-      <h2 id="pickHeroTitle">Ta prochaine histoire commence ici</h2>
-      <p id="pickHeroSub">Réponds à quelques questions — le conteur écrit la suite en direct.</p>
-      <div class="sunny-speech" id="sunnyHomeSpeech">Je garde une place pour toi dans l'histoire.</div>
-    </div>
+       <h2 id="pickHeroTitle">Ta prochaine histoire commence ici</h2>
+       <p id="pickHeroSub">Réponds à quelques questions — le conteur écrit la suite en direct.</p>
+       <div class="sunny-speech" id="sunnyHomeSpeech">Je garde une place pour toi dans l'histoire.</div>
+       <div class="higgsfield-hero-art" aria-label="Sunny, ton compagnon Sunami">
+         <img src="/assets/sunny-higgsfield.webp" alt="Sunny, une mascotte goutte d'eau qui te fait signe">
+         <span>Sunny · ton compagnon de voyage</span>
+       </div>
+     </div>
     <div class="sunny-sheet" aria-label="Planche des poses de Sunny">
       <div class="sunny-sheet-label">Sunny aujourd'hui</div>
       <div class="sunny-poses">
@@ -232,7 +244,7 @@
       <img class="scene-banner-bg" id="sceneBannerBg" alt="" aria-hidden="true">
       <div class="scene-banner-grad"></div>
       <div class="scene-tag" id="sceneTag"></div>
-      <div class="scene-prev-badge" id="scenePrevBadge" style="display:none;">📺 Previously on Sunami</div>
+      <div class="scene-prev-badge" id="scenePrevBadge" style="display:none;">📺 Précédemment dans Sunami</div>
       <button class="amb-btn" id="ambBtn" onclick="toggleAmbience()" aria-label="Ambiance sonore" title="Ambiance sonore">🔈</button>
       <div class="scene-banner-content">
         <div class="scene-avatar" id="sceneAvatar"><svg class="mascot idle" viewBox="0 0 120 140"><use href="#mascot"/></svg></div>
@@ -286,14 +298,10 @@
   <div class="chat-wrap social-screen" id="friendsScreen" style="display:none;">
     <div class="social-backdrop" aria-hidden="true"><img id="friendsSceneBg" alt=""><div class="social-backdrop-shade"></div></div>
     <button class="social-back" onclick="closeImmersivePanel()">← Retour</button>
-    <div class="friends-heading glass-panel"><div class="eyebrow-left">LE CAMP DE BASE</div><h2>Ton équipage.</h2><p>Apprends ensemble, partage tes petites victoires et garde la flamme.</p><button class="btn small" id="inviteFriendBtn">＋ Inviter un ami</button></div>
-    <div class="friends-tabs"><button class="active">Activité</button><button>Classement</button><button>Défis</button></div>
-    <div class="friends-list" id="friendsList">
-      <article class="friend-card glass-panel"><div class="friend-avatar coral">L</div><div class="friend-copy"><b>Lou</b><span>vient de terminer un chapitre en anglais</span><div class="friend-progress"><i style="width:78%"></i></div></div><strong>+24 XP</strong></article>
-      <article class="friend-card glass-panel"><div class="friend-avatar gold">M</div><div class="friend-copy"><b>Marco</b><span>garde une série de 12 jours</span><div class="friend-progress"><i style="width:61%"></i></div></div><strong>🔥 12</strong></article>
-      <article class="friend-card glass-panel"><div class="friend-avatar violet">S</div><div class="friend-copy"><b>Sarah</b><span>a débloqué le badge « Première scène »</span><div class="friend-progress"><i style="width:44%"></i></div></div><strong>🏆</strong></article>
-    </div>
-    <div class="friends-empty glass-panel"><svg class="mascot pose-wave" viewBox="0 0 120 140"><use href="#mascot"/></svg><div><b>La prochaine place est pour toi.</b><span>Invite ton premier ami pour créer un défi à deux.</span></div></div>
+    <div class="friends-heading glass-panel"><div class="eyebrow-left">TON CERCLE</div><h2>Invite les bons mots.</h2><p>Il n’y a encore personne ici. Choisis une personne précise et partage-lui ton prochain chapitre.</p><button class="btn small" id="inviteFriendBtn">＋ Inviter une personne</button></div>
+    <div class="friends-tabs"><button class="active" type="button">Activité</button></div>
+    <div class="friends-list" id="friendsList" aria-live="polite"></div>
+    <div class="friends-empty glass-panel"><div class="friends-empty-art"><img src="/assets/sunny-higgsfield.webp" alt="Sunny attend ton premier invité"></div><div><b>Ton cercle est vide pour l’instant.</b><span>Les invitations acceptées apparaîtront ici, sans profils inventés.</span></div></div>
   </div>
 </div>
 
@@ -310,6 +318,21 @@
       <div class="set-row">
         <div class="set-label"><b>Thème</b><small>clair ou sombre</small></div>
         <button class="btn ghost set-btn" onclick="toggleTheme()">Basculer 🌗</button>
+      </div>
+    </div>
+    <div class="set-group">
+      <div class="set-title">Langue de narration</div>
+      <div class="set-row">
+        <div class="set-label"><b>Ta langue maternelle</b><small>la langue des scènes et des traductions</small></div>
+        <select id="setMotherLanguage" onchange="setMotherLanguage(this)" aria-label="Ta langue maternelle">
+          <option value="francais">Français</option>
+          <option value="anglais">English</option>
+          <option value="espagnol">Español</option>
+          <option value="allemand">Deutsch</option>
+          <option value="italien">Italiano</option>
+          <option value="portugais">Português</option>
+          <option value="arabe">العربية</option>
+        </select>
       </div>
     </div>
     <div class="set-group">
