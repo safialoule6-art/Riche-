@@ -1,4 +1,4 @@
-/* Sunami — application (écran connecté). Version gratuite, IA Groq en streaming.
+/* Sunami — application (écran connecté). Version gratuite, IA Groq.
    Accessible uniquement authentifié : sinon redirection vers la landing '/'. */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -6,10 +6,14 @@ const supabaseUrl = 'https://cdtabuyomtkfasvugtck.supabase.co';
 const supabaseKey = 'sb_publishable_ms6RPYdPVcO3c9A6X1ruQQ_uiYl1Dxo';
 const supabase = createClient(supabaseUrl, supabaseKey);
 window.supabase = supabase;
+const HIGGSFIELD_UI_ASSETS = Object.freeze({
+  sunny: '/assets/sunny-higgsfield.webp',
+  lagoon: '/assets/sunami-lagoon-higgsfield.webp'
+});
 
 /* ===== PARAMÈTRES + SYNTHÈSE VOCALE ===== */
 const LOCALES = { anglais:'en-US', espagnol:'es-ES', allemand:'de-DE', italien:'it-IT', arabe:'ar-SA', portugais:'pt-PT', francais:'fr-FR' };
-let settings = { autoplay:true, rate:1, font:'m' };
+let settings = { autoplay:true, rate:1, font:'m', motherLanguage:'francais' };
 try{ settings = { ...settings, ...JSON.parse(localStorage.getItem('sunami-settings') || '{}') }; }catch(e){}
 
 function saveSettings(){ localStorage.setItem('sunami-settings', JSON.stringify(settings)); }
@@ -19,6 +23,7 @@ function applySettings(){
   const ap = document.getElementById('setAutoplay'); if(ap) ap.checked = settings.autoplay;
   const rt = document.getElementById('setRate'); if(rt) rt.value = settings.rate;
   const rv = document.getElementById('setRateVal'); if(rv) rv.textContent = settings.rate.toFixed(1) + '×';
+  const ml = document.getElementById('setMotherLanguage'); if(ml) ml.value = settings.motherLanguage || 'francais';
   document.querySelectorAll('.seg-font').forEach(b => b.classList.toggle('active', b.dataset.font === settings.font));
 }
 
@@ -112,6 +117,7 @@ window.scrollToChat = function(){
 };
 window.setAutoplay = function(el){ settings.autoplay = el.checked; saveSettings(); };
 window.setRate = function(el){ settings.rate = parseFloat(el.value); document.getElementById('setRateVal').textContent = settings.rate.toFixed(1) + '×'; saveSettings(); };
+window.setMotherLanguage = function(el){ settings.motherLanguage = el.value || 'francais'; saveSettings(); };
 window.setFont = function(f){ settings.font = f; saveSettings(); applySettings(); };
 window.resetProgress = async function(){
   if(!confirm('Réinitialiser toute ta progression (streak, XP, langue, histoire) ? Cette action est irréversible.')) return;
@@ -1134,6 +1140,7 @@ let chapter = 0;
 let episodeConsumed = false;
 
 function renderPickers(){
+  updateHomeScene();
   pickStepInit();
   const nameInput = document.getElementById('firstName');
   const nextBtn = document.querySelector('.pick-next[data-next="1"]');
@@ -1170,6 +1177,7 @@ function renderPickers(){
       pickedLang = l.code;
       updateMotivationLabel();
       updatePickHeadings();
+      updateHomeScene();
       checkReady();
       pickAdvance(2); // auto-avance vers la motivation après un court feedback
     };
@@ -1222,13 +1230,14 @@ function renderPickers(){
       c.onclick = ()=>{
         const already = t.code === pickedTheme;
         document.querySelectorAll('#themeGrid .pick-card').forEach(x=>x.classList.remove('active'));
-        if(already){ pickedTheme = null; localStorage.removeItem('sunami-theme-ctx'); }
+         if(already){ pickedTheme = null; localStorage.removeItem('sunami-theme-ctx'); }
         else {
           c.classList.add('active'); pickedTheme = t.code; localStorage.setItem('sunami-theme-ctx', t.code);
           pickedUniverse = ''; localStorage.removeItem('sunami-universe-ctx');
-          const ci = document.getElementById('customUniverse'); if(ci) ci.value = '';
-        }
-        checkReady();
+           const ci = document.getElementById('customUniverse'); if(ci) ci.value = '';
+         }
+         updateHomeScene();
+         checkReady();
       };
       themeGrid.appendChild(c);
     });
@@ -1237,15 +1246,16 @@ function renderPickers(){
   if(custom){
     custom.value = pickedUniverse || '';
     custom.oninput = ()=>{
-      pickedUniverse = custom.value.trim();
+        pickedUniverse = custom.value.trim();
       if(pickedUniverse){
         localStorage.setItem('sunami-universe-ctx', pickedUniverse);
         pickedTheme = null; localStorage.removeItem('sunami-theme-ctx');
         document.querySelectorAll('#themeGrid .pick-card').forEach(x=>x.classList.remove('active'));
-      } else {
-        localStorage.removeItem('sunami-universe-ctx');
-      }
-      checkReady();
+        } else {
+          localStorage.removeItem('sunami-universe-ctx');
+        }
+        updateHomeScene();
+        checkReady();
     };
   }
 }
@@ -1265,6 +1275,24 @@ function updatePickHeadings(){
   if(heroTitle) heroTitle.textContent = name ? `Enchanté, ${name} 👋` : 'Ta prochaine histoire commence ici';
   if(heroSub) heroSub.textContent = name ? 'Encore quelques réglages et ton conteur entre en scène.' : 'Réponds à quelques questions — le conteur écrit la suite en direct.';
   if(langLabel) langLabel.textContent = name ? `${name}, quelle langue veux-tu apprendre\u00a0?` : 'Quelle langue veux-tu apprendre\u00a0?';
+}
+
+function updateHomeScene(){
+  const bg = document.getElementById('homeSceneBg');
+  const speech = document.getElementById('sunnyHomeSpeech');
+  if(!bg) return;
+  const url = HIGGSFIELD_UI_ASSETS.lagoon;
+  if(bg.getAttribute('data-src') !== url){ bg.setAttribute('data-src', url); bg.src = url; }
+  if(speech){
+    const lines = [
+      'Je garde une place pour toi dans l\'histoire.',
+      'On choisit ton aventure, puis je t\'accompagne.',
+      'Chaque réponse ouvre un nouveau chemin.',
+      'Je lis la scène avec toi. Pas à pas.',
+      'Quand tu es prêt, le décor s\'anime.'
+    ];
+    speech.textContent = lines[Math.min(pickStep || 0, lines.length - 1)];
+  }
 }
 
 /* ===== Stepper d'onboarding : une étape à la fois, avec transitions ===== */
@@ -1299,6 +1327,7 @@ function goToStep(n, instant){
   const active = document.querySelector('#pickSteps .pick-step.active');
   const field = active && active.querySelector('input');
   if(field && !instant) setTimeout(()=>{ try{ field.focus(); }catch(_){} }, 120);
+  updateHomeScene();
 }
 function pickStepNext(n){ goToStep(typeof n === 'number' ? n : pickStep+1); }
 window.pickStepPrev = function(){ goToStep(pickStep-1); };
@@ -1846,7 +1875,7 @@ function resumeScene(s){
   if(sagaRecap){
     const banner = document.createElement('div');
     banner.className = 'prev-banner';
-    banner.innerHTML = '<div class="prev-label">📺 Previously on Sunami…</div>' + formatRecap(sagaRecap);
+    banner.innerHTML = '<div class="prev-label">📺 Précédemment dans Sunami…</div>' + formatRecap(sagaRecap);
     if(log) log.appendChild(banner);
   }
   const lastAI = [...chatHistory].reverse().find(m => m.role === 'assistant');
@@ -1911,7 +1940,7 @@ function showScreen(which){
   });
 }
 
-/* --- Covers d'épisode (Pollinations.ai, gratuit, déterministe par seed) --- */
+/* --- Covers d'épisode : assets Higgsfield gratuits et cohérents --- */
 const COVER_STYLES = [
   { id:'cinematic',  label:'🎬 Ciné',      prompt:'cinematic film poster, dramatic lighting, photorealistic, depth of field' },
   { id:'anime',      label:'🌸 Anime',     prompt:'anime key visual, studio ghibli inspired, vibrant colors, detailed background' },
@@ -1924,10 +1953,7 @@ function coverStylePrompt(id){ return (COVER_STYLES.find(s=>s.id===id) || COVER_
 function _seedFrom(str){ let h = 0; const s = String(str||''); for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i))>>>0; } return h % 1000000; }
 /* portrait = affiche de série (Mes sagas) ; paysage = cover d'épisode dans le fil */
 function coverUrl(desc, seed, styleId, portrait){
-  const clean = String(desc||'').replace(/\*\*/g,'').replace(/\([^)]*\)/g,'').slice(0,180);
-  const prompt = `${coverStylePrompt(styleId)}, ${clean}, rich vivid colors, highly detailed, no text, no words, no letters`;
-  const dim = portrait ? 'width=512&height=768' : 'width=768&height=432';
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?${dim}&nologo=true&seed=${seed}`;
+  return portrait ? HIGGSFIELD_UI_ASSETS.sunny : HIGGSFIELD_UI_ASSETS.lagoon;
 }
 function coverDesc(){ return sagaSetting || sagaTitle || ((LANGUAGES.find(l=>l.code===pickedLang)?.label || '') + ' adventure'); }
 function buildCover(episodeNum, styleId, salt, portrait){
@@ -2352,6 +2378,12 @@ function setMascotColor(color){
   if(color === 'yellow') av.classList.add('mascot-yellow');
   if(color === 'red') av.classList.add('mascot-red');
 }
+function setMascotPose(target, pose){
+  const el = typeof target === 'string' ? document.querySelector(target) : target;
+  if(!el) return;
+  ['wave','celebrate','think','read','sleep','encourage'].forEach(p => el.classList.remove('pose-' + p));
+  if(pose) el.classList.add('pose-' + pose);
+}
 function setMascotExpression(emo){
   const av = document.getElementById('sceneAvatar');
   if(!av) return;
@@ -2414,9 +2446,7 @@ function roleOf(name, chars){
 }
 /* Portrait IA d'un personnage (déterministe par nom) */
 function charPortraitUrl(name, role){
-  const desc = (role && role.trim() && role.toLowerCase() !== 'personnage') ? role : 'person';
-  const prompt = coverStylePrompt(sagaCoverStyle) + ', character portrait, close-up face of a ' + desc + ', expressive, centered, plain background, no text, no words';
-  return 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?width=256&height=256&nologo=true&seed=' + _seedFrom('portrait:' + (name||'?').toLowerCase());
+  return '';
 }
 
 /* Transition cinématique d'épisode (title card) */
@@ -2608,8 +2638,9 @@ function mascotReact(){
   const av = document.getElementById('sceneAvatar');
   if(!av) return;
   setMascotExpression('happy');
+  setMascotPose(av, 'celebrate');
   av.classList.remove('pop'); void av.offsetWidth; av.classList.add('pop');
-  setTimeout(() => av.classList.remove('pop'), 700);
+  setTimeout(() => { av.classList.remove('pop'); setMascotPose(av, 'wave'); }, 900);
 }
 
 /* Animation "+X XP" qui s'envole */
@@ -2624,17 +2655,24 @@ function popXp(n){
 
 /* Bannière d'ambiance : illustration de décor générée depuis le lieu courant */
 function bannerUrl(desc, seed, styleId){
-  const clean = String(desc || '').replace(/\*\*/g,'').replace(/\([^)]*\)/g,'').slice(0,160);
-  const prompt = coverStylePrompt(styleId) + ', wide scenic landscape background of ' + clean + ', atmospheric, empty scenery, no people, no characters, no text, no words';
-  return 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?width=768&height=384&nologo=true&seed=' + seed;
+  return HIGGSFIELD_UI_ASSETS.lagoon;
+}
+function storyBackdropUrl(desc, seed, styleId){
+  return HIGGSFIELD_UI_ASSETS.lagoon;
 }
 function updateSceneBanner(){
   const bg = document.getElementById('sceneBannerBg');
+  const backdrop = document.getElementById('storyBackdropBg');
   if(!bg) return;
   const label = (LANGUAGES.find(l => l.code === pickedLang)?.label) || '';
   const desc = sagaSetting || (label + ' city street');
   const url = bannerUrl(desc, _seedFrom((pickedLang||'') + ':scene:' + (sagaSetting||'')), sagaCoverStyle);
   if(bg.getAttribute('data-src') !== url){ bg.setAttribute('data-src', url); bg.src = url; }
+  if(backdrop){
+    const backdropUrl = storyBackdropUrl(desc, _seedFrom((pickedLang||'') + ':story-world:' + (sagaSetting||'')), sagaCoverStyle);
+    if(backdrop.getAttribute('data-src') !== backdropUrl){ backdrop.setAttribute('data-src', backdropUrl); backdrop.src = backdropUrl; }
+  }
+  setMascotPose(document.getElementById('sceneAvatar'), 'wave');
   Ambience.setScene(sceneTypeFrom(sagaSetting));
 }
 function cleanForSpeech(s){ return s.replace(/\*\*/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim(); }
@@ -2738,42 +2776,61 @@ async function callAI(userReply, opts){
   sendBtn.disabled = true; input.disabled = true;
   const sceneCard = document.getElementById('sceneBanner');
 
-  // "Previously on Sunami" — affiche un résumé de l'épisode précédent
+  // « Précédemment dans Sunami » — affiche un résumé de l'épisode précédent
   if(userReply && chatHistory.length > 0){
     const prev = localStorage.getItem('sunami_prev');
     if(prev){
-      const banner = document.createElement('div');
-      banner.className = 'prev-banner';
-      banner.innerHTML = '<div class="prev-label">📺 Previously on Sunami…</div>' + formatRecap(prev);
-      document.getElementById('chatLog').appendChild(banner);
-      scrollChat();
+      const chatLog = document.getElementById('chatLog');
+      const previousBanner = [...(chatLog?.querySelectorAll('.prev-banner') || [])].pop();
+      if(!previousBanner || previousBanner.dataset.recap !== prev){
+        const banner = document.createElement('div');
+        banner.className = 'prev-banner';
+        banner.dataset.recap = prev;
+        banner.innerHTML = '<div class="prev-label">📺 Précédemment dans Sunami…</div>' + formatRecap(prev);
+        chatLog.appendChild(banner);
+        scrollChat();
+      }
     }
   }
 
   if(sceneCard){ sceneCard.classList.add('thinking'); sceneCard.classList.remove('speaking'); }
   setMascotColor('green');
   setMascotExpression('think');
+  setMascotPose(document.getElementById('sceneAvatar'), 'think');
 
   // Indicateur "le conteur écrit…"
   const loadingEl = document.createElement('div');
   loadingEl.className = 'loading rich';
   loadingEl.setAttribute('aria-label', 'Le conteur écrit');
-  loadingEl.innerHTML = '<span class="tdot"></span><span class="tdot"></span><span class="tdot"></span>';
+   loadingEl.innerHTML = '<span class="loading-label">Le conteur écrit…</span><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span>';
   document.getElementById('chatLog').appendChild(loadingEl);
   scrollChat();
 
   // Timeout simple sur la requête complète
   const clientCtrl = new AbortController();
-  const clientTimeoutId = setTimeout(() => clientCtrl.abort(), 25000);
+  const clientTimeoutId = setTimeout(() => clientCtrl.abort(), 58000);
 
   try{
+    // The API validates the Supabase session before contacting Groq.
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    if(!accessToken){
+      clearTimeout(clientTimeoutId);
+      loadingEl.remove();
+      if(sceneCard) sceneCard.classList.remove('thinking');
+      retryMsg('Ta session a expiré. Reconnecte-toi puis réessaie.', userReply, opts);
+      sendBtn.disabled = false; input.disabled = false;
+      return;
+    }
+
     const res = await fetch('/api/generate', {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+accessToken},
       body: JSON.stringify({
         history: chatHistory, userReply,
-        language: pickedLang, level: pickedLevel, theme: pickedTheme, universe: pickedUniverse || '',
-        motivation: pickedMotivation || progress.motivation || null,
+         language: pickedLang, level: pickedLevel, theme: pickedTheme, universe: pickedUniverse || '',
+         motherLanguage: settings.motherLanguage || 'francais',
+         motivation: pickedMotivation || progress.motivation || null,
         vocabulary: getWordsForReview(5),
         recap: sagaRecap, characters, setting: sagaSetting,
         protagonist: sagaProtagonist, episode: progress.episode || 1, chapter,
@@ -2784,22 +2841,39 @@ async function callAI(userReply, opts){
     });
     clearTimeout(clientTimeoutId);
 
-    if(res.status === 429){
+    if(res.status === 401){
       loadingEl.remove();
       if(sceneCard) sceneCard.classList.remove('thinking');
-      setMascotColor('red');
-      retryMsg('⏳ Trop de demandes d\u2019un coup — patiente ~30 secondes puis réessaie.', userReply, opts);
+      retryMsg('Ta session a expiré. Reconnecte-toi puis réessaie.', userReply, opts);
       sendBtn.disabled = false; input.disabled = false;
       return;
     }
 
-    const data = await res.json().catch(() => ({}));
+    if(res.status === 429){
+      loadingEl.remove();
+      if(sceneCard) sceneCard.classList.remove('thinking');
+      setMascotColor('red');
+      setMascotPose(document.getElementById('sceneAvatar'), 'encourage');
+      retryMsg('Trop de demandes, réessaie dans quelques secondes', userReply, opts);
+      sendBtn.disabled = false; input.disabled = false;
+      return;
+    }
+
+    let data = {};
+    try {
+      data = await res.json();
+    } catch(err) {
+      console.error('[conteur]', err);
+      data = { error: 'Réponse du conteur illisible.' };
+    }
 
     if(!res.ok || data.error){
       loadingEl.remove();
       if(sceneCard) sceneCard.classList.remove('thinking');
       setMascotColor('red');
-      retryMsg('Le conteur a rencontré un souci. Réessaie dans un instant.', userReply, opts);
+      setMascotPose(document.getElementById('sceneAvatar'), 'encourage');
+      const apiMessage = typeof data.error === 'string' && data.error.trim() ? data.error.trim() : 'Le conteur a rencontré un souci. Réessaie dans un instant.';
+      retryMsg(apiMessage, userReply, opts);
       sendBtn.disabled = false; input.disabled = false;
       return;
     }
@@ -2811,6 +2885,7 @@ async function callAI(userReply, opts){
     if(!fullText.trim()){
       if(sceneCard) sceneCard.classList.remove('thinking');
       setMascotColor('red');
+      setMascotPose(document.getElementById('sceneAvatar'), 'encourage');
       retryMsg('Le conteur n\u2019a rien répondu — réessaie.', userReply, opts);
       sendBtn.disabled = false; input.disabled = false;
       return;
@@ -2828,6 +2903,7 @@ async function callAI(userReply, opts){
     }
 
     if(sceneCard){ sceneCard.classList.remove('thinking'); sceneCard.classList.add('speaking'); }
+    if(!userReply) setMascotPose(document.getElementById('sceneAvatar'), 'wave');
     setMascotExpression(emotionToExpr(data.emotion));
     const speech = cleanForSpeech(fullText);
     await renderStoryMessage(fullText, data.characters);
@@ -2848,6 +2924,7 @@ async function callAI(userReply, opts){
       // Mascotte : jaune si erreurs, vert si parfait
       const isPerfect = /parfait|correcte?|bien|impeccable|bravo|aucune erreur/i.test(grammar);
       setMascotColor(isPerfect ? 'green' : 'yellow');
+      setMascotPose(document.getElementById('sceneAvatar'), isPerfect ? 'celebrate' : 'encourage');
       if(isPerfect){ stats.perfectCount = (stats.perfectCount || 0) + 1; saveStats(); checkAchievements(); }
     } else if(userReply){
       setMascotColor('green');
@@ -2878,6 +2955,7 @@ async function callAI(userReply, opts){
     try{ loadingEl.remove(); }catch(_){}
     if(sceneCard) sceneCard.classList.remove('thinking','speaking');
     setMascotColor('red');
+    setMascotPose(document.getElementById('sceneAvatar'), 'encourage');
     console.error('[CLIENT] Erreur callAI — name=' + (err.name || '?') + ' message=' + (err.message || '?'));
     if(err.name === 'AbortError'){
       retryMsg('⏱️ Le conteur met trop de temps à répondre.', userReply, opts);
