@@ -38,22 +38,6 @@
     document.head.appendChild(s);
   }
 
-  function installLanguageGuard(){
-    if(window.__sunamiLanguageGuard) return;
-    window.__sunamiLanguageGuard = true;
-    var nativeFetch = window.fetch.bind(window);
-    window.fetch = function(input, init){
-      var url = typeof input === 'string' ? input : (input && input.url) || '';
-      var method = init && init.method ? String(init.method).toUpperCase() : (input && input.method ? String(input.method).toUpperCase() : 'GET');
-      if(url.endsWith('/api/generate') && method === 'POST'){
-        var safeUrl = url.replace('/api/generate','/api/generate-safe');
-        if(typeof input === 'string') return nativeFetch(safeUrl, init);
-        if(input instanceof Request) return nativeFetch(new Request(safeUrl, input), init);
-      }
-      return nativeFetch(input, init);
-    };
-  }
-
   function addOnboardingUX(){
     var pick=document.getElementById('pickScreen');
     if(!pick || document.getElementById('sunamiJourney')) return;
@@ -135,7 +119,7 @@
     document.head.appendChild(script);
   }
 
-  function boot(){css();installLanguageGuard();addOnboardingUX();polishLanding();loadNarrative();}
+  function boot(){css();addOnboardingUX();polishLanding();loadNarrative();}
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();
   new MutationObserver(function(){addOnboardingUX();polishLanding();}).observe(document.documentElement,{childList:true,subtree:true});
 })();

@@ -13,21 +13,6 @@ function json(data, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
 }
 
-// Verifie le JWT Supabase (header Authorization) et renvoie l'utilisateur, ou null.
-async function getAuthUser(req) {
-  const auth = req.headers.get("authorization") || "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  if (!token || !SUPABASE_KEY) return null;
-  try {
-    const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${token}` },
-    });
-    if (!r.ok) return null;
-    const u = await r.json();
-    return u && u.id ? u : null;
-  } catch (e) { return null; }
-}
-
 export default async function handler(req) {
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
 

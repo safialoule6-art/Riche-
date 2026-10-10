@@ -1,9 +1,10 @@
 // Adaptive-compatible wrapper around the existing narrative endpoint.
-// The original api/generate.js remains untouched for backward compatibility.
+// Keep the core handler as the single compatibility boundary for all callers.
 import generateHandler from "./generate.js";
 import { createAdaptivePromptData } from "./adaptive-integration.js";
 
 export const config = { runtime: "edge" };
+export const maxDuration = 60;
 
 export default async function handler(req) {
   if (req.method !== "POST") return generateHandler(req);
@@ -11,8 +12,12 @@ export default async function handler(req) {
   let body = {};
   try {
     body = await req.json();
-  } catch (_) {
-    body = {};
+  } catch (err) {
+    console.error("[conteur]", err);
+    return new Response(JSON.stringify({ error: "Corps JSON invalide" }), {
+      status: 400,
+      headers: { "content-type": "application/json" },
+    });
   }
 
   const adaptiveData = createAdaptivePromptData({
@@ -38,6 +43,7 @@ export default async function handler(req) {
     ...body,
     vocabulary,
     universe: adaptiveUniverse,
+    motherLanguage: body.motherLanguage || body.nativeLanguage || body.langue_maternelle || "francais",
   };
 
   const enrichedRequest = new Request(req.url, {

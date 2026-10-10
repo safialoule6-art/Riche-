@@ -16,7 +16,7 @@ Au lieu d'exercices répétitifs, un **conteur IA** raconte une histoire immersi
   - `index.html` + `landing.js` — landing marketing (`/`)
   - `app.html` + `app.js` — l'application (`/app`)
   - `styles.css` (design partagé) · `theme.js` (thème clair/sombre)
-- **API** : `api/generate.js` — **fonction Edge Vercel** qui appelle **Groq** (`llama-3.1-8b-instant`) en **streaming** (réponse mot à mot)
+- **API** : `api/generate.js` — **fonction Edge Vercel** qui appelle **Groq** avec une réponse JSON structurée
 - **Auth** : Supabase (Google OAuth)
 - **DB** : Supabase Postgres
   - `progress` — streak, langue, niveau (par user)
@@ -26,7 +26,8 @@ Au lieu d'exercices répétitifs, un **conteur IA** raconte une histoire immersi
 
 | Variable | Description |
 |---|---|
-| `GROQ_API_KEY` | Clé API Groq (modèle : `llama-3.1-8b-instant`). Utilisée côté serveur dans `api/generate.js` et `api/support.js`. |
+| `GROQ_API_KEY` | Clé API Groq. Utilisée côté serveur dans `api/generate.js` et `api/support.js`. |
+| `GROQ_MODEL` | *(optionnel)* Modèle Groq du conteur. Par défaut : `llama-3.3-70b-versatile`. |
 | `GROQ_API_KEY_2` | *(optionnel)* Seconde clé Groq : bascule automatique en cas de rate-limit 429. |
 | `SUPABASE_URL` | URL du projet Supabase (ex : `https://xxxx.supabase.co`). |
 | `SUPABASE_SERVICE_ROLE_KEY` | Clé **service role** Supabase, utilisée côté serveur uniquement (`api/refund.js`, `api/referral.js`, `api/subscribe.js`, `api/send-reminders.js`). Contourne la RLS. **Ne jamais** l'exposer côté client. |
@@ -95,6 +96,25 @@ Tant que les IDs contiennent un `X` (placeholders), **aucun pixel n'est chargé*
 ## URL de production
 
 https://sunami-rho.vercel.app
+
+## Application mobile Expo
+
+Le dossier `mobile/` contient une première application native Expo TypeScript avec :
+
+- splash animé et onboarding en 3 étapes ;
+- transitions Reanimated (`withSpring`, `withTiming`, fade et zoom) ;
+- mascotte Lottie interactive chargée depuis un CDN ;
+- accueil avec streak, progression, épisode du jour et statistiques.
+
+Pour la lancer :
+
+```bash
+cd mobile
+npm install
+npx expo start
+```
+
+Les alertes de l'accueil sont des points d'intégration pour brancher l'authentification, Supabase et l'API narrative existante.
 
 ## Roadmap (idées)
 

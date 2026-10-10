@@ -1,15 +1,10 @@
-/* Illustrated world layer for the existing Sunami app flow. */
+/* Higgsfield visual layer for the existing Sunami app flow. */
 const SUNNY_POSES = ['wave', 'celebrate', 'think', 'read', 'sleep', 'encourage'];
-
-function sceneSeed(value) {
-  let hash = 0;
-  for (const char of String(value || '')) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  return hash % 1000000;
-}
-
-function sceneImage(prompt, width, height, seed) {
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&nologo=true&seed=${seed}`;
-}
+const HIGGSFIELD_ASSETS = Object.freeze({
+  sunny: '/assets/sunny-higgsfield.webp',
+  lagoon: '/assets/sunami-lagoon-higgsfield.webp',
+  world: '/assets/sunami-world-higgsfield.webp'
+});
 
 function bindImage(image) {
   if (!image || image.dataset.immersiveBound) return;
@@ -17,6 +12,13 @@ function bindImage(image) {
   image.addEventListener('load', () => image.classList.add('loaded'));
   image.addEventListener('error', () => image.classList.remove('loaded'));
   if (image.complete && image.naturalWidth) image.classList.add('loaded');
+}
+
+function setLocalImage(image, url) {
+  if (!image || image.dataset.src === url) return;
+  bindImage(image);
+  image.dataset.src = url;
+  image.src = url;
 }
 
 function setPose(target, pose) {
@@ -28,31 +30,20 @@ function setPose(target, pose) {
 function updateHomeScene() {
   const bg = document.getElementById('homeSceneBg');
   if (!bg) return;
-  bindImage(bg);
-  const selected = document.querySelector('#themeGrid .pick-card.active')?.textContent?.trim();
-  const custom = document.getElementById('customUniverse')?.value?.trim();
-  const setting = custom || selected || 'a language learning adventure by the sea';
-  const prompt = `whimsical storybook illustration, rich atmospheric setting for ${setting}, warm teal lime and coral palette, cinematic depth, inviting language learning adventure, no people, no characters, no text, no words`;
-  const url = sceneImage(prompt, 768, 1024, sceneSeed(`home:${setting}`));
-  if (bg.dataset.src !== url) { bg.dataset.src = url; bg.src = url; }
+  setLocalImage(bg, HIGGSFIELD_ASSETS.lagoon);
 }
 
 function updateStoryScene() {
   const bg = document.getElementById('storyBackdropBg');
   const setting = document.getElementById('sceneSetting')?.textContent?.trim();
   if (!bg || !setting || setting.includes("s'écrit") || setting.includes('s\u2019écrit')) return;
-  bindImage(bg);
-  const prompt = `whimsical storybook illustration, immersive vertical story world, ${setting}, warm teal lime and coral palette, layered atmospheric scenery, no people, no characters, no text, no words`;
-  const url = sceneImage(prompt, 768, 1024, sceneSeed(`reader:${setting}`));
-  if (bg.dataset.src !== url) { bg.dataset.src = url; bg.src = url; }
+  setLocalImage(bg, HIGGSFIELD_ASSETS.lagoon);
 }
 
 function updateSocialScene(id, prompt) {
   const bg = document.getElementById(id);
   if (!bg) return;
-  bindImage(bg);
-  const url = sceneImage(prompt, 768, 1024, sceneSeed(id));
-  if (bg.dataset.src !== url) { bg.dataset.src = url; bg.src = url; }
+  setLocalImage(bg, HIGGSFIELD_ASSETS.lagoon);
 }
 
 function setImmersiveScreen(id) {
@@ -61,6 +52,29 @@ function setImmersiveScreen(id) {
     if (screen) screen.style.display = screenId === id ? 'flex' : 'none';
   });
   document.getElementById(id)?.scrollIntoView({ block: 'start' });
+}
+
+function bindMotionLayer() {
+  const roots = [...document.querySelectorAll('#pickScreen, #chatScreen, .social-screen')];
+  if (!roots.length) return;
+  roots.forEach(root => {
+    root.addEventListener('pointermove', event => {
+      const rect = root.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      root.style.setProperty('--pointer-x', (((event.clientX - rect.left) / rect.width) * 2 - 1).toFixed(3));
+      root.style.setProperty('--pointer-y', (((event.clientY - rect.top) / rect.height) * 2 - 1).toFixed(3));
+    });
+    root.addEventListener('pointerleave', () => {
+      root.style.setProperty('--pointer-x', '0');
+      root.style.setProperty('--pointer-y', '0');
+    });
+  });
+  const updateScrollMotion = () => {
+    const lift = `${Math.max(-28, Math.min(0, -window.scrollY * 0.04))}px`;
+    roots.forEach(root => root.style.setProperty('--scroll-lift', lift));
+  };
+  window.addEventListener('scroll', updateScrollMotion, { passive: true });
+  updateScrollMotion();
 }
 
 window.openProfilePanel = function() {
@@ -103,6 +117,8 @@ function bindImmersiveLayer() {
   bindImage(document.getElementById('sceneBannerBg'));
   bindImage(document.getElementById('profileSceneBg'));
   bindImage(document.getElementById('friendsSceneBg'));
+  setLocalImage(document.getElementById('sceneBannerBg'), HIGGSFIELD_ASSETS.lagoon);
+  bindMotionLayer();
   updateHomeScene();
   restoreReaderPoses();
 

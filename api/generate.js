@@ -1,6 +1,6 @@
 // api/generate.js
 //
-// Moteur narratif de Sunami — Groq (openai/gpt-oss-120b), SORTIE JSON STRUCTURÉE.
+// Moteur narratif de Sunami — Groq/OpenAI-compatible, SORTIE JSON STRUCTURÉE.
 //
 // Objectif : une vraie SAGA à suivre (mêmes personnages, même intrigue, épisodes
 // qui s'enchaînent), pas des scènes au hasard. La continuité est garantie par un
@@ -11,6 +11,7 @@
 //   history        : [{role, content}]   derniers messages (contexte court)
 //   userReply      : string              réponse de l'apprenant (null au démarrage)
 //   language,level : codes FR (mappés)   langue cible + niveau CECR
+//   motherLanguage : code FR de la langue maternelle de narration
 //   theme          : string|null         ambiance
 //   vocabulary     : [string]            mots à réviser (répétition espacée)
 //   recap          : string              résumé FR de la saga jusqu'ici
@@ -23,16 +24,17 @@
 //   { text, story, grammar, vocab:[{word,fr}], characters:[{name,role}],
 //     setting, recap, emotion, episodeComplete, episodeTitle, choices:[string] }
 //
-// Variables d'environnement Vercel : GROQ_API_KEY (+ GROQ_API_KEY_2 optionnelle).
+// Variables d'environnement Vercel : GROQ_API_KEY et GROQ_MODEL (serveur uniquement).
 
 export const config = { runtime: "edge" };
+export const maxDuration = 60;
 
 import { requireAuth } from "./_lib/auth.js";
 import { rateLimit, rateLimitResponse } from "./_lib/rate-limit.js";
 import { buildAdaptiveStoryContext } from "../adaptive-story-engine.js";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const MODEL = "openai/gpt-oss-120b";
+const MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 const GROQ_TIMEOUT_MS = 25000;
 const CHAPTERS_PER_EPISODE = 5; // un épisode = ~5 chapitres puis cliffhanger
 
@@ -104,7 +106,7 @@ function formatMemory(memory) {
 }
 
 function buildSystemPrompt(o) {
-  const { language, level, theme, universe, motivation, hasUserReply, vocabulary, recap, characters, setting, protagonist, episode, chapter, memory } = o;
+  const { language, motherLanguage, level, theme, universe, motivation, hasUserReply, vocabulary, recap, characters, setting, protagonist, episode, chapter, memory } = o;
   const memoryLine = formatMemory(memory);
   const hasExplicitContext = !!(universe || (theme && THEME_HINTS[theme]));
   const themeLine = universe
@@ -128,51 +130,56 @@ function buildSystemPrompt(o) {
   const recapLine = recap ? `\nSTORY SO FAR (authoritative recap — stay 100% consistent with it): ${recap}` : "";
   const nearEnd = chapter && chapter >= CHAPTERS_PER_EPISODE;
   const arcLine = nearEnd
-    ? `\nEPISODE PACING: this is chapter ${chapter} of episode ${episode || 1}. Bring THIS episode to a satisfying beat and END it on a CLIFFHANGER. Set "episodeComplete" to true and provide a short French "episodeTitle".`
+    ? `\nEPISODE PACING: this is chapter ${chapter} of episode ${episode || 1}. Bring THIS episode to a satisfying beat and END it on a CLIFFHANGER. Set "episodeComplete" to true and provide a short ${motherLanguage} "episodeTitle".`
     : `\nEPISODE PACING: this is chapter ${chapter || 1} of episode ${episode || 1}. Advance the plot one meaningful step. Set "episodeComplete" to false.`;
 
   return `You are the storyteller of "Sunami", a language tutor who teaches through a SERIALIZED, ongoing STORY (like a TV show). The learner${protagonist ? ` (named ${protagonist})` : ""} is the protagonist.
 
-TARGET LANGUAGE: ${language}. LEARNER LEVEL: ${level}.${themeLine}${motivationLine}
+LANGUAGE SETTINGS
+- MOTHER LANGUAGE: ${motherLanguage}.
+- TARGET LANGUAGE: ${language}.
+- LEARNER LEVEL: ${level}.${themeLine}${motivationLine}
 
-ABSOLUTE RULES
-- The "story" field is written ONLY in ${language}. Every word of the story must be in ${language}. NEVER write the story (or the ending question) in French or English unless ${language} IS that language. This is the most common failure — do not let it happen. If unsure, still write in ${language}.
+ABSOLUTE LANGUAGE RULES
+- Write the whole story in ${motherLanguage}.
+- In each story passage, insert ONLY 2 to 4 target-language words or short expressions in ${language}. Bold each one and immediately follow it with its translation in ${motherLanguage} in parentheses, for example **el jardín** (le jardin).
+- End the story with one short question the learner must answer in ${language}. Put the ${motherLanguage} translation immediately after that question in parentheses.
+- Never use a third language. Do not use English unless ${motherLanguage} or ${language} is English. Do not mix languages inside a sentence except for the marked target expression and its translation.
+- Keep the story warm, short, and easy to follow. Use 4 to 6 short sentences per passage.
 - CONTINUITY IS SACRED: same protagonist, same characters, same places, one coherent plot that PROGRESSES. Never restart or contradict the recap. Never invent a new unrelated scene.${protagonist ? `
-- ADDRESS THE LEARNER BY NAME: characters call the protagonist "${protagonist}" out loud, naturally, in the ${language} dialogue (a greeting, a direct question…). Do it where it feels human — not in every single sentence.` : ""}
+- ADDRESS THE LEARNER BY NAME: characters call the protagonist "${protagonist}" naturally in ${motherLanguage}.` : ""}
 - Difficulty for ${level}: ${levelGuide}${vocabLine}
 ${recapLine}${memoryLine}${charLine}${settingLine}${arcLine}${adaptiveLine}
 
 PEDAGOGY
-- In "story": 2 to 5 sentences. Highlight 1-3 key words/expressions with **double asterisks**, each immediately followed by its French translation in parentheses, e.g. **el bosque** (la forêt).
-- ALWAYS end "story" with exactly ONE simple question in ${language} that pushes the plot forward.
-- Build directly on the learner's last reply.${hasUserReply ? `
-- "grammar": a SHORT friendly note in FRENCH about the learner's reply (max 2 sentences). Correct ONLY real errors and keep the learner's intended meaning. Do NOT invent mistakes: if the reply is already correct, simply confirm it is correct and encourage briefly — never fabricate an error just to have something to say.` : `
-- "grammar": empty string for the very first chapter.`}
+- The "story" field must contain 4 to 6 short sentences in ${motherLanguage}, with exactly 2 to 4 marked target-language words or expressions and one final target-language question.
+- "grammar" is a SHORT friendly note in ${motherLanguage} about the learner's reply (max 2 sentences).${hasUserReply ? " Correct ONLY real errors and keep the learner's intended meaning. If correct, confirm it and encourage briefly." : " It is an empty string for the very first chapter."}
+- Build directly on the learner's last reply.
 
 LIVING MEMORY (this is what makes Sunami feel alive — take it seriously)
-- If the learner reveals a PERSONAL fact (a name of a relative/friend/pet, a job, a hobby, a place they live, a preference, a fear…), capture it in "newFacts" as {key, value}. Keep values short. Only capture things a friend would remember — do NOT capture trivial one-off details.
-- The two "choices" you propose MUST be genuinely different DIRECTIONS, not rephrasings of the same answer. Each should plausibly send the story down a different path.
-- If the learner's reply is a real DECISION that should shape the story going forward (trusting someone, refusing help, taking a risk, revealing a secret…), record it in "newDecision" as one short FRENCH sentence. Otherwise set "newDecision" to "".
-- Always honor WHAT YOU KNOW ABOUT THE LEARNER and PAST DECISIONS above: reference known facts naturally, and never contradict past decisions.
+- If the learner reveals a PERSONAL fact, capture it in "newFacts" as {key, value}. Keep values short and write them in ${motherLanguage}.
+- The two "choices" MUST be genuinely different DIRECTIONS. Write each choice in ${language}, followed by a ${motherLanguage} translation in parentheses.
+- If the learner's reply is a real DECISION, record it in "newDecision" as one short ${motherLanguage} sentence. Otherwise set it to "".
+- Always honor WHAT YOU KNOW ABOUT THE LEARNER and PAST DECISIONS above.
 
 OUTPUT — return ONLY a valid minified JSON object, no markdown, with EXACTLY these keys:
 {
- "sagaTitle": "<short catchy FRENCH title for the WHOLE saga, like a TV series name (2-4 words); keep it identical across episodes>",
- "story": "<text in ${language}, bold key words + (FR translation), ends with one question>",
- "grammar": "<short FR note or empty>",
- "vocab": [{"word":"<word in ${language}>","fr":"<French translation>"}],
- "characters": [{"name":"<name>","role":"<short FR role>"}],
- "setting": "<short FR description of the current place>",
- "recap": "<UPDATED French recap of the WHOLE saga so far, 3-5 sentences, includes what just happened>",
+ "sagaTitle": "<short catchy ${motherLanguage} title for the WHOLE saga (2-4 words); keep it identical across episodes>",
+ "story": "<4-6 short sentences in ${motherLanguage}; exactly 2-4 bold target expressions with (${motherLanguage} translation); ends with one target-language question and translation>",
+ "grammar": "<short ${motherLanguage} note or empty>",
+ "vocab": [{"word":"<target-language word>","fr":"<translation in ${motherLanguage}>"}],
+ "characters": [{"name":"<name>","role":"<short ${motherLanguage} role>"}],
+ "setting": "<short ${motherLanguage} description of the current place>",
+ "recap": "<UPDATED ${motherLanguage} recap of the WHOLE saga so far, 3-5 sentences>",
  "emotion": "happy|surprised|think|neutral",
  "episodeComplete": ${nearEnd ? "true" : "false"},
- "episodeTitle": "<short FR episode title when episodeComplete is true, else empty>",
- "choices": ["<short suggested reply in ${language} — one clear direction>","<short suggested reply in ${language} — a genuinely different direction>"],
- "newFacts": [{"key":"<short FR label, e.g. 'sœur'>","value":"<short FR value, e.g. 'Sarah'>"}],
- "newDecision": "<one short FR sentence if the learner made a story-shaping decision, else empty>",
- "quiz": {"q":"<short FRENCH comprehension question about what just happened in the story, or empty string on the very first chapter>","options":["<French option>","<French option>","<French option>"],"answer":<0-based index of the correct option>}
+ "episodeTitle": "<short ${motherLanguage} episode title when episodeComplete is true, else empty>",
+ "choices": ["<short target-language reply + ${motherLanguage} translation — one direction>","<short target-language reply + ${motherLanguage} translation — a different direction>"],
+ "newFacts": [{"key":"<short ${motherLanguage} label>","value":"<short ${motherLanguage} value>"}],
+ "newDecision": "<one short ${motherLanguage} sentence if the learner made a story-shaping decision, else empty>",
+ "quiz": {"q":"<short ${motherLanguage} comprehension question, or empty on the first chapter>","options":["<${motherLanguage} option>","<${motherLanguage} option>","<${motherLanguage} option>"],"answer":<0-based index>}
 }
-The "vocab" array must list the words you highlighted in "story" with their French translation. The "recap" must be cumulative so a future episode stays consistent. "newFacts" is usually empty ([]) — only fill it when the learner genuinely shares something personal. The "quiz" is a quick comprehension check written in FRENCH about the latest story beat, with 3 plausible French options and the 0-based index of the correct one; include it from the 2nd chapter onward, and for the very first chapter set it to {"q":"","options":[],"answer":0}.`;
+The "vocab" array must list the target expressions highlighted in "story" with their ${motherLanguage} translations. Keep the "recap" cumulative. "newFacts" is usually empty. Include the quiz from the 2nd chapter onward; for the first chapter use {"q":"","options":[],"answer":0}.`;
 }
 
 function jsonResponse(data, status) {
@@ -183,35 +190,97 @@ function jsonResponse(data, status) {
 }
 
 function safeParse(content) {
-  // Try direct JSON, then extract the first {...} block.
-  try { return JSON.parse(content); } catch (_) {}
-  const start = content.indexOf("{");
-  const end = content.lastIndexOf("}");
+  const cleaned = String(content || "")
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+  try { return JSON.parse(cleaned); } catch (err) { console.error("[conteur]", err); }
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
   if (start !== -1 && end > start) {
-    try { return JSON.parse(content.slice(start, end + 1)); } catch (_) {}
+    try { return JSON.parse(cleaned.slice(start, end + 1)); } catch (err) { console.error("[conteur]", err); }
   }
   return null;
 }
 
-async function callGroq(apiKey, messages, signal) {
+async function callGroq(apiKey, model, messages, signal) {
   return fetch(GROQ_URL, {
     method: "POST",
-    headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
     body: JSON.stringify({
-      model: MODEL,
+      model,
       messages,
-      stream: false,
       temperature: 0.7,
-      // gpt-oss-120b est un modèle de raisonnement : les tokens de "pensée" comptent
-      // dans le budget, donc on prévoit large pour ne pas tronquer le JSON, et on met
-      // l'effort de raisonnement au minimum (récit = pas besoin de raisonnement lourd).
-      max_completion_tokens: 2000,
-      reasoning_effort: "low",
-      include_reasoning: false,
+      max_tokens: 2400,
       response_format: { type: "json_object" },
     }),
     signal,
   });
+}
+
+async function groqErrorMessage(response) {
+  try {
+    const raw = await response.clone().text();
+    console.error("[conteur] Groq HTTP error", { status: response.status, body: raw });
+    if (!raw) return response.statusText || "Réponse API vide";
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed?.error?.message || parsed?.message || raw.slice(0, 500);
+    } catch (err) {
+      console.error("[conteur]", err);
+      return raw.slice(0, 500);
+    }
+  } catch (err) {
+    console.error("[conteur]", err);
+    return response.statusText || "Réponse API illisible";
+  }
+}
+
+function retryAfterMs(response) {
+  const value = response.headers.get("retry-after");
+  if (!value) return 250;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.min(3000, Math.max(0, seconds * 1000));
+  const dateMs = Date.parse(value) - Date.now();
+  return Math.min(3000, Math.max(0, Number.isFinite(dateMs) ? dateMs : 250));
+}
+
+async function callGroqWithRetry(apiKey, model, messages) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const ctrl = new AbortController();
+    const timeoutId = setTimeout(() => ctrl.abort(), GROQ_TIMEOUT_MS);
+    try {
+      const response = await callGroq(apiKey, model, messages, ctrl.signal);
+      clearTimeout(timeoutId);
+      if (response.ok) return response;
+
+      const apiMessage = await groqErrorMessage(response);
+      const apiError = new Error(`Groq HTTP ${response.status}: ${apiMessage}`);
+      apiError.status = response.status;
+      apiError.apiMessage = apiMessage;
+      console.error("[conteur]", apiError);
+      if (attempt === 0 && response.status === 429) {
+        await new Promise(resolve => setTimeout(resolve, retryAfterMs(response)));
+        continue;
+      }
+      return response;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err?.name === "AbortError") {
+        const timeoutError = new Error(`Groq timeout après ${GROQ_TIMEOUT_MS} ms`);
+        timeoutError.code = "ETIMEDOUT";
+        console.error("[conteur]", timeoutError);
+        throw timeoutError;
+      }
+      console.error("[conteur]", err);
+      throw err;
+    }
+  }
+  throw new Error("Groq indisponible après une nouvelle tentative");
 }
 
 export default async function handler(req) {
@@ -223,23 +292,32 @@ export default async function handler(req) {
   const rl = rateLimit(req, `generate:${user.id}`, 12, 60 * 60 * 1000);
   if (!rl.allowed) return rateLimitResponse(rl);
 
-  const apiKey = process.env.GROQ_API_KEY;
-  const apiKey2 = process.env.GROQ_API_KEY_2;
-  if (!apiKey && !apiKey2) return jsonResponse({ error: "GROQ_API_KEY manquante sur le serveur" }, 500);
-  const key1 = apiKey || apiKey2;
-
   let body;
-  try { body = await req.json(); } catch { body = {}; }
+  try {
+    body = await req.json();
+  } catch (err) {
+    console.error("[conteur]", err);
+    return jsonResponse({ error: "Corps JSON invalide" }, 400);
+  }
   const {
     history, userReply, language, level, theme, universe, motivation, vocabulary,
-    recap, characters, setting, protagonist, episode, chapter, memory,
+    recap, characters, setting, protagonist, episode, chapter, memory, motherLanguage, nativeLanguage, langue_maternelle,
   } = body || {};
+
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    const missingKeyError = new Error("GROQ_API_KEY manquante sur le serveur");
+    console.error("[conteur]", missingKeyError);
+    return jsonResponse({ error: "Le service du conteur n'est pas configuré sur le serveur." }, 500);
+  }
 
   if (typeof userReply === "string" && userReply.length > 4000) {
     return jsonResponse({ error: "Réponse trop longue" }, 413);
   }
 
   const targetLanguage = LANG_NAME[language] || language || "English";
+  const motherLanguageCode = motherLanguage || nativeLanguage || langue_maternelle;
+  const motherLanguageName = LANG_NAME[motherLanguageCode] || "French";
   const cefrLevel = LEVEL_NAME[level] || level || "A1-A2 (beginner)";
   const customUniverse = (typeof universe === "string" ? universe.trim() : "").slice(0, 160);
   const learnerMotivation = (typeof motivation === "string" && MOTIVATION_HINTS[motivation]) ? motivation : null;
@@ -273,7 +351,7 @@ export default async function handler(req) {
   const hasUserReply = typeof userReply === "string" && userReply.trim().length > 0;
 
   const system = buildSystemPrompt({
-    language: targetLanguage, level: cefrLevel, theme: theme || null, universe: customUniverse, motivation: learnerMotivation, hasUserReply,
+    language: targetLanguage, motherLanguage: motherLanguageName, level: cefrLevel, theme: theme || null, universe: customUniverse, motivation: learnerMotivation, hasUserReply,
     vocabulary: vocabList, recap: safeRecap, characters: charList,
     setting: safeSetting, protagonist: safeProtagonist, episode: safeEpisode, chapter: safeChapter,
     memory: safeMemory,
@@ -285,37 +363,43 @@ export default async function handler(req) {
     { role: "user", content: userReply || "Begin episode 1: introduce me (the protagonist) and the setting, then ask your first question. Respond in the required JSON format." },
   ];
 
-  const ctrl = new AbortController();
-  const timeoutId = setTimeout(() => ctrl.abort(), GROQ_TIMEOUT_MS);
-
   let groqRes;
   try {
-    groqRes = await callGroq(key1, messages, ctrl.signal);
-    if (groqRes.status === 429 && apiKey2 && key1 !== apiKey2) {
-      groqRes = await callGroq(apiKey2, messages, ctrl.signal);
-    }
+    groqRes = await callGroqWithRetry(apiKey, MODEL, messages);
   } catch (err) {
-    clearTimeout(timeoutId);
-    if (err.name === "AbortError") return jsonResponse({ error: "Le conteur met trop de temps à répondre, réessaie." }, 504);
-    return jsonResponse({ error: "Erreur réseau vers Groq" }, 502);
+    console.error("[conteur]", err);
+    if (err.code === "ETIMEDOUT") return jsonResponse({ error: "Le conteur met trop de temps à répondre. Réessaie dans un instant." }, 504);
+    return jsonResponse({ error: "Erreur réseau vers le conteur. Réessaie dans un instant." }, 502);
   }
-  clearTimeout(timeoutId);
 
-  if (groqRes.status === 429) return jsonResponse({ error: "rate_limit" }, 429);
+  if (groqRes.status === 429) return jsonResponse({ error: "Trop de demandes, réessaie dans quelques secondes" }, 429);
   if (!groqRes.ok) {
-    const errBody = await groqRes.text().catch(() => "");
-    return jsonResponse({ error: "Groq: " + errBody.slice(0, 200) }, groqRes.status || 500);
+    const errBody = await groqErrorMessage(groqRes);
+    return jsonResponse({ error: "Le conteur est indisponible : " + errBody.slice(0, 200) }, groqRes.status || 500);
   }
 
   let data;
-  try { data = await groqRes.json(); } catch { return jsonResponse({ error: "Réponse Groq illisible" }, 502); }
-  const content = data.choices?.[0]?.message?.content || "";
-  if (!content.trim()) return jsonResponse({ error: "Le conteur n'a rien répondu, réessaie." }, 500);
+  try {
+    data = await groqRes.json();
+  } catch (err) {
+    console.error("[conteur]", err);
+    return jsonResponse({ error: "Réponse Groq illisible" }, 502);
+  }
+  const content = typeof data?.choices?.[0]?.message?.content === "string"
+    ? data.choices[0].message.content
+    : "";
+  if (!content.trim()) {
+    const emptyError = new Error("Groq a renvoyé une réponse vide");
+    console.error("[conteur]", emptyError);
+    return jsonResponse({ error: "Le conteur n'a rien répondu, réessaie." }, 500);
+  }
 
   const parsed = safeParse(content);
 
   // Fallback : si le JSON est invalide, on renvoie le texte brut (rétrocompatible).
   if (!parsed || typeof parsed.story !== "string") {
+    const fallbackError = new Error("JSON Groq invalide : réponse texte utilisée en secours");
+    console.error("[conteur]", fallbackError);
     return jsonResponse({ text: content.trim(), story: content.trim(), grammar: null, fallback: true }, 200);
   }
 
